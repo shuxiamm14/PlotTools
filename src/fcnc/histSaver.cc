@@ -79,6 +79,7 @@ void histSaver::init_sample(TString samplename, TString sampleTitle, enum EColor
     plots[i]->SetLineWidth(0.3);
   }
   for(auto const& region: regions) {
+    if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
     plot_lib[samplename][region] = plots;
   }
   if (samplename == "data") dataref = 1;

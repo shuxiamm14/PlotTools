@@ -8,7 +8,7 @@ public:
   Int_t nbin[50];
   Float_t xlo[50];
   Float_t xhi[50];
-  std::string titleX[50];
+  TString titleX[50];
   Float_t* var1[50];
   Float_t* fweight = NULL;
   Double_t* dweight = NULL;
@@ -16,7 +16,7 @@ public:
   Int_t* var2[50];
   Bool_t MeVtoGeV[50];
   Int_t nvar;
-  std::string name[50];
+  TString name[50];
   Double_t xbins[50][101];
   bool ifRebin[50];
   bool dataref;
@@ -25,6 +25,7 @@ public:
   map<TString, map<TString, vector<TH1D*>>> plot_lib;
   vector<TString> regions;
   TString this_region = "nominal";
+  int debug = 1;
   histSaver();
   virtual ~histSaver();
 
