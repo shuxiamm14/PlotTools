@@ -56,7 +56,7 @@ Float_t histSaver::getVal(Int_t i) {
 void histSaver::show(){
   for (int i = 0; i < nvar; ++i)
   {
-    printf("histSaver::show()\t%s = ", name[i].c_str());
+    printf("histSaver::show()\t%s = ", name[i].Data());
     if(var2[i]) printf("%d\n", *var2[i]);
     else printf("%f\n", MeVtoGeV[i] ? *var1[i]/1000 : *var1[i]);
   }
@@ -72,7 +72,7 @@ void histSaver::init_sample(TString samplename, TString sampleTitle, enum EColor
   printf("add new sample: %s\n", samplename.Data());
   vector<TH1D*> plots;
   for (int i = 0; i < nvar; ++i){
-    plots.push_back(new TH1D(samplename + "_" + name[i].c_str(),sampleTitle,nbin[i],xlo[i],xhi[i]));
+    plots.push_back(new TH1D(samplename + "_" + name[i].Data(),sampleTitle,nbin[i],xlo[i],xhi[i]));
     plots[i]->Sumw2();
     plots[i]->SetLineColor(kBlack);
     plots[i]->SetFillColor(color);
@@ -112,7 +112,7 @@ void histSaver::plot_stack(){
     gSystem->mkdir(region);
     for (int i = 0; i < nvar; ++i){
       TCanvas cv;
-      THStack *hsk = new THStack(name[i].c_str(),name[i].c_str());
+      THStack *hsk = new THStack(name[i].Data(),name[i].Data());
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
       TLegend* lg1;
       lg1 = new TLegend(0.53,0.75,0.94,0.90,"");
@@ -127,7 +127,7 @@ void histSaver::plot_stack(){
 
       if (dataref) plot_lib["data"][region][i]->Draw("E");
       hsk->Draw("hist same");
-      hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].c_str() : (titleX[i] + " [" + unit[i] + "]").Data());
+      hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
       char str[30];
       sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
       hsk->GetYaxis()->SetTitle(str);
