@@ -81,6 +81,8 @@ void histSaver::init_sample(TString samplename, TString sampleTitle, enum EColor
   for(auto const& region: regions) {
     plot_lib[samplename][region] = plots;
   }
+  if (samplename == "data") dataref = 1;
+
   printf("finished initializing %s\n", samplename.Data() );
 }
 
@@ -116,11 +118,15 @@ void histSaver::plot_stack(){
       lg1 = new TLegend(0.53,0.75,0.94,0.90,"");
       lg1->SetNColumns(2);
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
-         hsk->Add(iter->second[region][i]);
-         lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
+        if(iter->first == "data") continue;
+        hsk->Add(iter->second[region][i]);
+        lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
       }
+
       hsk->SetMaximum(1.4*hsk->GetMaximum());
-      hsk->Draw("hist");
+
+      if (dataref) plot_lib["data"][region][i]->Draw("E");
+      hsk->Draw("hist same");
       hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].c_str() : (titleX[i] + " [" + unit[i] + "]").Data());
       char str[30];
       sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());

@@ -19,6 +19,7 @@ public:
   std::string name[50];
   Double_t xbins[50][101];
   bool ifRebin[50];
+  bool dataref;
   TString unit[50];
   TString current_sample;
   map<TString, map<TString, vector<TH1D*>>> plot_lib;
