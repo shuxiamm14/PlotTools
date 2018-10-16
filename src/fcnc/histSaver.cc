@@ -99,6 +99,7 @@ void histSaver::fill_hist(TString sample, TString region){
   for (int i = 0; i < nvar; ++i){
     if(debug == 1) printf("plot_lib[%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), getVal(i), weight_type == 1? *fweight : *dweight);
     plot_lib[sample][region][i]->Fill(getVal(i),weight_type == 1? *fweight : *dweight);
+  }
 }
 
 void histSaver::fill_hist(TString region){
