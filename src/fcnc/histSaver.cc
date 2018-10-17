@@ -42,6 +42,7 @@ Float_t histSaver::getVal(Int_t i) {
   if(i>=0  && i<nvar) {
     if(var1[i]) tmp = MeVtoGeV[i] ? *var1[i]/1000 : *var1[i];
     else if(var2[i]) tmp = *var2[i];
+    if(debug == 1) printf("fill value: %f\n", tmp);
   }
   if (!ifRebin[i]){
     if(tmp >= xhi[i]) tmp = xhi[i]*0.999999;
