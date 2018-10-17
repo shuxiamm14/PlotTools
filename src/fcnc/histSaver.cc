@@ -75,9 +75,9 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
   for (int i = 0; i < nvar; ++i){
     plots.push_back(new TH1D(histname + "_" + name[i].Data(),sampleTitle,nbin[i],xlo[i],xhi[i]));
     plots[i]->Sumw2();
-    plots[i]->SetLineColor(kBlack);
     plots[i]->SetFillColor(color);
-    plots[i]->SetLineWidth(0.5);
+    plots[i]->SetLineWidth(0.3);
+    plots[i]->SetLineColor(kBlack);
   }
   for(auto const& region: regions) {
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
@@ -159,6 +159,7 @@ void histSaver::plot_stack(){
         char str[30];
         sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
+        plot_lib["data"][region][i]->SetMarkerStyle(20);
         plot_lib["data"][region][i]->SetMarkerSize(0.8);
         plot_lib["data"][region][i]->Draw("E");
       }else{
@@ -173,8 +174,8 @@ void histSaver::plot_stack(){
       hmc->SetMarkerColor(1);
       hmc->SetFillStyle(3004);
 
-      hmc->Draw("E2,same");
       hsk->Draw("hist same");
+      hmc->Draw("E2,same");
       lg1->Draw("same");
 
 //===============================lower pad===============================
