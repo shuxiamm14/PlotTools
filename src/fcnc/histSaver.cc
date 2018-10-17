@@ -120,7 +120,6 @@ void histSaver::plot_stack(){
     for (int i = 0; i < nvar; ++i){
 
       TCanvas cv("cv","cv",600,600);
-      cv.cd();
 
       TFile savehist(region + "/root/" + name[i] + ".root","recreate");
 
@@ -160,7 +159,6 @@ void histSaver::plot_stack(){
         hsk->SetMaximum(1.8*hsk->GetMaximum());
       }
 
-      padhi->Draw();
 
       hmc->SetFillColor(1);
       hmc->SetLineColor(0);
@@ -173,6 +171,8 @@ void histSaver::plot_stack(){
       hsk->Draw("hist same");
       lg1->Draw("same");
 
+      cv.cd();
+      padhi->Draw();
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
@@ -217,7 +217,7 @@ void histSaver::plot_stack(){
       TLine *line = new TLine();
       line->SetLineColor(2);
       line->DrawLine(hdataR->GetBinLowEdge(1), 1., hdataR->GetBinLowEdge(hdataR->GetNbinsX()+1), 1.);
-
+      cv.cd();
       padlow->Draw();
 
       cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
