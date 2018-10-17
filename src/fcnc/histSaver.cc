@@ -120,6 +120,7 @@ void histSaver::plot_stack(){
     for (int i = 0; i < nvar; ++i){
 
       TCanvas cv("cv","cv",600,600);
+      cv.cd();
 
       TFile savehist(region + "/root/" + name[i] + ".root","recreate");
 
