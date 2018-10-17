@@ -129,9 +129,9 @@ void histSaver::plot_stack(){
       TH1D *hmcR   = new TH1D("hmcR","hmcR",nbin[i],xlo[i],xhi[i]);
       TH1D *hdataR = new TH1D("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
 
+//===============================upper pad===============================
       padhi->SetBottomMargin(0.);
       padhi->cd();
-
       hmc->Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
@@ -155,10 +155,6 @@ void histSaver::plot_stack(){
       }else{
         hsk->SetMaximum(1.8*hsk->GetMaximum());
       }
-      lg1->Draw("same");
-      char str[30];
-      sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
-      hsk->GetYaxis()->SetTitle(str);
 
       padhi->Draw();
 
@@ -171,7 +167,12 @@ void histSaver::plot_stack(){
 
       hmc->Draw("E2,same");
       hsk->Draw("hist same");
+      lg1->Draw("same");
+      char str[30];
+      sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
+      hsk->GetYaxis()->SetTitle(str);
 
+//===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
       padlow->SetTopMargin(0);
