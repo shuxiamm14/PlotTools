@@ -176,30 +176,24 @@ void histSaver::plot_stack(){
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
-      padlow->SetTopMargin(0);
+      padlow->SetTopMargin(0.01);
       padlow->SetBottomMargin(0.35);
       padlow->Draw();
       padlow->cd();
 
-      for(Int_t j=1; j<nbin[i]; j++) {
+      for(Int_t j=1; j<nbin[i]+1; j++) {
         hmcR->SetBinContent(j,1);
         hmcR->SetBinError(j,hmc->GetBinContent(j)>0 ? hmc->GetBinError(j)/hmc->GetBinContent(j) : 0);
         hdataR->SetBinContent(j, hmc->GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc->GetBinContent(j) : 1);
-        hdataR->SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc->GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc->GetBinContent(j) : 0);
+        hdataR->SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc->GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc->GetBinContent(j) : 0.01);
       }
 
       hdataR->GetXaxis()->SetLabelFont(42);
-      hdataR->GetXaxis()->SetLabelSize(0.12); 
-      hdataR->GetXaxis()->SetTitleOffset(3.2);
-      hdataR->GetXaxis()->SetTitleSize(0.15); 
       hdataR->GetYaxis()->SetLabelFont(42);
-      hdataR->GetYaxis()->SetLabelSize(0.12); 
-      hdataR->GetYaxis()->SetTitleOffset(1.7);
-      hdataR->GetYaxis()->SetTitleSize(0.12); 
       hdataR->SetMarkerStyle(20);
       hdataR->SetMarkerSize(0.8);
-      hdataR->SetMaximum(1.499);
-      hdataR->SetMinimum(0.501);
+      hdataR->SetMaximum(1.5);
+      hdataR->SetMinimum(0.5);
       hdataR->GetYaxis()->SetNdivisions(504,false);
       hdataR->GetYaxis()->SetTickLength(0.01);
       hdataR->GetYaxis()->SetTitle("Data/Bkg");
