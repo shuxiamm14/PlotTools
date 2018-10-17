@@ -155,7 +155,7 @@ void histSaver::plot_stack(){
         lg1->AddEntry(plot_lib["data"][region][i],"data","LP");
         plot_lib["data"][region][i]->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
         plot_lib["data"][region][i]->GetXaxis()->SetLabelColor(kWhite);
-        plot_lib["data"][region][i]->SetMaximum(1.8*plot_lib["data"][region][i]->GetMaximum());
+        //plot_lib["data"][region][i]->SetMaximum(1.8*plot_lib["data"][region][i]->GetMaximum());
         char str[30];
         sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
@@ -180,7 +180,7 @@ void histSaver::plot_stack(){
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
-      padlow->SetTopMargin(0.02);
+      padlow->SetTopMargin(0.03);
       padlow->SetBottomMargin(0.35);
       padlow->cd();
 
@@ -197,6 +197,7 @@ void histSaver::plot_stack(){
       hdataR->SetMinimum(0.5);
       hdataR->GetYaxis()->SetNdivisions(504,false);
       hdataR->GetYaxis()->SetTitle("Data/Bkg");
+      hdataR->GetYaxis()->SetTitleOffset(hdataR->GetYaxis()->GetTitleOffset*1.1);
       hdataR->GetYaxis()->CenterTitle();
       hdataR->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
       hdataR->GetXaxis()->SetTitleSize(hdataR->GetXaxis()->GetTitleSize()*0.7);
@@ -208,7 +209,7 @@ void histSaver::plot_stack(){
       hmcR->SetMarkerColor(1);
       hmcR->SetFillStyle(3004);
       hdataR->Draw("E same");
-      hdataR->GetXaxis()->SetTitleOffset(3.2);
+      hdataR->GetXaxis()->SetTitleOffset(3.4);
       hdataR->GetXaxis()->SetLabelSize(hdataR->GetXaxis()->GetLabelSize()*0.7); 
       hdataR->GetYaxis()->SetLabelSize(hdataR->GetYaxis()->GetLabelSize()*0.7); 
       hmcR->Draw("E same");
