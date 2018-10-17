@@ -129,6 +129,10 @@ void histSaver::plot_stack(){
       TH1D *hmcR   = new TH1D("hmcR","hmcR",nbin[i],xlo[i],xhi[i]);
       TH1D *hdataR = new TH1D("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
 
+      cv.cd();
+      padhi->Draw();
+      padlow->Draw();
+
 //===============================upper pad===============================
       padhi->SetBottomMargin(0.01);
       padhi->cd();
@@ -150,8 +154,8 @@ void histSaver::plot_stack(){
       if (dataref) {
         lg1->AddEntry(plot_lib["data"][region][i],"data","LP");
         plot_lib["data"][region][i]->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
-        plot_lib["data"][region][i]->Draw("E");
         SetMax(hsk,plot_lib["data"][region][i],1.8);
+        plot_lib["data"][region][i]->Draw("E");
         char str[30];
         sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
@@ -170,15 +174,13 @@ void histSaver::plot_stack(){
       hmc->Draw("E2,same");
       hsk->Draw("hist same");
       lg1->Draw("same");
+      hsk->GetXaxis()->SetLabelColor(kWhite);
 
-      cv.cd();
-      padhi->Draw();
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
       padlow->SetTopMargin(0.01);
       padlow->SetBottomMargin(0.35);
-      padlow->Draw();
       padlow->cd();
 
       for(Int_t j=1; j<nbin[i]+1; j++) {
@@ -203,13 +205,12 @@ void histSaver::plot_stack(){
       hmcR->SetMarkerColor(1);
       hmcR->SetFillStyle(3004);
       hdataR->Draw("E same");
+      hdataR->GetXaxis()->SetTitleOffset(0.1);
       hmcR->Draw("E same");
 
       TLine *line = new TLine();
       line->SetLineColor(2);
       line->DrawLine(hdataR->GetBinLowEdge(1), 1., hdataR->GetBinLowEdge(hdataR->GetNbinsX()+1), 1.);
-      cv.cd();
-      padlow->Draw();
 
       cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
       deletepointer(hsk);
