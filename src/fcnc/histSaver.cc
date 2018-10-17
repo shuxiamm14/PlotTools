@@ -146,7 +146,7 @@ void histSaver::plot_stack(){
         hmc->Add(iter->second[region][i]);
         lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
       }
-      hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+      //hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
       if (dataref) {
         lg1->AddEntry(plot_lib["data"][region][i],"data","LP");
         plot_lib["data"][region][i]->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
