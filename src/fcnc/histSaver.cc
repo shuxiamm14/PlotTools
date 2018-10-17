@@ -78,6 +78,7 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
     plots[i]->SetFillColor(color);
     plots[i]->SetLineWidth(0.3);
     plots[i]->SetLineColor(kBlack);
+    plots[i]->SetMarkerSize(0);
   }
   for(auto const& region: regions) {
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
@@ -130,8 +131,6 @@ void histSaver::plot_stack(){
       TH1D *hdataR = new TH1D("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
 
       cv.cd();
-      padhi->Draw();
-      padlow->Draw();
 
 //===============================upper pad===============================
       padhi->SetBottomMargin(0.015);
@@ -161,10 +160,11 @@ void histSaver::plot_stack(){
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
         plot_lib["data"][region][i]->SetMarkerStyle(20);
         plot_lib["data"][region][i]->SetMarkerSize(0.8);
-        plot_lib["data"][region][i]->Draw("E");
+        plot_lib["data"][region][i]->Draw("E1 same");
       }else{
         hsk->SetMaximum(1.8*hsk->GetMaximum());
       }
+      lg1->Draw("same");
 
 
       hmc->SetFillColor(1);
@@ -176,8 +176,9 @@ void histSaver::plot_stack(){
 
       hsk->Draw("hist same");
       hmc->Draw("E2,same");
-      lg1->Draw("same");
-
+      if(dataref) plot_lib["data"][region][i]->Draw("E1 same");
+      cv.cd();
+      padhi->Draw();
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
@@ -206,7 +207,7 @@ void histSaver::plot_stack(){
       hmcR->SetFillColor(1);
       hmcR->SetLineColor(0);
       hmcR->SetMarkerStyle(1);
-      hmcR->SetMarkerSize(0.0001);
+      hmcR->SetMarkerSize(0);
       hmcR->SetMarkerColor(1);
       hmcR->SetFillStyle(3004);
       hdataR->Draw("E same");
@@ -214,12 +215,11 @@ void histSaver::plot_stack(){
       hdataR->GetXaxis()->SetLabelSize(hdataR->GetXaxis()->GetLabelSize()*0.7); 
       hdataR->GetYaxis()->SetLabelSize(hdataR->GetYaxis()->GetLabelSize()*0.7); 
       hmcR->Draw("E2 same");
-
       TLine *line = new TLine();
       line->SetLineColor(2);
       line->DrawLine(hdataR->GetBinLowEdge(1), 1., hdataR->GetBinLowEdge(hdataR->GetNbinsX()+1), 1.);
-      padhi->Update();
-      padlow->Update();
+      cv.cd();
+      padlow->Draw();
       cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
       deletepointer(hsk);
       deletepointer(lg1);
