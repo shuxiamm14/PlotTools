@@ -49,7 +49,7 @@ Float_t histSaver::getVal(Int_t i) {
     if(tmp < xlo[i]) tmp = xlo[i];
   }else{
     if(tmp >= xbins[i][nbin[i]]) tmp = xbins[i][nbin[i]]*0.999999;
-    if(tmp < xbins[i][0]) tmp = xbins[i][0];
+    if(tmp < xbins[i][nbin[i]]) tmp = xbins[i][nbin[i]];
   }
   return tmp;
 }
@@ -77,7 +77,7 @@ void histSaver::init_sample(TString samplename, TString sampleTitle, enum EColor
     plots[i]->Sumw2();
     plots[i]->SetLineColor(kBlack);
     plots[i]->SetFillColor(color);
-    plots[i]->SetLineWidth(0.3);
+    plots[i]->SetLineWidth(1);
   }
   for(auto const& region: regions) {
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
@@ -118,29 +118,98 @@ void histSaver::plot_stack(){
     gSystem->mkdir(region + "/eps");
     gSystem->mkdir(region + "/root");
     for (int i = 0; i < nvar; ++i){
+
+      TCanvas cv("cv","cv",600,600);
+
       TFile savehist(region + "/root/" + name[i] + ".root","recreate");
-      TCanvas cv;
+
+      TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
+      TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
+      TH1D *hmc    = new TH1D("hmc","hmc",nbin[i],xlo[i],xhi[i]);
+      TH1D *hmcR   = new TH1D("hmcR","hmcR",nbin[i],xlo[i],xhi[i]);
+      TH1D *hdataR = new TH1D("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
+
+      padhi->SetBottomMargin(0.);
+      padhi->cd();
+
+      hmc->Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
       TLegend* lg1;
-      lg1 = new TLegend(0.53,0.75,0.94,0.90,"");
+      lg1 = new TLegend(0.43,0.75,0.94,0.90,"");
       lg1->SetNColumns(2);
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
         savehist.cd();
         iter->second[region][i]->Write();
         if(iter->first == "data") continue;
         hsk->Add(iter->second[region][i]);
+        hmc->Add(iter->second[region][i]);
         lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
       }
-
-      hsk->SetMaximum(1.4*hsk->GetMaximum());
-
-      if (dataref) {
-        lg1->AddEntry(plot_lib["data"][region][i],"data","L");
-        plot_lib["data"][region][i]->Draw("E");
-      }
-      hsk->Draw("hist same");
       hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+      if (dataref) {
+        lg1->AddEntry(plot_lib["data"][region][i],"data","LP");
+        plot_lib["data"][region][i]->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+        plot_lib["data"][region][i]->Draw("E");
+        SetMax(hsk,plot_lib["data"][region][i],1.8);
+      }else{
+        hsk->SetMaximum(1.8*hsk->GetMaximum());
+      }
+
+      hmc->SetFillColor(1);
+      hmc->SetLineColor(0);
+      hmc->SetMarkerStyle(1);
+      hmc->SetMarkerSize(0.0001);
+      hmc->SetMarkerColor(1);
+      hmc->SetFillStyle(3004);
+
+      hmc->Draw("E2,same");
+      hsk->Draw("hist same");
+
+      padlow->SetFillStyle(4000);
+      padlow->SetGrid(1,1);
+      padlow->SetTopMargin(0);
+      padlow->SetBottomMargin(0.35);
+      padlow->Draw();
+      padlow->cd();
+
+      for(Int_t j=1; nbin[i]; j++) {
+        hmcR->SetBinContent(j,1);
+        hmcR->SetBinError(j,hmc->GetBinContent(j)>0 ? hmc->GetBinError(j)/hmc->GetBinContent(j) : 0);
+        hdataR->SetBinContent(j, hmc->GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc->GetBinContent(j) : 1);
+        hdataR->SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc->GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc->GetBinContent(j) : 0);
+      }
+
+      hdataR->GetXaxis()->SetLabelFont(42);
+      hdataR->GetXaxis()->SetLabelSize(0.12); 
+      hdataR->GetXaxis()->SetTitleOffset(3.2);
+      hdataR->GetXaxis()->SetTitleSize(0.15); 
+      hdataR->GetYaxis()->SetLabelFont(42);
+      hdataR->GetYaxis()->SetLabelSize(0.12); 
+      hdataR->GetYaxis()->SetTitleOffset(1.7);
+      hdataR->GetYaxis()->SetTitleSize(0.12); 
+      hdataR->SetMarkerStyle(20);
+      hdataR->SetMarkerSize(0.8);
+      hdataR->SetMaximum(1.5);
+      hdataR->SetMinimum(0.5);
+      hdataR->GetYaxis()->SetNdivisions(504,false);
+      hdataR->GetYaxis()->SetTickLength(0.01);
+      hdataR->GetYaxis()->SetTitle("Data/Bkg");
+      hdataR->GetYaxis()->CenterTitle();
+      hdataR->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+      hmcR->SetFillColor(1);
+      hmcR->SetLineColor(0);
+      hmcR->SetMarkerStyle(1);
+      hmcR->SetMarkerSize(0.0001);
+      hmcR->SetMarkerColor(1);
+      hmcR->SetFillStyle(3004);
+      hmcR->Draw("E");
+      hdataR->Draw("E same");
+
+      TLine *line = new TLine();
+      line->SetLineColor(2);
+      line->DrawLine(hdataR->GetBinLowEdge(1), 1., hdataR->GetBinLowEdge(hdataR->GetNbinsX()+1), 1.);
+
       char str[30];
       sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
       hsk->GetYaxis()->SetTitle(str);
@@ -148,6 +217,12 @@ void histSaver::plot_stack(){
       cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
       deletepointer(hsk);
       deletepointer(lg1);
+      deletepointer(padlow );
+      deletepointer(padhi  );
+      deletepointer(hmc    );
+      deletepointer(hmcR   );
+      deletepointer(hdataR );
+      deletepointer(line   );
     }
   }
 }
