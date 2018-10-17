@@ -155,6 +155,12 @@ void histSaver::plot_stack(){
       }else{
         hsk->SetMaximum(1.8*hsk->GetMaximum());
       }
+      lg1->Draw("same");
+      char str[30];
+      sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
+      hsk->GetYaxis()->SetTitle(str);
+
+      padhi->Draw();
 
       hmc->SetFillColor(1);
       hmc->SetLineColor(0);
@@ -210,10 +216,8 @@ void histSaver::plot_stack(){
       line->SetLineColor(2);
       line->DrawLine(hdataR->GetBinLowEdge(1), 1., hdataR->GetBinLowEdge(hdataR->GetNbinsX()+1), 1.);
 
-      char str[30];
-      sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
-      hsk->GetYaxis()->SetTitle(str);
-      lg1->Draw("same");
+      padlow->Draw();
+
       cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
       deletepointer(hsk);
       deletepointer(lg1);
