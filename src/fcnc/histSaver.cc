@@ -197,7 +197,7 @@ void histSaver::plot_stack(){
       hdataR->SetMinimum(0.5);
       hdataR->GetYaxis()->SetNdivisions(504,false);
       hdataR->GetYaxis()->SetTitle("Data/Bkg");
-      hdataR->GetYaxis()->SetTitleOffset(hdataR->GetYaxis()->GetTitleOffset*1.1);
+      hdataR->GetYaxis()->SetTitleOffset(hdataR->GetYaxis()->GetTitleOffset()*1.1);
       hdataR->GetYaxis()->CenterTitle();
       hdataR->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
       hdataR->GetXaxis()->SetTitleSize(hdataR->GetXaxis()->GetTitleSize()*0.7);
