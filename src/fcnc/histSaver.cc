@@ -205,7 +205,7 @@ void histSaver::plot_stack(){
       hmcR->SetMarkerColor(1);
       hmcR->SetFillStyle(3004);
       hdataR->Draw("E same");
-      hdataR->GetXaxis()->SetTitleOffset(0.1);
+      hdataR->GetXaxis()->SetTitleOffset(1);
       hmcR->Draw("E same");
 
       TLine *line = new TLine();
