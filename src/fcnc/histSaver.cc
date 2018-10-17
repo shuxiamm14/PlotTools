@@ -173,7 +173,7 @@ void histSaver::plot_stack(){
       padlow->Draw();
       padlow->cd();
 
-      for(Int_t j=1; nbin[i]; j++) {
+      for(Int_t j=1; j<nbin[i]; j++) {
         hmcR->SetBinContent(j,1);
         hmcR->SetBinError(j,hmc->GetBinContent(j)>0 ? hmc->GetBinError(j)/hmc->GetBinContent(j) : 0);
         hdataR->SetBinContent(j, hmc->GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc->GetBinContent(j) : 1);
