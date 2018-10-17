@@ -152,6 +152,9 @@ void histSaver::plot_stack(){
         plot_lib["data"][region][i]->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
         plot_lib["data"][region][i]->Draw("E");
         SetMax(hsk,plot_lib["data"][region][i],1.8);
+        char str[30];
+        sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
+        plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
       }else{
         hsk->SetMaximum(1.8*hsk->GetMaximum());
       }
@@ -168,9 +171,6 @@ void histSaver::plot_stack(){
       hmc->Draw("E2,same");
       hsk->Draw("hist same");
       lg1->Draw("same");
-      char str[30];
-      sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
-      hsk->GetYaxis()->SetTitle(str);
 
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
