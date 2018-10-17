@@ -113,7 +113,10 @@ void histSaver::fill_hist(){
 void histSaver::plot_stack(){
   for(auto const& region: regions) {
     gSystem->mkdir(region);
+    gSystem->mkdir(region + "/eps");
+    gSystem->mkdir(region + "/root");
     for (int i = 0; i < nvar; ++i){
+      TFile savehist(region + "/root/" + name[i] + ".root","recreate");
       TCanvas cv;
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
@@ -121,6 +124,8 @@ void histSaver::plot_stack(){
       lg1 = new TLegend(0.53,0.75,0.94,0.90,"");
       lg1->SetNColumns(2);
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
+        savehist.cd();
+        iter->second[region][i]->Write();
         if(iter->first == "data") continue;
         hsk->Add(iter->second[region][i]);
         lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
@@ -135,7 +140,7 @@ void histSaver::plot_stack(){
       sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
       hsk->GetYaxis()->SetTitle(str);
       lg1->Draw("same");
-      cv.SaveAs((CharAppend(region + "/", name[i]) + ".eps"));
+      cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
       deletepointer(hsk);
       deletepointer(lg1);
     }
