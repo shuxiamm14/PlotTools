@@ -77,7 +77,7 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
     plots[i]->Sumw2();
     plots[i]->SetLineColor(kBlack);
     plots[i]->SetFillColor(color);
-    plots[i]->SetLineWidth(0.3);
+    plots[i]->SetLineWidth(0.5);
   }
   for(auto const& region: regions) {
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
@@ -212,7 +212,7 @@ void histSaver::plot_stack(){
       hdataR->GetXaxis()->SetTitleOffset(3.4);
       hdataR->GetXaxis()->SetLabelSize(hdataR->GetXaxis()->GetLabelSize()*0.7); 
       hdataR->GetYaxis()->SetLabelSize(hdataR->GetYaxis()->GetLabelSize()*0.7); 
-      hmcR->Draw("E same");
+      hmcR->Draw("E2 same");
 
       TLine *line = new TLine();
       line->SetLineColor(2);
