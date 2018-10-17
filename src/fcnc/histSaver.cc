@@ -134,7 +134,7 @@ void histSaver::plot_stack(){
       padlow->Draw();
 
 //===============================upper pad===============================
-      padhi->SetBottomMargin(0.01);
+      padhi->SetBottomMargin(0.015);
       padhi->cd();
       hmc->Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
@@ -154,11 +154,13 @@ void histSaver::plot_stack(){
       if (dataref) {
         lg1->AddEntry(plot_lib["data"][region][i],"data","LP");
         plot_lib["data"][region][i]->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+        plot_lib["data"][region][i]->GetXaxis()->SetLabelColor(kWhite);
         SetMax(hsk,plot_lib["data"][region][i],1.8);
-        plot_lib["data"][region][i]->Draw("E");
         char str[30];
         sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
+        plot_lib["data"][region][i]->SetMarkerSize(0.8);
+        plot_lib["data"][region][i]->Draw("E");
       }else{
         hsk->SetMaximum(1.8*hsk->GetMaximum());
       }
@@ -174,12 +176,11 @@ void histSaver::plot_stack(){
       hmc->Draw("E2,same");
       hsk->Draw("hist same");
       lg1->Draw("same");
-      hsk->GetXaxis()->SetLabelColor(kWhite);
 
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
-      padlow->SetTopMargin(0.01);
+      padlow->SetTopMargin(0.015);
       padlow->SetBottomMargin(0.35);
       padlow->cd();
 
@@ -205,13 +206,16 @@ void histSaver::plot_stack(){
       hmcR->SetMarkerColor(1);
       hmcR->SetFillStyle(3004);
       hdataR->Draw("E same");
-      hdataR->GetXaxis()->SetTitleOffset(1);
+      hdataR->GetXaxis()->SetTitleOffset(3.2);
+      hdataR->GetXaxis()->SetLabelSize(0.1); 
+      hdataR->GetYaxis()->SetLabelSize(0.1); 
       hmcR->Draw("E same");
 
       TLine *line = new TLine();
       line->SetLineColor(2);
       line->DrawLine(hdataR->GetBinLowEdge(1), 1., hdataR->GetBinLowEdge(hdataR->GetNbinsX()+1), 1.);
-
+      padhi->Update();
+      padlow->Update();
       cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
       deletepointer(hsk);
       deletepointer(lg1);
