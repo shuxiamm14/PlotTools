@@ -185,17 +185,14 @@ void histSaver::plot_stack(){
         hmcR->SetBinContent(j,1);
         hmcR->SetBinError(j,hmc->GetBinContent(j)>0 ? hmc->GetBinError(j)/hmc->GetBinContent(j) : 0);
         hdataR->SetBinContent(j, hmc->GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc->GetBinContent(j) : 1);
-        hdataR->SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc->GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc->GetBinContent(j) : 0.01);
+        hdataR->SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc->GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc->GetBinContent(j) : 0);
       }
 
-      hdataR->GetXaxis()->SetLabelFont(42);
-      hdataR->GetYaxis()->SetLabelFont(42);
       hdataR->SetMarkerStyle(20);
       hdataR->SetMarkerSize(0.8);
       hdataR->SetMaximum(1.5);
       hdataR->SetMinimum(0.5);
       hdataR->GetYaxis()->SetNdivisions(504,false);
-      hdataR->GetYaxis()->SetTickLength(0.01);
       hdataR->GetYaxis()->SetTitle("Data/Bkg");
       hdataR->GetYaxis()->CenterTitle();
       hdataR->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
