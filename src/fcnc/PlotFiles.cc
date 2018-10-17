@@ -188,7 +188,7 @@ void histSaver::Streamer(TBuffer &R__b)
       R__b.WriteArray(xlo, 50);
       R__b.WriteArray(xhi, 50);
       for (int R__i0=0; R__i0<50; ++R__i0 )
-         { TString R__str(titleX[R__i0].c_str()); R__str.Streamer(R__b);}
+         { TString R__str(titleX[R__i0].Data()); R__str.Streamer(R__b);}
       int R__i;
       for (R__i = 0; R__i < 50; R__i++)
          ;//R__b.WriteArray(var1, __COUNTER__);
@@ -200,7 +200,7 @@ void histSaver::Streamer(TBuffer &R__b)
       R__b.WriteArray(MeVtoGeV, 50);
       R__b << nvar;
       for (int R__i0=0; R__i0<50; ++R__i0 )
-         { TString R__str(name[R__i0].c_str()); R__str.Streamer(R__b);}
+         { TString R__str(name[R__i0].Data()); R__str.Streamer(R__b);}
       R__b.WriteArray((double*)xbins, 5050);
       R__b.WriteArray(ifRebin, 50);
       for (R__i = 0; R__i < 50; R__i++)
@@ -681,7 +681,7 @@ static int G__PlotFiles_891_0_11(G__value* result7, G__CONST char* funcname, str
 static int G__PlotFiles_891_0_12(G__value* result7, G__CONST char* funcname, struct G__param* libp, int hash)
 {
       ((histSaver*) G__getstructoffset())->init_sample(*((TString*) G__int(libp->para[0])), *((TString*) G__int(libp->para[1]))
-, (EColor) G__int(libp->para[2]));
+, *((TString*) G__int(libp->para[2])), (EColor) G__int(libp->para[3]));
       G__setnull(result7);
    return(1 || funcname || hash || result7 || libp) ;
 }

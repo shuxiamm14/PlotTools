@@ -67,17 +67,17 @@ float histSaver::binwidth(int i){
   return (xhi[i]-xlo[i])/nbin[i];
 }
 
-void histSaver::init_sample(TString samplename, TString sampleTitle, enum EColor color){
+void histSaver::init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
   current_sample = samplename;
   if(plot_lib.find(samplename) != plot_lib.end()) return;
   if(debug) printf("add new sample: %s\n", samplename.Data());
   vector<TH1D*> plots;
   for (int i = 0; i < nvar; ++i){
-    plots.push_back(new TH1D(samplename + "_" + name[i].Data(),sampleTitle,nbin[i],xlo[i],xhi[i]));
+    plots.push_back(new TH1D(histname + "_" + name[i].Data(),sampleTitle,nbin[i],xlo[i],xhi[i]));
     plots[i]->Sumw2();
     plots[i]->SetLineColor(kBlack);
     plots[i]->SetFillColor(color);
-    plots[i]->SetLineWidth(1);
+    plots[i]->SetLineWidth(0.3);
   }
   for(auto const& region: regions) {
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
@@ -155,7 +155,7 @@ void histSaver::plot_stack(){
         lg1->AddEntry(plot_lib["data"][region][i],"data","LP");
         plot_lib["data"][region][i]->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
         plot_lib["data"][region][i]->GetXaxis()->SetLabelColor(kWhite);
-        SetMax(hsk,plot_lib["data"][region][i],1.8);
+        plot_lib["data"][region][i]->SetMaximum(1.8*plot_lib["data"][region][i]->GetMaximum());
         char str[30];
         sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
@@ -180,7 +180,7 @@ void histSaver::plot_stack(){
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
-      padlow->SetTopMargin(0.015);
+      padlow->SetTopMargin(0.02);
       padlow->SetBottomMargin(0.35);
       padlow->cd();
 
@@ -199,6 +199,8 @@ void histSaver::plot_stack(){
       hdataR->GetYaxis()->SetTitle("Data/Bkg");
       hdataR->GetYaxis()->CenterTitle();
       hdataR->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+      hdataR->GetXaxis()->SetTitleSize(hdataR->GetXaxis()->GetTitleSize()*0.7);
+      hdataR->GetYaxis()->SetTitleSize(hdataR->GetYaxis()->GetTitleSize()*0.7);
       hmcR->SetFillColor(1);
       hmcR->SetLineColor(0);
       hmcR->SetMarkerStyle(1);
@@ -207,8 +209,8 @@ void histSaver::plot_stack(){
       hmcR->SetFillStyle(3004);
       hdataR->Draw("E same");
       hdataR->GetXaxis()->SetTitleOffset(3.2);
-      hdataR->GetXaxis()->SetLabelSize(0.1); 
-      hdataR->GetYaxis()->SetLabelSize(0.1); 
+      hdataR->GetXaxis()->SetLabelSize(hdataR->GetXaxis()->GetLabelSize()*0.7); 
+      hdataR->GetYaxis()->SetLabelSize(hdataR->GetYaxis()->GetLabelSize()*0.7); 
       hmcR->Draw("E same");
 
       TLine *line = new TLine();

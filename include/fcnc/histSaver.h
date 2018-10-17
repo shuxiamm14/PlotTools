@@ -59,7 +59,7 @@ public:
   void fill_hist(TString sample);
   void fill_hist();
   void add_region(TString region);
-  void init_sample(TString samplename,TString sampleTitle, enum EColor color);
+  void init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
   void set_weight(Float_t* _weight){ fweight = _weight; weight_type = 1;}
   void set_weight(Double_t* _weight){ dweight = _weight; weight_type = 2;}
 
