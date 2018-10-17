@@ -69,7 +69,7 @@ float histSaver::binwidth(int i){
 void histSaver::init_sample(TString samplename, TString sampleTitle, enum EColor color){
   current_sample = samplename;
   if(plot_lib.find(samplename) != plot_lib.end()) return;
-  printf("add new sample: %s\n", samplename.Data());
+  if(debug) printf("add new sample: %s\n", samplename.Data());
   vector<TH1D*> plots;
   for (int i = 0; i < nvar; ++i){
     plots.push_back(new TH1D(samplename + "_" + name[i].Data(),sampleTitle,nbin[i],xlo[i],xhi[i]));
@@ -84,7 +84,7 @@ void histSaver::init_sample(TString samplename, TString sampleTitle, enum EColor
   }
   if (samplename == "data") dataref = 1;
 
-  printf("finished initializing %s\n", samplename.Data() );
+  if(debug) printf("finished initializing %s\n", samplename.Data() );
 }
 
 void histSaver::add_region(TString region){
@@ -111,6 +111,7 @@ void histSaver::fill_hist(){
 }
 
 void histSaver::plot_stack(){
+  SetAtlasStyle();
   for(auto const& region: regions) {
     gSystem->mkdir(region);
     gSystem->mkdir(region + "/eps");
@@ -133,7 +134,10 @@ void histSaver::plot_stack(){
 
       hsk->SetMaximum(1.4*hsk->GetMaximum());
 
-      if (dataref) plot_lib["data"][region][i]->Draw("E");
+      if (dataref) {
+        lg1->AddEntry(plot_lib["data"][region][i],"data","L");
+        plot_lib["data"][region][i]->Draw("E");
+      }
       hsk->Draw("hist same");
       hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
       char str[30];
