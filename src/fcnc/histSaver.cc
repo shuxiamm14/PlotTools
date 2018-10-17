@@ -130,7 +130,7 @@ void histSaver::plot_stack(){
       TH1D *hdataR = new TH1D("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
 
 //===============================upper pad===============================
-      padhi->SetBottomMargin(0.);
+      padhi->SetBottomMargin(0.01);
       padhi->cd();
       hmc->Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
@@ -198,8 +198,8 @@ void histSaver::plot_stack(){
       hdataR->GetYaxis()->SetTitleSize(0.12); 
       hdataR->SetMarkerStyle(20);
       hdataR->SetMarkerSize(0.8);
-      hdataR->SetMaximum(1.5);
-      hdataR->SetMinimum(0.5);
+      hdataR->SetMaximum(1.499);
+      hdataR->SetMinimum(0.501);
       hdataR->GetYaxis()->SetNdivisions(504,false);
       hdataR->GetYaxis()->SetTickLength(0.01);
       hdataR->GetYaxis()->SetTitle("Data/Bkg");
@@ -211,8 +211,8 @@ void histSaver::plot_stack(){
       hmcR->SetMarkerSize(0.0001);
       hmcR->SetMarkerColor(1);
       hmcR->SetFillStyle(3004);
-      hmcR->Draw("E");
       hdataR->Draw("E same");
+      hmcR->Draw("E same");
 
       TLine *line = new TLine();
       line->SetLineColor(2);
