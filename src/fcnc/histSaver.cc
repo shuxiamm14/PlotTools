@@ -189,9 +189,9 @@ void histSaver::plot_stack(){
 
       for(Int_t j=1; j<nbin[i]+1; j++) {
         hmcR->SetBinContent(j,1);
-        hmcR->SetBinError(j,hmc->GetBinContent(j)>0 ? hmc->GetBinError(j)/hmc->GetBinContent(j) : 0);
-        hdataR->SetBinContent(j, hmc->GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc->GetBinContent(j) : 1);
-        hdataR->SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc->GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc->GetBinContent(j) : 0);
+        hmcR->SetBinError(j,hmc.GetBinContent(j)>0 ? hmc.GetBinError(j)/hmc.GetBinContent(j) : 0);
+        hdataR->SetBinContent(j, hmc.GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc.GetBinContent(j) : 1);
+        hdataR->SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc.GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc.GetBinContent(j) : 0);
       }
 
       hdataR->SetMarkerStyle(20);
