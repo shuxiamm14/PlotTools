@@ -128,8 +128,8 @@ void histSaver::plot_stack(){
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
       TH1D hmc("hmc","hmc",nbin[i],xlo[i],xhi[i]);
-      TH1D *hmcR   = new TH1D("hmcR","hmcR",nbin[i],xlo[i],xhi[i]);
-      TH1D *hdataR = new TH1D("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
+      TH1D hmcR("hmcR","hmcR",nbin[i],xlo[i],xhi[i]);
+      TH1D hdataR("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
 
       cv.cd();
 
@@ -188,37 +188,37 @@ void histSaver::plot_stack(){
       padlow->cd();
 
       for(Int_t j=1; j<nbin[i]+1; j++) {
-        hmcR->SetBinContent(j,1);
-        hmcR->SetBinError(j,hmc.GetBinContent(j)>0 ? hmc.GetBinError(j)/hmc.GetBinContent(j) : 0);
-        hdataR->SetBinContent(j, hmc.GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc.GetBinContent(j) : 1);
-        hdataR->SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc.GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc.GetBinContent(j) : 0);
+        hmcR.SetBinContent(j,1);
+        hmcR.SetBinError(j,hmc.GetBinContent(j)>0 ? hmc.GetBinError(j)/hmc.GetBinContent(j) : 0);
+        hdataR.SetBinContent(j, hmc.GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc.GetBinContent(j) : 1);
+        hdataR.SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc.GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc.GetBinContent(j) : 0);
       }
 
-      hdataR->SetMarkerStyle(20);
-      hdataR->SetMarkerSize(0.8);
-      hdataR->SetMaximum(1.5);
-      hdataR->SetMinimum(0.5);
-      hdataR->GetYaxis()->SetNdivisions(504,false);
-      hdataR->GetYaxis()->SetTitle("Data/Bkg");
-      hdataR->GetYaxis()->SetTitleOffset(hdataR->GetYaxis()->GetTitleOffset()*1.1);
-      hdataR->GetYaxis()->CenterTitle();
-      hdataR->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
-      hdataR->GetXaxis()->SetTitleSize(hdataR->GetXaxis()->GetTitleSize()*0.7);
-      hdataR->GetYaxis()->SetTitleSize(hdataR->GetYaxis()->GetTitleSize()*0.7);
-      hmcR->SetFillColor(1);
-      hmcR->SetLineColor(0);
-      hmcR->SetMarkerStyle(1);
-      hmcR->SetMarkerSize(0);
-      hmcR->SetMarkerColor(1);
-      hmcR->SetFillStyle(3004);
-      hdataR->Draw("E same");
-      hdataR->GetXaxis()->SetTitleOffset(3.4);
-      hdataR->GetXaxis()->SetLabelSize(hdataR->GetXaxis()->GetLabelSize()*0.7); 
-      hdataR->GetYaxis()->SetLabelSize(hdataR->GetYaxis()->GetLabelSize()*0.7); 
-      hmcR->Draw("E2 same");
-      TLine *line = new TLine();
-      line->SetLineColor(2);
-      line->DrawLine(hdataR->GetBinLowEdge(1), 1., hdataR->GetBinLowEdge(hdataR->GetNbinsX()+1), 1.);
+      hdataR.SetMarkerStyle(20);
+      hdataR.SetMarkerSize(0.8);
+      hdataR.SetMaximum(1.5);
+      hdataR.SetMinimum(0.5);
+      hdataR.GetYaxis()->SetNdivisions(504,false);
+      hdataR.GetYaxis()->SetTitle("Data/Bkg");
+      hdataR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.1);
+      hdataR.GetYaxis()->CenterTitle();
+      hdataR.GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+      hdataR.GetXaxis()->SetTitleSize(hdataR.GetXaxis()->GetTitleSize()*0.7);
+      hdataR.GetYaxis()->SetTitleSize(hdataR.GetYaxis()->GetTitleSize()*0.7);
+      hmcR.SetFillColor(1);
+      hmcR.SetLineColor(0);
+      hmcR.SetMarkerStyle(1);
+      hmcR.SetMarkerSize(0);
+      hmcR.SetMarkerColor(1);
+      hmcR.SetFillStyle(3004);
+      hdataR.Draw("E same");
+      hdataR.GetXaxis()->SetTitleOffset(3.4);
+      hdataR.GetXaxis()->SetLabelSize(hdataR.GetXaxis()->GetLabelSize()*0.7); 
+      hdataR.GetYaxis()->SetLabelSize(hdataR.GetYaxis()->GetLabelSize()*0.7); 
+      hmcR.Draw("E2 same");
+      TLine line;
+      line.SetLineColor(2);
+      line.DrawLine(hdataR.GetBinLowEdge(1), 1., hdataR.GetBinLowEdge(hdataR.GetNbinsX()+1), 1.);
       cv.cd();
       padlow->Draw();
       cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
@@ -227,9 +227,6 @@ void histSaver::plot_stack(){
       deletepointer(lg1);
       deletepointer(padlow );
       deletepointer(padhi  );
-      deletepointer(hmcR   );
-      deletepointer(hdataR );
-      deletepointer(line   );
     }
   }
 }
