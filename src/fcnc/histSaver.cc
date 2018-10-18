@@ -72,15 +72,15 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
   if(plot_lib.find(samplename) != plot_lib.end()) return;
   if(debug) printf("add new sample: %s\n", samplename.Data());
   vector<TH1D*> plots;
-  for (int i = 0; i < nvar; ++i){
-    plots.push_back(new TH1D(histname + "_" + name[i].Data(),sampleTitle,nbin[i],xlo[i],xhi[i]));
-    plots[i]->Sumw2();
-    plots[i]->SetFillColor(color);
-    plots[i]->SetLineWidth(0.3);
-    plots[i]->SetLineColor(kBlack);
-    plots[i]->SetMarkerSize(0);
-  }
   for(auto const& region: regions) {
+    for (int i = 0; i < nvar; ++i){
+      plots.push_back(new TH1D(histname + "_" + region + "_" + name[i].Data(),sampleTitle,nbin[i],xlo[i],xhi[i]));
+      plots[i]->Sumw2();
+      plots[i]->SetFillColor(color);
+      plots[i]->SetLineWidth(0.9);
+      plots[i]->SetLineColor(kBlack);
+      plots[i]->SetMarkerSize(0);
+    }
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
     plot_lib[samplename][region] = plots;
   }
@@ -170,13 +170,13 @@ void histSaver::plot_stack(){
       hmc->SetFillColor(1);
       hmc->SetLineColor(0);
       hmc->SetMarkerStyle(1);
-      hmc->SetMarkerSize(0.0001);
+      hmc->SetMarkerSize(0);
       hmc->SetMarkerColor(1);
       hmc->SetFillStyle(3004);
 
       hsk->Draw("hist same");
       hmc->Draw("E2,same");
-      if(dataref) plot_lib["data"][region][i]->Draw("E1 same");
+      if(dataref) plot_lib["data"][region][i]->Draw("E+ same");
       cv.cd();
       padhi->Draw();
 //===============================lower pad===============================
@@ -221,6 +221,7 @@ void histSaver::plot_stack(){
       cv.cd();
       padlow->Draw();
       cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
+      savehist.Close();
       deletepointer(hsk);
       deletepointer(lg1);
       deletepointer(padlow );
