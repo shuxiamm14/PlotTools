@@ -127,7 +127,7 @@ void histSaver::plot_stack(){
 
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
-      TH1D *hmc    = new TH1D("hmc","hmc",nbin[i],xlo[i],xhi[i]);
+      TH1D hmc("hmc","hmc",nbin[i],xlo[i],xhi[i]);
       TH1D *hmcR   = new TH1D("hmcR","hmcR",nbin[i],xlo[i],xhi[i]);
       TH1D *hdataR = new TH1D("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
 
@@ -136,10 +136,10 @@ void histSaver::plot_stack(){
 //===============================upper pad===============================
       padhi->SetBottomMargin(0.015);
       padhi->cd();
-      hmc->Sumw2();
+      hmc.Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
-      TLegend* lg1;
+      TLegend* lg1 = 0;
       lg1 = new TLegend(0.43,0.75,0.94,0.90,"");
       lg1->SetNColumns(2);
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
@@ -147,7 +147,7 @@ void histSaver::plot_stack(){
         iter->second[region][i]->Write();
         if(iter->first == "data") continue;
         hsk->Add(iter->second[region][i]);
-        hmc->Add(iter->second[region][i]);
+        hmc.Add(iter->second[region][i]);
         lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
       }
       //hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
@@ -168,15 +168,15 @@ void histSaver::plot_stack(){
       lg1->Draw("same");
 
 
-      hmc->SetFillColor(1);
-      hmc->SetLineColor(0);
-      hmc->SetMarkerStyle(1);
-      hmc->SetMarkerSize(0);
-      hmc->SetMarkerColor(1);
-      hmc->SetFillStyle(3004);
+      hmc.SetFillColor(1);
+      hmc.SetLineColor(0);
+      hmc.SetMarkerStyle(1);
+      hmc.SetMarkerSize(0);
+      hmc.SetMarkerColor(1);
+      hmc.SetFillStyle(3004);
 
       hsk->Draw("hist same");
-      hmc->Draw("E2,same");
+      hmc.Draw("E2,same");
       if(dataref) plot_lib["data"][region][i]->Draw("E+ same");
       cv.cd();
       padhi->Draw();
@@ -227,7 +227,6 @@ void histSaver::plot_stack(){
       deletepointer(lg1);
       deletepointer(padlow );
       deletepointer(padhi  );
-      deletepointer(hmc    );
       deletepointer(hmcR   );
       deletepointer(hdataR );
       deletepointer(line   );
