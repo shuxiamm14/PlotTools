@@ -167,7 +167,7 @@ void histSaver::write(){
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
         inputfile[region][i]->cd();
-        iter->second[region][i]->Write();
+        iter->second[region][i]->Write("",TObject::kWriteDelete);
       }
     }
   }
