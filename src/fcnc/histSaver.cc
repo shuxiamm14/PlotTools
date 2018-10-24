@@ -127,16 +127,14 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
 
 void histSaver::add_region(TString region){
   regions.push_back(region);
-  vector<TFile*> filev;
   if(fromntuple){
     gSystem->mkdir(region);
     gSystem->mkdir(region + "/eps");
     gSystem->mkdir(region + "/root");
-    for (int i = 0; i < nvar; ++i) filev.push_back(new TFile(region + "/root/" + name[i] + ".root", "update"));
+    for (int i = 0; i < nvar; ++i) inputfile[region].push_back(new TFile(region + "/root/" + name[i] + ".root", "update"));
   }else{
-    for (int i = 0; i < nvar; ++i) filev.push_back(new TFile(region + "/root/" + name[i] + ".root", "read"));
+    for (int i = 0; i < nvar; ++i) inputfile[region].push_back(new TFile(region + "/root/" + name[i] + ".root", "read"));
   }
-  inputfile[region] = filev;
 }
 
 void histSaver::fill_hist(TString sample, TString region){
@@ -146,7 +144,8 @@ void histSaver::fill_hist(TString sample, TString region){
   }
   for (int i = 0; i < nvar; ++i){
     if(debug == 1) printf("plot_lib[%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), i, getVal(i), weight_type == 1? *fweight : *dweight);
-    plot_lib[sample][region][i]->Fill(getVal(i),weight_type == 1? *fweight : *dweight);
+    if(plot_lib[sample][region][i]) plot_lib[sample][region][i]->Fill(getVal(i),weight_type == 1? *fweight : *dweight);
+    else printf("ERROR: histogram doesn't exist: plot_lib[%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), i, getVal(i), weight_type == 1? *fweight : *dweight);
   }
 }
 
