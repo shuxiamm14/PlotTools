@@ -23,8 +23,12 @@ public:
   TString unit[50];
   TString current_sample;
   map<TString, map<TString, vector<TH1D*>>> plot_lib;
+  map<TString, vector<TFile*>> inputfile;
   vector<TString> regions;
+  bool fromntuple = 1;
+  int histcount = 0;
   TString this_region = "nominal";
+  TString read_path = "./" ;
   int debug = 1;
   histSaver();
   virtual ~histSaver();
@@ -53,7 +57,10 @@ public:
   Float_t getVal(Int_t i);
   void add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Int_t* var_, const char* unit_ = "");
   void add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
+  void add(const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
   float binwidth(int i);
+  void add(const char* titleX_, const char* name_, const char* unit_ = "");
+  void read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
   void plot_stack();
   void fill_hist(TString sample, TString region);
   void fill_hist(TString sample);
@@ -62,6 +69,7 @@ public:
   void init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
   void set_weight(Float_t* _weight){ fweight = _weight; weight_type = 1;}
   void set_weight(Double_t* _weight){ dweight = _weight; weight_type = 2;}
+  void write();
 
   ClassDef(histSaver,1)
 };
