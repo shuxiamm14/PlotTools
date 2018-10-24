@@ -82,23 +82,20 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
   current_sample = samplename;
   if(plot_lib.find(samplename) != plot_lib.end()) return;
   if(debug) printf("add new sample: %s\n", samplename.Data());
-  vector<TH1D*> plots;
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       if(inputfile[region][i]->Get(histname + "_" + region + "_" + name[i]))
-        plots.push_back((TH1D*)inputfile[region][i]->Get(histname + "_" + region + "_" + name[i]));
+        plot_lib[samplename][region].push_back((TH1D*)inputfile[region][i]->Get(histname + "_" + region + "_" + name[i]));
       else{
-        plots.push_back(new TH1D(histname + "_" + region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
-        plots[i]->Sumw2();
-        plots[i]->SetFillColor(color);
-        plots[i]->SetLineWidth(0.9);
-        plots[i]->SetLineColor(kBlack);
-        plots[i]->SetMarkerSize(0);
+        plot_lib[samplename][region].push_back(new TH1D(histname + "_" + region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
+        plot_lib[samplename][region][i]->Sumw2();
+        plot_lib[samplename][region][i]->SetFillColor(color);
+        plot_lib[samplename][region][i]->SetLineWidth(0.9);
+        plot_lib[samplename][region][i]->SetLineColor(kBlack);
+        plot_lib[samplename][region][i]->SetMarkerSize(0);
       }
     }
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
-    plot_lib[samplename][region] = plots;
-    plots.clear();
   }
   if (samplename == "data") dataref = 1;
 
