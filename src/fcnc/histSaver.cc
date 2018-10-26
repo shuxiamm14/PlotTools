@@ -88,11 +88,14 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
         plot_lib[samplename][region].push_back((TH1D*)inputfile[region][i]->Get(histname + "_" + region + "_" + name[i]));
       else{
         plot_lib[samplename][region].push_back(new TH1D(histname + "_" + region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
-        plot_lib[samplename][region][i]->Sumw2();
-        plot_lib[samplename][region][i]->SetFillColor(color);
-        plot_lib[samplename][region][i]->SetLineWidth(0.9);
-        plot_lib[samplename][region][i]->SetLineColor(kBlack);
-        plot_lib[samplename][region][i]->SetMarkerSize(0);
+        if (samplename != "data")
+        {
+          plot_lib[samplename][region][i]->Sumw2();
+          plot_lib[samplename][region][i]->SetFillColor(color);
+          plot_lib[samplename][region][i]->SetLineWidth(0.9);
+          plot_lib[samplename][region][i]->SetLineColor(kBlack);
+          plot_lib[samplename][region][i]->SetMarkerSize(0);
+        }
       }
     }
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
@@ -103,6 +106,7 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
 }
 
 void histSaver::read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
+  if (samplename == "data") dataref = 1;
   for(auto const& region: regions) {
     if (debug == 1)
     {
@@ -169,8 +173,9 @@ void histSaver::write(){
   }
 }
 
-void histSaver::plot_stack(){
+void histSaver::plot_stack(TString outputdir){
   SetAtlasStyle();
+  gSystem->mkdir(outputdir);
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
 
@@ -183,14 +188,14 @@ void histSaver::plot_stack(){
       TH1D hdataR("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
 
       cv.cd();
-
+      padhi->Draw();
 //===============================upper pad===============================
       padhi->SetBottomMargin(0.015);
       padhi->cd();
       hmc.Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
       TLegend* lg1 = 0;
-      lg1 = new TLegend(0.43,0.75,0.94,0.90,"");
+      lg1 = new TLegend(0.43,0.75,0.90,0.90,"");
       lg1->SetNColumns(2);
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
@@ -208,13 +213,14 @@ void histSaver::plot_stack(){
         char str[30];
         sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
+        plot_lib["data"][region][i]->GetYaxis()->SetTitleOffset(1.3);
         plot_lib["data"][region][i]->SetMarkerStyle(20);
         plot_lib["data"][region][i]->SetMarkerSize(0.8);
         plot_lib["data"][region][i]->Draw("E1 same");
+        SetMax(hsk,plot_lib["data"][region][i],1.6);
       }else{
-        hsk->SetMaximum(1.8*hsk->GetMaximum());
+        hsk->SetMaximum(1.6*hsk->GetMaximum());
       }
-      lg1->Draw("same");
 
 
       hmc.SetFillColor(1);
@@ -227,8 +233,8 @@ void histSaver::plot_stack(){
       hsk->Draw("hist same");
       hmc.Draw("E2,same");
       if(dataref) plot_lib["data"][region][i]->Draw("E+ same");
-      cv.cd();
-      padhi->Draw();
+      lg1->Draw("same");
+
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
@@ -270,7 +276,8 @@ void histSaver::plot_stack(){
       line.DrawLine(hdataR.GetBinLowEdge(1), 1., hdataR.GetBinLowEdge(hdataR.GetNbinsX()+1), 1.);
       cv.cd();
       padlow->Draw();
-      cv.SaveAs((CharAppend(region + "/eps/", name[i]) + ".eps"));
+      gSystem->mkdir(outputdir + "/" + region);
+      cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".eps");
       inputfile[region][i]->Close();
       deletepointer(hsk);
       deletepointer(lg1);

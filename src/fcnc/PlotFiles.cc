@@ -645,7 +645,7 @@ static int G__PlotFiles_891_0_6(G__value* result7, G__CONST char* funcname, stru
 
 static int G__PlotFiles_891_0_7(G__value* result7, G__CONST char* funcname, struct G__param* libp, int hash)
 {
-      ((histSaver*) G__getstructoffset())->plot_stack();
+      ((histSaver*) G__getstructoffset())->plot_stack(*((TString*) G__int(libp->para[0])));
       G__setnull(result7);
    return(1 || funcname || hash || result7 || libp) ;
 }

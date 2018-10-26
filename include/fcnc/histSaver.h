@@ -61,7 +61,7 @@ public:
   float binwidth(int i);
   void add(const char* titleX_, const char* name_, const char* unit_ = "");
   void read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
-  void plot_stack();
+  void plot_stack(TString outputdir);
   void fill_hist(TString sample, TString region);
   void fill_hist(TString sample);
   void fill_hist();
