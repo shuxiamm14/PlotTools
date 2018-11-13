@@ -3,6 +3,7 @@
 
 #include "fcnc_include.h"
 #include "AtlasStyle.h"
+#include "AtlasLabels.h"
 class histSaver{
 public:
   Int_t nbin[50];

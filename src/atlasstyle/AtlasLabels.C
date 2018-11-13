@@ -13,9 +13,10 @@ void ATLASLabel(Double_t x,Double_t y,const char* text,Color_t color, const char
   l.SetNDC();
 //   l.SetTextFont(72);
   l.SetTextFont(73);
+  l.SetTextSize(12);
   l.SetTextColor(color);
 
-  double delx = 0.115*696*gPad->GetWh()/(472*gPad->GetWw());
+  double delx = 0.05*696*gPad->GetWh()/(472*gPad->GetWw());
   double dely = 0.06;
   l.DrawLatex(x,y,"ATLAS");
   if (text) {
@@ -23,11 +24,12 @@ void ATLASLabel(Double_t x,Double_t y,const char* text,Color_t color, const char
     p.SetNDC();
 //     p.SetTextFont(42);
     p.SetTextFont(43);
+    p.SetTextSize(12);
     p.SetTextColor(color);
     p.DrawLatex(x+delx,y,text);
     if(channelname){
-      p.DrawLatex(x,y-dely,"#it{#sqrt{s}} = 13TeV, 36.1 fb^{-1}");
-      p.DrawLatex(x,y-2*dely,"#it{H #rightarrow #tau^{+}#tau^{-}}");
+      p.DrawLatex(x,y-dely,"#it{#sqrt{s}} = 13TeV, 80 fb^{-1}");
+      p.DrawLatex(x,y-2*dely,"Fake tau studies");
       p.DrawLatex(x,y-3*dely,channelname);
     }
   }

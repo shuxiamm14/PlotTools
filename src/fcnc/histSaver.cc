@@ -1,5 +1,5 @@
 #include "histSaver.h"
-
+#include "TGaxis.h"
 histSaver::histSaver() {
   nvar = 0;
   for(Int_t i=0; i<50; i++) {
@@ -107,12 +107,23 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
 
 void histSaver::read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
   if (samplename == "data") dataref = 1;
+  bool newsample = plot_lib.find(samplename) == plot_lib.end();
+
   for(auto const& region: regions) {
     if (debug == 1)
     {
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
     ++histcount;
+    if (!newsample)
+    {
+      for (int i = 0; i < nvar; ++i)
+      {
+        if(debug == 1) printf("histogram name: %s\n", (histname+"_"+region+"_"+name[i]).Data());
+        plot_lib[samplename][region][i]->Add((TH1D*)inputfile[region][i]->Get(histname+"_"+region+"_"+name[i]));
+
+      }
+    }else
     for (int i = 0; i < nvar; ++i){
       plot_lib[samplename][region].push_back((TH1D*)inputfile[region][i]->Get(histname+"_"+region+"_"+name[i]));
       plot_lib[samplename][region][i]->SetTitle(sampleTitle);
@@ -175,6 +186,7 @@ void histSaver::write(){
 
 void histSaver::plot_stack(TString outputdir){
   SetAtlasStyle();
+  TGaxis::SetMaxDigits(3);
   gSystem->mkdir(outputdir);
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
@@ -190,7 +202,7 @@ void histSaver::plot_stack(TString outputdir){
       cv.cd();
       padhi->Draw();
 //===============================upper pad===============================
-      padhi->SetBottomMargin(0.015);
+      padhi->SetBottomMargin(0.017);
       padhi->cd();
       hmc.Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
@@ -213,13 +225,15 @@ void histSaver::plot_stack(TString outputdir){
         char str[30];
         sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
-        plot_lib["data"][region][i]->GetYaxis()->SetTitleOffset(1.3);
+        plot_lib["data"][region][i]->GetYaxis()->SetTitleOffset(1.2);
         plot_lib["data"][region][i]->SetMarkerStyle(20);
         plot_lib["data"][region][i]->SetMarkerSize(0.8);
         plot_lib["data"][region][i]->Draw("E1 same");
         SetMax(hsk,plot_lib["data"][region][i],1.6);
+        plot_lib["data"][region][i]->SetMinimum(0);
       }else{
         hsk->SetMaximum(1.6*hsk->GetMaximum());
+        hsk->SetMinimum(0);
       }
 
 
@@ -229,6 +243,7 @@ void histSaver::plot_stack(TString outputdir){
       hmc.SetMarkerSize(0);
       hmc.SetMarkerColor(1);
       hmc.SetFillStyle(3004);
+      ATLASLabel(0.2,0.900,"work in progress",kBlack, region);
 
       hsk->Draw("hist same");
       hmc.Draw("E2,same");
@@ -255,7 +270,7 @@ void histSaver::plot_stack(TString outputdir){
       hdataR.SetMinimum(0.5);
       hdataR.GetYaxis()->SetNdivisions(504,false);
       hdataR.GetYaxis()->SetTitle("Data/Bkg");
-      hdataR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.1);
+      hdataR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.05);
       hdataR.GetYaxis()->CenterTitle();
       hdataR.GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
       hdataR.GetXaxis()->SetTitleSize(hdataR.GetXaxis()->GetTitleSize()*0.7);
@@ -277,7 +292,7 @@ void histSaver::plot_stack(TString outputdir){
       cv.cd();
       padlow->Draw();
       gSystem->mkdir(outputdir + "/" + region);
-      cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".eps");
+      cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf");
       inputfile[region][i]->Close();
       deletepointer(hsk);
       deletepointer(lg1);
