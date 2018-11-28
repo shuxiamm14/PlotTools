@@ -195,9 +195,9 @@ void histSaver::plot_stack(TString outputdir){
 
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
-      TH1D hmc("hmc","hmc",nbin[i],xlo[i],xhi[i]);
-      TH1D hmcR("hmcR","hmcR",nbin[i],xlo[i],xhi[i]);
-      TH1D hdataR("hdataR","hdataR",nbin[i],xlo[i],xhi[i]);
+      TH1D hmc("hmc","hmc",nbin[i]/irebin,xlo[i],xhi[i]);
+      TH1D hmcR("hmcR","hmcR",nbin[i]/irebin,xlo[i],xhi[i]);
+      TH1D hdataR("hdataR","hdataR",nbin[i]/irebin,xlo[i],xhi[i]);
 
       cv.cd();
       padhi->Draw();
@@ -211,6 +211,7 @@ void histSaver::plot_stack(TString outputdir){
       lg1->SetNColumns(2);
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
+        if(irebin != 1) iter->second[region][i]->Rebin(irebin);
         if(iter->first == "data") continue;
         hsk->Add(iter->second[region][i]);
         hmc.Add(iter->second[region][i]);
@@ -223,7 +224,7 @@ void histSaver::plot_stack(TString outputdir){
         plot_lib["data"][region][i]->GetXaxis()->SetLabelColor(kWhite);
         //plot_lib["data"][region][i]->SetMaximum(1.8*plot_lib["data"][region][i]->GetMaximum());
         char str[30];
-        sprintf(str,"Events / %4.2f %s",binwidth(i), unit[i].Data());
+        sprintf(str,"Events / %4.2f %s",binwidth(i)*irebin, unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
         plot_lib["data"][region][i]->GetYaxis()->SetTitleOffset(1.2);
         plot_lib["data"][region][i]->SetMarkerStyle(20);

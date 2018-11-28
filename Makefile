@@ -47,4 +47,4 @@ bin/.%.o: src/atlasstyle/%.C include/atlasstyle/%.h
 .PHONY:clean
 
 clean:
-	@rm bin/* lib/*
+	@rm bin/.* lib/*

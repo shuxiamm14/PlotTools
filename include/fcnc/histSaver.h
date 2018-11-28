@@ -10,6 +10,7 @@ public:
   Float_t xlo[50];
   Float_t xhi[50];
   TString titleX[50];
+  int irebin = 1;
   Float_t* var1[50];
   Float_t* fweight = NULL;
   Double_t* dweight = NULL;
