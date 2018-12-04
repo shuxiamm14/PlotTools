@@ -11,6 +11,7 @@ public:
   Float_t xhi[50];
   TString titleX[50];
   int irebin = 1;
+  int nregion = 0;
   Float_t* var1[50];
   Float_t* fweight = NULL;
   Double_t* dweight = NULL;
@@ -62,7 +63,7 @@ public:
   void add(const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
   float binwidth(int i);
   void add(const char* titleX_, const char* name_, const char* unit_ = "");
-  void read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
+  void read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm);
   void plot_stack(TString outputdir);
   void fill_hist(TString sample, TString region);
   void fill_hist(TString sample);

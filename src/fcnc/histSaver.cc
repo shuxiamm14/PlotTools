@@ -105,7 +105,7 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
   if(debug) printf("finished initializing %s\n", samplename.Data() );
 }
 
-void histSaver::read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
+void histSaver::read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm){
   if (samplename == "data") dataref = 1;
   bool newsample = plot_lib.find(samplename) == plot_lib.end();
 
@@ -120,12 +120,13 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
       for (int i = 0; i < nvar; ++i)
       {
         if(debug == 1) printf("histogram name: %s\n", (histname+"_"+region+"_"+name[i]).Data());
-        plot_lib[samplename][region][i]->Add((TH1D*)inputfile[region][i]->Get(histname+"_"+region+"_"+name[i]));
+        plot_lib[samplename][region][i]->Add((TH1D*)inputfile[region][i]->Get(histname+"_"+region+"_"+name[i]),norm);
 
       }
     }else
     for (int i = 0; i < nvar; ++i){
       plot_lib[samplename][region].push_back((TH1D*)inputfile[region][i]->Get(histname+"_"+region+"_"+name[i]));
+      plot_lib[samplename][region][i]->Scale(norm);
       plot_lib[samplename][region][i]->SetTitle(sampleTitle);
       plot_lib[samplename][region][i]->SetFillColor(color);
       plot_lib[samplename][region][i]->SetLineWidth(0.9);
@@ -142,6 +143,8 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
 
 void histSaver::add_region(TString region){
   regions.push_back(region);
+  nregion += 1;
+  for (int i = 0; i < nvar; ++i) printf("reading hist file: %s\n", (region + "/root/" + name[i] + ".root").Data());
   if(fromntuple){
     gSystem->mkdir(region);
     gSystem->mkdir(region + "/eps");
@@ -188,10 +191,11 @@ void histSaver::plot_stack(TString outputdir){
   SetAtlasStyle();
   TGaxis::SetMaxDigits(3);
   gSystem->mkdir(outputdir);
-  for(auto const& region: regions) {
-    for (int i = 0; i < nvar; ++i){
-
-      TCanvas cv("cv","cv",600,600);
+  int iregion = 0;
+  TCanvas cv("cv","cv",600,600);
+  for (int i = 0; i < nvar; ++i){
+    cv.SaveAs(outputdir + "/" + name[i] + ".pdf[");
+    for(auto const& region: regions) {
 
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
@@ -292,13 +296,15 @@ void histSaver::plot_stack(TString outputdir){
       line.DrawLine(hdataR.GetBinLowEdge(1), 1., hdataR.GetBinLowEdge(hdataR.GetNbinsX()+1), 1.);
       cv.cd();
       padlow->Draw();
-      gSystem->mkdir(outputdir + "/" + region);
-      cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf");
+      ++iregion;
+      cv.SaveAs(outputdir + "/" + name[i] + ".pdf");
       inputfile[region][i]->Close();
       deletepointer(hsk);
       deletepointer(lg1);
       deletepointer(padlow );
       deletepointer(padhi  );
     }
+    cv.SaveAs(outputdir + "/" + name[i] + ".pdf]");
+    cv.Clear();
   }
 }
