@@ -29,7 +29,7 @@ void ATLASLabel(Double_t x,Double_t y,const char* text,Color_t color, const char
     p.DrawLatex(x+delx,y,text);
     if(channelname){
       p.DrawLatex(x,y-dely,"#it{#sqrt{s}} = 13TeV, 80 fb^{-1}");
-      p.DrawLatex(x,y-2*dely,"Fake tau studies");
+      p.DrawLatex(x,y-2*dely,"FCNC tqH H#rightarrow tautau");
       p.DrawLatex(x,y-3*dely,channelname);
     }
   }

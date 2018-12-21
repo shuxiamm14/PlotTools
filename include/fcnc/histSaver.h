@@ -16,6 +16,7 @@ public:
   Float_t* fweight = NULL;
   Double_t* dweight = NULL;
   int weight_type = 0;
+  TString overlay = "";
   Int_t* var2[50];
   Bool_t MeVtoGeV[50];
   Int_t nvar;

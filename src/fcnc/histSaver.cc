@@ -119,13 +119,19 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
     {
       for (int i = 0; i < nvar; ++i)
       {
-        if(debug == 1) printf("histogram name: %s\n", (histname+"_"+region+"_"+name[i]).Data());
+        if(debug == 1) {
+          printf("histogram name: %s\n", (histname+"_"+region+"_"+name[i]).Data());
+          printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
+        }
         plot_lib[samplename][region][i]->Add((TH1D*)inputfile[region][i]->Get(histname+"_"+region+"_"+name[i]),norm);
-
       }
     }else
     for (int i = 0; i < nvar; ++i){
-      plot_lib[samplename][region].push_back((TH1D*)inputfile[region][i]->Get(histname+"_"+region+"_"+name[i]));
+      if(debug == 1) {
+        printf("histogram name: %s\n", (histname+"_"+region+"_"+name[i]).Data());
+        printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
+      }
+      plot_lib[samplename][region].push_back((TH1D*)(inputfile[region][i]->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i]+ "_" + samplename)));
       plot_lib[samplename][region][i]->Scale(norm);
       plot_lib[samplename][region][i]->SetTitle(sampleTitle);
       plot_lib[samplename][region][i]->SetFillColor(color);
@@ -214,12 +220,29 @@ void histSaver::plot_stack(TString outputdir){
       lg1 = new TLegend(0.43,0.75,0.90,0.90,"");
       lg1->SetNColumns(2);
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
+      TH1D *histoverlay;
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
         if(irebin != 1) iter->second[region][i]->Rebin(irebin);
         if(iter->first == "data") continue;
+        if(iter->first == overlay){
+          histoverlay = iter->second[region][i];
+          continue;
+        }
+        if(debug) {
+          printf("plot_lib[%s][%s][%d]\n", iter->first.Data(), region.Data(), i);
+          printf("adding %s in region %s\n",iter->first.Data(), plot_lib["b"]["reg1e1mu1tau2b_1prong_btagwp70"][0]->GetName());
+        }
         hsk->Add(iter->second[region][i]);
         hmc.Add(iter->second[region][i]);
         lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
+      }
+      if(overlay != ""){
+        if(debug) { printf("overlay: %f\n", overlay.Data()); }
+        lg1->AddEntry(histoverlay,histoverlay->GetTitle(),"LP");
+        histoverlay->SetLineStyle(9);
+        histoverlay->SetLineWidth(3);
+        histoverlay->SetLineColor(kRed);
+        histoverlay->SetFillColor(0);
       }
       //hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
       if (dataref) {
@@ -249,8 +272,8 @@ void histSaver::plot_stack(TString outputdir){
       hmc.SetMarkerColor(1);
       hmc.SetFillStyle(3004);
       ATLASLabel(0.2,0.900,"work in progress",kBlack, region);
-
       hsk->Draw("hist same");
+      if(overlay != "") histoverlay->Draw("hist same");
       hmc.Draw("E2,same");
       if(dataref) plot_lib["data"][region][i]->Draw("E+ same");
       lg1->Draw("same");
