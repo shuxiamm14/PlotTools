@@ -84,6 +84,7 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
   if(debug) printf("add new sample: %s\n", samplename.Data());
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
+      inputfile[region][i]->cd();
       if(inputfile[region][i]->Get(histname + "_" + region + "_" + name[i]))
         plot_lib[samplename][region].push_back((TH1D*)inputfile[region][i]->Get(histname + "_" + region + "_" + name[i]));
       else{
