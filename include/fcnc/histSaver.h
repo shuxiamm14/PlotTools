@@ -74,8 +74,6 @@ public:
   void set_weight(Float_t* _weight){ fweight = _weight; weight_type = 1;}
   void set_weight(Double_t* _weight){ dweight = _weight; weight_type = 2;}
   void write();
-
-  ClassDef(histSaver,1)
 };
 
 
