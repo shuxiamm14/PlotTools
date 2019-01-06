@@ -3,7 +3,7 @@
 TMinuit* gM = 0;
 
 HISTFITTER::HISTFITTER(){}
-
+HISTFITTER::~HISTFITTER(){}
 void HISTFITTER::addfithist(TString component,  TH1D* inputhist, int begin, int end){
 	if ( fithists.find(component) == fithists.end() )
 	{

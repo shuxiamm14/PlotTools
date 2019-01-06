@@ -7,7 +7,7 @@ ROOTLIBS := $(shell root-config --libs)
 ROOTGLIBS:= $(shell root-config --glibs)
 
 EXTRALIBS +=$(ROOTLIBS) -L./lib
-EXTRALIBS +=$(ROOTGLIBS) -lMinuit -lTMVA -lHistFactory -lRooStats -lRooFit -lRooFitCore
+EXTRALIBS +=$(ROOTGLIBS) -lMinuit -lTMVA
 
 FCNCLIB := lib
 
@@ -34,19 +34,19 @@ bin/.atlasstyle_dict.cc: $(ATLASINC) include/atlasstyle/LinkDef.h
 	@rootcint -f $@ -c $^
 
 bin/.plotTool_dict.cc: include/fcnc/HISTFITTER.h include/fcnc/fcnc_include.h include/fcnc/histSaver.h include/fcnc/LinkDef.h       
-	@rootcint -f $(INCLUDE) $@ -c $^
+	@rootcint -f $@ -c $(INCLUDE) $^
 
 bin/.%_dict.o: bin/.%_dict.cc
 	@$(CXX) $(CPPFLAGS) -c $< -o $@
-	@mv $(patsubst .%_dict.o, %_dict_rdict.pcm, $@) lib/.
+	@mv $(patsubst bin/.%_dict.o, bin/.%_dict_rdict.pcm, $@) lib/.
 
 $(FCNCLIB)/libAtlasStyle.so: $(ATLASOBJS) bin/.atlasstyle_dict.o
 	@echo Linking $@
-	@$(MAKESHARED) $(CPPFLAGS) $(ROOTGLIBS) -o $@ $(ATLASOBJS)
+	@$(MAKESHARED) $(CPPFLAGS) $(ROOTGLIBS) -o $@ $^
 
 $(FCNCLIB)/libPlotTool.so: $(PLOTOBJS) bin/.plotTool_dict.o | $(FCNCLIB)/libAtlasStyle.so 
 	@echo Linking $@ with $(PLOTOBJS)
-	@$(MAKESHARED) $(CPPFLAGS) $(EXTRALIBS) -lAtlasStyle -o $@ $(PLOTOBJS)
+	@$(MAKESHARED) $(CPPFLAGS) $(EXTRALIBS) -lAtlasStyle -o $@ $^
 
 bin/.%.o: src/fcnc/%.cc include/fcnc/%.h
 	@echo Compiling $@
@@ -59,4 +59,4 @@ bin/.%.o: src/atlasstyle/%.C include/atlasstyle/%.h
 .PHONY:clean
 
 clean:
-	@rm bin/.* lib/*
+	@rm -r bin lib
