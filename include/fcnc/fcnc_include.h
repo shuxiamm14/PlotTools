@@ -27,7 +27,7 @@
 #include "TMVA/Factory.h"
 #include "TMVA/Reader.h"
 #include "TKey.h"
-const Double_t GeV=1.0;
+const Double_t GeV=1000;
 const Double_t PI=3.1415926536;
 using namespace std;
 

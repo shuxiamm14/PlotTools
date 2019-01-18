@@ -3,11 +3,13 @@
 histSaver::histSaver() {
   nvar = 0;
   for(Int_t i=0; i<50; i++) {
-    nbin[i] = 1; xlo[i] = 0; xhi[i] = 1; var1[i] = 0; var2[i] = 0; MeVtoGeV[i] = 0;
+    nbin[i] = 1; xlo[i] = 0; xhi[i] = 1; var1[i] = 0; var2[i] = 0; MeVtoGeV[i] = 0; var3[i] = 0;
   }
 }
 
-histSaver::~histSaver() {}
+histSaver::~histSaver() {
+    deletepointer(inputfile);
+}
 
 void histSaver::add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Int_t* var_, const char* unit_) {
   if(nvar>=0 && nvar<20) {
@@ -52,6 +54,7 @@ Float_t histSaver::getVal(Int_t i) {
   Float_t tmp = -999999;
   if(i>=0  && i<nvar) {
     if(var1[i]) tmp = MeVtoGeV[i] ? *var1[i]/1000 : *var1[i];
+    else if(var3[i]) tmp = MeVtoGeV[i] ? *var3[i]/1000 : *var3[i];
     else if(var2[i]) tmp = *var2[i];
     if(debug == 1) printf("fill value: %f\n", tmp);
   }
@@ -70,7 +73,8 @@ void histSaver::show(){
   {
     printf("histSaver::show()\t%s = ", name[i].Data());
     if(var2[i]) printf("%d\n", *var2[i]);
-    else printf("%f\n", MeVtoGeV[i] ? *var1[i]/1000 : *var1[i]);
+    else if(var1[i]) printf("%f\n", MeVtoGeV[i] ? *var1[i]/1000 : *var1[i]);
+    else if(var3[i]) printf("%f\n", MeVtoGeV[i] ? *var3[i]/1000 : *var3[i]);
   }
 }
 
@@ -79,21 +83,31 @@ float histSaver::binwidth(int i){
 }
 
 void histSaver::init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
+
   current_sample = samplename;
+
   if(plot_lib.find(samplename) != plot_lib.end()) return;
+
+  if(debug) printf("reading hist file: %s\n", (histfilename + ".root").Data());
+  if(fromntuple){
+    inputfile = new TFile(histfilename + ".root", "recreate");
+  }else{
+    inputfile = new TFile(histfilename + ".root", "read");
+  }
+  
   if(debug) printf("add new sample: %s\n", samplename.Data());
+
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
-      inputfile[region][i]->cd();
-      if(inputfile[region][i]->Get(histname + "_" + region + "_" + name[i]))
-        plot_lib[samplename][region].push_back((TH1D*)inputfile[region][i]->Get(histname + "_" + region + "_" + name[i]));
+      if(inputfile->Get(histname + "_" + region + "_" + name[i]))
+        plot_lib[samplename][region].push_back((TH1D*)inputfile->Get(histname + "_" + region + "_" + name[i]));
       else{
         plot_lib[samplename][region].push_back(new TH1D(histname + "_" + region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
         if (samplename != "data")
         {
           plot_lib[samplename][region][i]->Sumw2();
           plot_lib[samplename][region][i]->SetFillColor(color);
-          plot_lib[samplename][region][i]->SetLineWidth(0.9);
+          plot_lib[samplename][region][i]->SetLineWidth(1);
           plot_lib[samplename][region][i]->SetLineColor(kBlack);
           plot_lib[samplename][region][i]->SetMarkerSize(0);
         }
@@ -107,9 +121,11 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
 }
 
 void histSaver::read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm){
+
+  if(!inputfile) inputfile = new TFile(histfilename + ".root", "read");
+
   if (samplename == "data") dataref = 1;
   bool newsample = plot_lib.find(samplename) == plot_lib.end();
-
   for(auto const& region: regions) {
     if (debug == 1)
     {
@@ -124,25 +140,26 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
           printf("histogram name: %s\n", (histname+"_"+region+"_"+name[i]).Data());
           printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
         }
-        plot_lib[samplename][region][i]->Add((TH1D*)inputfile[region][i]->Get(histname+"_"+region+"_"+name[i]),norm);
+        plot_lib[samplename][region][i]->Add((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i]),norm);
       }
-    }else
-    for (int i = 0; i < nvar; ++i){
-      if(debug == 1) {
-        printf("histogram name: %s\n", (histname+"_"+region+"_"+name[i]).Data());
-        printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
-      }
-      plot_lib[samplename][region].push_back((TH1D*)(inputfile[region][i]->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i]+ "_" + samplename)));
-      plot_lib[samplename][region][i]->Scale(norm);
-      plot_lib[samplename][region][i]->SetTitle(sampleTitle);
-      plot_lib[samplename][region][i]->SetFillColor(color);
-      plot_lib[samplename][region][i]->SetLineWidth(0.9);
-      plot_lib[samplename][region][i]->SetLineColor(kBlack);
-      plot_lib[samplename][region][i]->SetMarkerSize(0);
-      if(histcount == 1){
-        nbin[i] = plot_lib[samplename][region][i]->GetNbinsX();
-        xlo[i] = plot_lib[samplename][region][i]->GetXaxis()->GetXmin();
-        xhi[i] = plot_lib[samplename][region][i]->GetXaxis()->GetXmax();
+    }else{
+      for (int i = 0; i < nvar; ++i){
+        if(debug == 1) {
+          printf("histogram name: %s\n", (histname+"_"+region+"_"+name[i]).Data());
+          printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
+        }
+        plot_lib[samplename][region].push_back((TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i]+ "_" + samplename)));
+        plot_lib[samplename][region][i]->Scale(norm);
+        plot_lib[samplename][region][i]->SetTitle(sampleTitle);
+        plot_lib[samplename][region][i]->SetFillColor(color);
+        plot_lib[samplename][region][i]->SetLineWidth(1);
+        plot_lib[samplename][region][i]->SetLineColor(kBlack);
+        plot_lib[samplename][region][i]->SetMarkerSize(0);
+        if(histcount == 1){
+          nbin[i] = plot_lib[samplename][region][i]->GetNbinsX();
+          xlo[i] = plot_lib[samplename][region][i]->GetXaxis()->GetXmin();
+          xhi[i] = plot_lib[samplename][region][i]->GetXaxis()->GetXmax();
+        }
       }
     }
   }
@@ -151,15 +168,6 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
 void histSaver::add_region(TString region){
   regions.push_back(region);
   nregion += 1;
-  for (int i = 0; i < nvar; ++i) printf("reading hist file: %s\n", (region + "/root/" + name[i] + ".root").Data());
-  if(fromntuple){
-    gSystem->mkdir(region);
-    gSystem->mkdir(region + "/eps");
-    gSystem->mkdir(region + "/root");
-    for (int i = 0; i < nvar; ++i) inputfile[region].push_back(new TFile(region + "/root/" + name[i] + ".root", "update"));
-  }else{
-    for (int i = 0; i < nvar; ++i) inputfile[region].push_back(new TFile(region + "/root/" + name[i] + ".root", "read"));
-  }
 }
 
 void histSaver::fill_hist(TString sample, TString region){
@@ -187,11 +195,26 @@ void histSaver::write(){
     for (int i = 0; i < nvar; ++i){
       map<TString, map<TString, vector<TH1D*>>>::iterator iter;
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
-        inputfile[region][i]->cd();
+        inputfile->cd();
         iter->second[region][i]->Write("",TObject::kWriteDelete);
       }
     }
   }
+}
+
+void histSaver::clearhist(){
+  for(auto const& region: regions) {
+    for (int i = 0; i < nvar; ++i){
+      map<TString, map<TString, vector<TH1D*>>>::iterator iter;
+      for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
+        iter->second[region][i]->Reset();
+      }
+    }
+  }
+}
+
+void histSaver::overlay(TString _overlaysample){
+  overlaysample = _overlaysample;
 }
 
 void histSaver::plot_stack(TString outputdir){
@@ -225,20 +248,19 @@ void histSaver::plot_stack(TString outputdir){
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
         if(irebin != 1) iter->second[region][i]->Rebin(irebin);
         if(iter->first == "data") continue;
-        if(iter->first == overlay){
+        if(iter->first == overlaysample){
           histoverlay = iter->second[region][i];
           continue;
         }
         if(debug) {
           printf("plot_lib[%s][%s][%d]\n", iter->first.Data(), region.Data(), i);
-          printf("adding %s in region %s\n",iter->first.Data(), plot_lib["b"]["reg1e1mu1tau2b_1prong_btagwp70"][0]->GetName());
         }
         hsk->Add(iter->second[region][i]);
         hmc.Add(iter->second[region][i]);
         lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
       }
-      if(overlay != ""){
-        if(debug) { printf("overlay: %f\n", overlay.Data()); }
+      if(overlaysample != ""){
+        if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
         lg1->AddEntry(histoverlay,histoverlay->GetTitle(),"LP");
         histoverlay->SetLineStyle(9);
         histoverlay->SetLineWidth(3);
@@ -256,8 +278,8 @@ void histSaver::plot_stack(TString outputdir){
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
         plot_lib["data"][region][i]->GetYaxis()->SetTitleOffset(1.2);
         plot_lib["data"][region][i]->SetMarkerStyle(20);
-        plot_lib["data"][region][i]->SetMarkerSize(0.8);
-        plot_lib["data"][region][i]->Draw("E1 same");
+        plot_lib["data"][region][i]->SetMarkerSize(0.4);
+        plot_lib["data"][region][i]->Draw("E0 same");
         SetMax(hsk,plot_lib["data"][region][i],1.6);
         plot_lib["data"][region][i]->SetMinimum(0);
       }else{
@@ -265,6 +287,21 @@ void histSaver::plot_stack(TString outputdir){
         hsk->SetMinimum(0);
       }
 
+      if(blinding){
+        for(Int_t j=1; j<nbin[i]+1; j++) {
+          if(histoverlay->GetBinContent(j)/sqrt(plot_lib["data"][region][i]->GetBinContent(j)) > blinding) {
+            plot_lib["data"][region][i]->SetBinContent(j,0);
+            plot_lib["data"][region][i]->SetBinError(j,0);
+          }
+        }
+      }
+
+      for(Int_t j=1; j<nbin[i]+1; j++) {
+        hmcR.SetBinContent(j,1);
+        hmcR.SetBinError(j,hmc.GetBinContent(j)>0 ? hmc.GetBinError(j)/hmc.GetBinContent(j) : 0);
+        hdataR.SetBinContent(j, hmc.GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc.GetBinContent(j) : 1);
+        hdataR.SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc.GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc.GetBinContent(j) : 0);
+      }
 
       hmc.SetFillColor(1);
       hmc.SetLineColor(0);
@@ -274,7 +311,7 @@ void histSaver::plot_stack(TString outputdir){
       hmc.SetFillStyle(3004);
       ATLASLabel(0.2,0.900,"work in progress",kBlack, region);
       hsk->Draw("hist same");
-      if(overlay != "") histoverlay->Draw("hist same");
+      if(overlaysample != "") histoverlay->Draw("hist same");
       hmc.Draw("E2,same");
       if(dataref) plot_lib["data"][region][i]->Draw("E+ same");
       lg1->Draw("same");
@@ -286,12 +323,6 @@ void histSaver::plot_stack(TString outputdir){
       padlow->SetBottomMargin(0.35);
       padlow->cd();
 
-      for(Int_t j=1; j<nbin[i]+1; j++) {
-        hmcR.SetBinContent(j,1);
-        hmcR.SetBinError(j,hmc.GetBinContent(j)>0 ? hmc.GetBinError(j)/hmc.GetBinContent(j) : 0);
-        hdataR.SetBinContent(j, hmc.GetBinContent(j)>0 ? plot_lib["data"][region][i]->GetBinContent(j)/hmc.GetBinContent(j) : 1);
-        hdataR.SetBinError(j, ( plot_lib["data"][region][i]->GetBinContent(j)>0 && hmc.GetBinContent(j)>0 )? plot_lib["data"][region][i]->GetBinError(j)/hmc.GetBinContent(j) : 0);
-      }
 
       hdataR.SetMarkerStyle(20);
       hdataR.SetMarkerSize(0.8);
@@ -322,7 +353,6 @@ void histSaver::plot_stack(TString outputdir){
       padlow->Draw();
       ++iregion;
       cv.SaveAs(outputdir + "/" + name[i] + ".pdf");
-      inputfile[region][i]->Close();
       deletepointer(hsk);
       deletepointer(lg1);
       deletepointer(padlow );

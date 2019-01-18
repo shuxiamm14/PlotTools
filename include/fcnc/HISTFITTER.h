@@ -7,7 +7,7 @@ public:
 	~HISTFITTER();
 
 	map<TString, TH1D*> fithists;
-	int nparam;
+	int nparam = 0;
 	map<TString, int> iregion;
 	map<TString, TH1D*>::iterator iter;
 	TH1D *htot = NULL;

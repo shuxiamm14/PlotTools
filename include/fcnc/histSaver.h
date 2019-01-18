@@ -10,13 +10,16 @@ public:
   Float_t xlo[50];
   Float_t xhi[50];
   TString titleX[50];
+  TString histfilename = "hists";
   int irebin = 1;
   int nregion = 0;
+  float blinding = 0;
   Float_t* var1[50];
+  Double_t* var3[50];
   Float_t* fweight = NULL;
   Double_t* dweight = NULL;
   int weight_type = 0;
-  TString overlay = "";
+  TString overlaysample = "";
   Int_t* var2[50];
   Bool_t MeVtoGeV[50];
   Int_t nvar;
@@ -27,7 +30,7 @@ public:
   TString unit[50];
   TString current_sample;
   map<TString, map<TString, vector<TH1D*>>> plot_lib;
-  map<TString, vector<TFile*>> inputfile;
+  TFile* inputfile = 0;
   vector<TString> regions;
   bool fromntuple = 1;
   int histcount = 0;
@@ -36,7 +39,7 @@ public:
   int debug = 1;
   histSaver();
   virtual ~histSaver();
-
+  void clearhist();
   template<typename I, typename T,typename D>
   void add(I nbin_, T xlo_, T xhi_, const char* titleX_, const char* name_, D* var_, bool MeVtoGeV_ = false, const char* unit_ = ""){
     if(nvar>=0 && nvar<50) {
@@ -46,10 +49,15 @@ public:
       titleX[nvar] = titleX_; 
       name[nvar] = name_;
       TString Dname = typeid(*var_).name();
-      if (Dname.Contains("nt")) 
+      if(debug) printf("fill type: %s\n", Dname.Data());
+      if (Dname.Contains("i")) 
         var2[nvar] = (int*)var_;
-      else
+      else if(Dname.Contains("f")) 
         var1[nvar] = (float*)var_;
+      else if(Dname.Contains("d"))
+        var3[nvar] = (double*)var_;
+      else
+        printf("unknown var type: %s\n", name);
       unit[nvar] = unit_;
       MeVtoGeV[nvar] = MeVtoGeV_;
       ifRebin[nvar] = 0;
@@ -57,6 +65,8 @@ public:
     }
   }
   void show();
+  void rebin(int _irebin){ irebin = _irebin; }
+  void overlay(TString _overlaysample);
   //void add(int nbin_, double xlo_, double xhi_, const char* titleX_, const char* name_, float* var_, bool MeVtoGeV_, char* unit_ = "");
   Float_t getVal(Int_t i);
   void add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Int_t* var_, const char* unit_ = "");

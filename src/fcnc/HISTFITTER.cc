@@ -90,6 +90,7 @@ void HISTFITTER::asimovfit(int fitnumber, TString outfile){
 	deletepointer(fitresultfile);
 }
 double HISTFITTER::setparam(TString _paramname, double _startpoint, double _stepsize, double _lowrange, double _highrange){
+	printf("set parameter: %s\n", _paramname.Data());
 	paramname[nparam] = _paramname;
 	startpoint[nparam] = _startpoint;
 	stepsize[nparam] = _stepsize;
@@ -148,11 +149,6 @@ double HISTFITTER::fit(double *bstvl, double *error, bool asimov){
     for (int i = 0; i < 4; ++i) gM->GetParameter(i,val[i],err[i]);
 	for (int i = 0; i < nparam; ++i)
 		gM->mnparm(i, paramname[i], val[i], stepsize[i], lowrange[i], highrange[i],ierflg);
-
-	gM->mnparm(0, "sf_b", val[0], 0.1, 0.,2.,ierflg);
-	gM->mnparm(1, "sf_c", val[1], 0.1, 0.,2.,ierflg);
-	gM->mnparm(2, "sf_g", val[2], 0.1, 0.,10.,ierflg);
-	gM->mnparm(3, "sf_j", val[3], 0.1, 0.,2.,ierflg);
    
     arglist[0] = 1000; //max calls
     arglist[1] = 0.1;	//tolerance

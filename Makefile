@@ -45,7 +45,7 @@ $(FCNCLIB)/libAtlasStyle.so: $(ATLASOBJS) bin/.atlasstyle_dict.o
 	@$(MAKESHARED) $(CPPFLAGS) $(ROOTGLIBS) -o $@ $^
 
 $(FCNCLIB)/libPlotTool.so: $(PLOTOBJS) bin/.plotTool_dict.o | $(FCNCLIB)/libAtlasStyle.so 
-	@echo Linking $@ with $(PLOTOBJS)
+	@echo Linking $@ with $^
 	@$(MAKESHARED) $(CPPFLAGS) $(EXTRALIBS) -lAtlasStyle -o $@ $^
 
 bin/.%.o: src/fcnc/%.cc include/fcnc/%.h
