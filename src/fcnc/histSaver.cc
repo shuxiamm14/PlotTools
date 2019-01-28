@@ -53,9 +53,10 @@ void histSaver::add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, co
 Float_t histSaver::getVal(Int_t i) {
   Float_t tmp = -999999;
   if(i>=0  && i<nvar) {
-    if(var1[i]) tmp = MeVtoGeV[i] ? *var1[i]/1000 : *var1[i];
-    else if(var3[i]) tmp = MeVtoGeV[i] ? *var3[i]/1000 : *var3[i];
-    else if(var2[i]) tmp = *var2[i];
+    if(var1[i])      { if(debug) printf("fill var1\n"); tmp = MeVtoGeV[i] ? *var1[i]/1000 : *var1[i]; }
+    else if(var3[i]) { if(debug) printf("fill var3\n"); tmp = MeVtoGeV[i] ? *var3[i]/1000 : *var3[i]; }
+    else if(var2[i]) { if(debug) printf("fill var2\n"); tmp = *var2[i]; }
+    else printf("error: fill variable failed. no var available\n");
     if(debug == 1) printf("fill value: %f\n", tmp);
   }
   if (!ifRebin[i]){
@@ -69,6 +70,9 @@ Float_t histSaver::getVal(Int_t i) {
 }
 
 void histSaver::show(){
+  for(auto const& region: regions) {
+    printf("histSaver::show()\t region: %s\n", region.Data());
+  }
   for (int i = 0; i < nvar; ++i)
   {
     printf("histSaver::show()\t%s = ", name[i].Data());
@@ -174,6 +178,16 @@ void histSaver::fill_hist(TString sample, TString region){
   if (weight_type == 0)
   {
     printf("ERROR: weight not set\n");
+  }
+  if(plot_lib.find(sample) == plot_lib.end()){
+    printf("ERROR: sample %s not found while filling\n",sample.Data());
+    show();
+    exit(1);
+  }
+  if(plot_lib[sample].find(region) == plot_lib[sample].end()){
+    printf("ERROR: region %s for sample %s not found while filling\n",region.Data(),sample.Data());
+    show();
+    exit(1);
   }
   for (int i = 0; i < nvar; ++i){
     if(debug == 1) printf("plot_lib[%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), i, getVal(i), weight_type == 1? *fweight : *dweight);
