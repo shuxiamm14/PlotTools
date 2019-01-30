@@ -70,8 +70,12 @@ Float_t histSaver::getVal(Int_t i) {
 }
 
 void histSaver::show(){
+  map<TString, map<TString, vector<TH1D*>>>::iterator iter;
+  for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
+    printf("histSaver::show()\tsample: %s\n", iter->first.Data());
+  }
   for(auto const& region: regions) {
-    printf("histSaver::show()\t region: %s\n", region.Data());
+    printf("histSaver::show()\tregion: %s\n", region.Data());
   }
   for (int i = 0; i < nvar; ++i)
   {
