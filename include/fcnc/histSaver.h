@@ -11,7 +11,7 @@ public:
   Float_t xhi[50];
   TString titleX[50];
   TString histfilename = "hists";
-  int irebin = 1;
+  int rebin[50];
   int nregion = 0;
   float blinding = 0;
   Float_t* var1[50];
@@ -30,6 +30,7 @@ public:
   TString unit[50];
   TString current_sample;
   map<TString, map<TString, vector<TH1D*>>> plot_lib;
+  map<TString, map<TString, vector<TH1D*>>>::iterator iter;
   TFile* inputfile = 0;
   vector<TString> regions;
   bool fromntuple = 1;
@@ -65,15 +66,15 @@ public:
     }
   }
   void show();
-  void rebin(int _irebin){ irebin = _irebin; }
   void overlay(TString _overlaysample);
+  void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);
   //void add(int nbin_, double xlo_, double xhi_, const char* titleX_, const char* name_, float* var_, bool MeVtoGeV_, char* unit_ = "");
   Float_t getVal(Int_t i);
   void add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Int_t* var_, const char* unit_ = "");
   void add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
   void add(const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
   float binwidth(int i);
-  void add(const char* titleX_, const char* name_, const char* unit_ = "");
+  void add(const char* titleX_, const char* name_, const char* unit_ = "", int _rebin = 1);
   void read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm);
   void plot_stack(TString outputdir);
   void fill_hist(TString sample, TString region);

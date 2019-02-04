@@ -26,12 +26,13 @@ void histSaver::add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, co
 }
 
 
-void histSaver::add(const char* titleX_, const char* name_, const char* unit_) {
+void histSaver::add(const char* titleX_, const char* name_, const char* unit_, int _rebin) {
   fromntuple = 0;
   if(nvar>=0 && nvar<50) {
     titleX[nvar] = titleX_;
     name[nvar] = name_;
     unit[nvar] = unit_;
+    rebin[nvar] = _rebin;
     nvar++;
   }
 }
@@ -70,7 +71,6 @@ Float_t histSaver::getVal(Int_t i) {
 }
 
 void histSaver::show(){
-  map<TString, map<TString, vector<TH1D*>>>::iterator iter;
   for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
     printf("histSaver::show()\tsample: %s\n", iter->first.Data());
   }
@@ -88,6 +88,27 @@ void histSaver::show(){
 
 float histSaver::binwidth(int i){
   return (xhi[i]-xlo[i])/nbin[i];
+}
+
+void histSaver::merge_regions(TString inputregion1, TString inputregion2, TString outputregion){
+  for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
+    if(iter->second.find(inputregion1) == iter->second.end()){
+      printf("histSaver::merge_regions\t inputregion1: %s not found",inputregion1.Data());
+      show();
+      exit(1);
+    }
+    if(iter->second.find(inputregion2) == iter->second.end()){
+      printf("histSaver::merge_regions\t inputregion2: %s not found",inputregion2.Data());
+      show();
+      exit(1);
+    }
+    for (int i = 0; i < nvar; ++i)
+    {
+      TH1D* newhist = (TH1D*)iter->second[inputregion1][i]->Clone(iter->first+"_"+outputregion+"_"+name[i]);
+      newhist->Add(iter->second[inputregion2][i]);
+      iter->second[outputregion].push_back(newhist);
+    }
+  }
 }
 
 void histSaver::init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
@@ -215,7 +236,6 @@ void histSaver::fill_hist(){
 void histSaver::write(){
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
-      map<TString, map<TString, vector<TH1D*>>>::iterator iter;
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
         inputfile->cd();
         iter->second[region][i]->Write("",TObject::kWriteDelete);
@@ -251,9 +271,9 @@ void histSaver::plot_stack(TString outputdir){
 
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
-      TH1D hmc("hmc","hmc",nbin[i]/irebin,xlo[i],xhi[i]);
-      TH1D hmcR("hmcR","hmcR",nbin[i]/irebin,xlo[i],xhi[i]);
-      TH1D hdataR("hdataR","hdataR",nbin[i]/irebin,xlo[i],xhi[i]);
+      TH1D hmc("hmc","hmc",nbin[i]/rebin[i],xlo[i],xhi[i]);
+      TH1D hmcR("hmcR","hmcR",nbin[i]/rebin[i],xlo[i],xhi[i]);
+      TH1D hdataR("hdataR","hdataR",nbin[i]/rebin[i],xlo[i],xhi[i]);
 
       cv.cd();
       padhi->Draw();
@@ -265,10 +285,9 @@ void histSaver::plot_stack(TString outputdir){
       TLegend* lg1 = 0;
       lg1 = new TLegend(0.43,0.75,0.90,0.90,"");
       lg1->SetNColumns(2);
-      map<TString, map<TString, vector<TH1D*>>>::iterator iter;
       TH1D *histoverlay;
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
-        if(irebin != 1) iter->second[region][i]->Rebin(irebin);
+        if(rebin[i] != 1) iter->second[region][i]->Rebin(rebin[i]);
         if(iter->first == "data") continue;
         if(iter->first == overlaysample){
           histoverlay = iter->second[region][i];
@@ -296,7 +315,7 @@ void histSaver::plot_stack(TString outputdir){
         plot_lib["data"][region][i]->GetXaxis()->SetLabelColor(kWhite);
         //plot_lib["data"][region][i]->SetMaximum(1.8*plot_lib["data"][region][i]->GetMaximum());
         char str[30];
-        sprintf(str,"Events / %4.2f %s",binwidth(i)*irebin, unit[i].Data());
+        sprintf(str,"Events / %4.2f %s",binwidth(i)*rebin[i], unit[i].Data());
         plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
         plot_lib["data"][region][i]->GetYaxis()->SetTitleOffset(1.2);
         plot_lib["data"][region][i]->SetMarkerStyle(20);
