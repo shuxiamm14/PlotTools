@@ -16,7 +16,6 @@ void SetMax(TH1* h1, TH1* h2, Double_t scale=1.0) {
 
 void SetMax(THStack* h1, TH1* h2, Double_t scale=1.0) {
   h1->SetMaximum(scale*TMath::Max(h1->GetMaximum(),h2->GetMaximum()));
-  h2->SetMaximum(scale*TMath::Max(h1->GetMaximum(),h2->GetMaximum()));
 }
 
 void Copy(TH1F* h1, TH1F* h2) {

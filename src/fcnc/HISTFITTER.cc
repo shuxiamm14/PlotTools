@@ -1,5 +1,5 @@
 #include "HISTFITTER.h"
-
+#include "TVirtualFitter.h"
 TMinuit* gM = 0;
 
 HISTFITTER::HISTFITTER(){}
@@ -22,7 +22,49 @@ void HISTFITTER::addfithist(TString component,  TH1D* inputhist, int begin, int 
 	error = sqrt(error);
 	fithists[component]->SetBinError(iregion[component],error);
 }
+void HISTFITTER::calculateEigen(){
 
+	double covariance_matrix[4][4];
+	gM->mnemat(&covariance_matrix[0][0],nparam);
+	if(debug){
+		for (int i = 0; i < nparam; ++i){
+			printf("covariance matrix: ");
+			for (int j = 0; j < nparam; ++j)
+				printf(" %f", covariance_matrix[j][i]);
+			printf("\n");
+		}
+	}
+	float **covariance_matrix2 = new float*[nparam];
+	for (int i = 0; i < nparam; ++i)
+	{
+		covariance_matrix2[i] = new float[nparam];
+		for (int j = 0; j < nparam; ++j)
+		{
+			covariance_matrix2[i][j] = covariance_matrix[i][j];
+		}
+	}
+	eigenval = new float[nparam];
+	eigenvector = new float*[nparam];
+	for (int i = 0; i < nparam; ++i)
+	{
+		eigenvector[i] = new float[nparam];
+	}
+	EigenVectorCalc(covariance_matrix2,nparam,eigenval,eigenvector);
+	if(debug){
+		printf("eigen values: ");
+		for (int i = 0; i < nparam; ++i)
+		{
+			printf(" %f", eigenval[i]);
+		}
+		printf("\n");
+		for (int i = 0; i < nparam; ++i){
+			printf("eigenvectors: ");
+			for (int j = 0; j < nparam; ++j)
+				printf(" %f", eigenvector[j][i]);
+			printf("\n");
+		}
+	}
+}
 void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag) {
 	f = 0;
 	map<TString, TH1D*>* histforfit = (map<TString, TH1D*>*) gM->GetObjectFit();
@@ -167,7 +209,7 @@ double HISTFITTER::fit(double *bstvl, double *error, bool asimov){
 
 }
 
-void HISTFITTER::debug(){
+void HISTFITTER::debugfile(){
 	TFile debugfile("debugfile","recreate");
 	for (iter = fithists.begin(); iter != fithists.end(); iter ++){
 		iter->second->Write();

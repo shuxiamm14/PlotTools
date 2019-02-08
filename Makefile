@@ -1,17 +1,18 @@
 # --------------------------------------------------------------
 # GNUmakefile
 # --------------------------------------------------------------
-INCLUDE := -Iinclude -Iinclude/TtHFitter -Iinclude/fcnc -Iinclude/atlasstyle
+INCLUDE := -Iinclude -Iinclude/TtHFitter -Iinclude/fcnc -Iinclude/atlasstyle -Iinclude/external -I.
 ROOTCFLAGS      := $(shell root-config --cflags) $(INCLUDE)
 ROOTLIBS := $(shell root-config --libs)
 ROOTGLIBS:= $(shell root-config --glibs)
 
+EIGEN_DIR :=/Users/Liby/work/tools/eigen-eigen-323c052e1731
 EXTRALIBS +=$(ROOTLIBS) -L./lib
 EXTRALIBS +=$(ROOTGLIBS) -lMinuit -lTMVA
 
 FCNCLIB := lib
 
-CPPFLAGS += $(ROOTCFLAGS) -g -I.
+CPPFLAGS += $(ROOTCFLAGS) -g -I$(EIGEN_DIR)
 CPPFLAGS  += -Wno-long-long -w 
 
 CXX := clang++
@@ -21,14 +22,26 @@ ATLASSRC		= $(wildcard src/atlasstyle/Atlas*.C)
 ATLASINC		= $(wildcard include/atlasstyle/Atlas*.h)
 
 PLOTOBJS		= $(patsubst src/fcnc/%.cc,bin/.%.o,$(wildcard src/fcnc/*.cc))
-
-all: makebin $(FCNCLIB)/libAtlasStyle.so $(FCNCLIB)/libPlotTool.so 
+EXTERNAL		= $(patsubst src/external/%.cc,bin/.%.o,$(wildcard src/external/*.cc))
+all: makebin $(FCNCLIB)/libExternal.so $(FCNCLIB)/libAtlasStyle.so $(FCNCLIB)/libPlotTool.so bin/test_run
 
 makebin:
 	@echo using compiler: $(CXX)
 	@mkdir -p ./bin
 	@mkdir -p ./lib
 	@echo current directory: $(PWD)
+
+bin/%_run: bin/.%.o
+	@echo Linking $@ with $^
+	@$(CXX) $(CPPFLAGS) $(EXTRALIBS) -lExternal -lAtlasStyle -lPlotTool -o $@ $^
+
+bin/.%.o: util/%.cc
+	@echo Compiling $@ with $^
+	@$(CXX) $(CPPFLAGS) -c $< -o $@
+
+$(FCNCLIB)/libExternal.so: $(EXTERNAL)
+	@echo Linking $@ with $^
+	@$(MAKESHARED) $(CPPFLAGS) $(ROOTGLIBS) -o $@ $^
 
 bin/.atlasstyle_dict.cc: $(ATLASINC) include/atlasstyle/LinkDef.h
 	@rootcint -f $@ -c $^
@@ -46,9 +59,13 @@ $(FCNCLIB)/libAtlasStyle.so: $(ATLASOBJS) bin/.atlasstyle_dict.o
 
 $(FCNCLIB)/libPlotTool.so: $(PLOTOBJS) bin/.plotTool_dict.o | $(FCNCLIB)/libAtlasStyle.so 
 	@echo Linking $@ with $^
-	@$(MAKESHARED) $(CPPFLAGS) $(EXTRALIBS) -lAtlasStyle -o $@ $^
+	@$(MAKESHARED) $(CPPFLAGS) $(EXTRALIBS) -lAtlasStyle -lExternal -o $@ $^
 
 bin/.%.o: src/fcnc/%.cc include/fcnc/%.h
+	@echo Compiling $@
+	@$(CXX) $(CPPFLAGS) -c $< -o $@
+
+bin/.%.o: src/external/%.cc include/external/%.h
 	@echo Compiling $@
 	@$(CXX) $(CPPFLAGS) -c $< -o $@
 

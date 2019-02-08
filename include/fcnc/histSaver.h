@@ -33,6 +33,7 @@ public:
   map<TString, map<TString, vector<TH1D*>>>::iterator iter;
   TFile* inputfile = 0;
   vector<TString> regions;
+  vector<TString> mutedregions;
   bool fromntuple = 1;
   int histcount = 0;
   TString this_region = "nominal";
@@ -66,7 +67,11 @@ public:
     }
   }
   void show();
+  void muteregion(TString region);
+  void unmuteregion(TString region);
+
   void overlay(TString _overlaysample);
+  TH1D* grabhist(TString sample, TString region, int ivar);
   void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);
   //void add(int nbin_, double xlo_, double xhi_, const char* titleX_, const char* name_, float* var_, bool MeVtoGeV_, char* unit_ = "");
   Float_t getVal(Int_t i);

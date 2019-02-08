@@ -42,13 +42,14 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
 tau_plots->plot_stack();
 
 //=====================================Read from a histogram=====================================
-// structure: regionname/root/varname.root : samplefillname_regionname_varname
+
+tau_plots->histfile = "yourhistfile.root" //histogram in the file with name: samplefillname_regionname_varname
 
 tau_plots = new histSaver();
 
-tau_plots->add("p_{T,#tau}","taupt","GeV");
-tau_plots->add("p_{T,b}","bpt","GeV");
-tau_plots->add("p_{T,light-jet}","ljetpt","GeV");
+tau_plots->add("p_{T,#tau}","taupt","GeV",nrebin1);
+tau_plots->add("p_{T,b}","bpt","GeV",nrebin2);
+tau_plots->add("p_{T,light-jet}","ljetpt","GeV",nrebin3);
 
 tau_plots->add_region("the regions you have 1");
 tau_plots->add_region("the regions you have 2");

@@ -82,8 +82,9 @@ TStyle* AtlasStyle()
   atlasStyle->SetLineStyleString(2,"[12 12]"); // postscript dashes
 
   // get rid of X error bars 
-  //atlasStyle->SetErrorX(0.001);
+  atlasStyle->SetErrorX(0.5);
   // get rid of error bar caps
+  
   atlasStyle->SetEndErrorSize(0.);
 
   // do not display any of the standard histogram decorations
