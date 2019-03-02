@@ -34,6 +34,9 @@ public:
   TFile* inputfile = 0;
   vector<TString> regions;
   vector<TString> mutedregions;
+  TString lumi = "#it{#sqrt{s}} = 13TeV, 80 fb^{-1}";
+  TString analysis = "FCNC tqH H#rightarrow tautau";
+  TString workflow = "work in progress";
   bool fromntuple = 1;
   int histcount = 0;
   TString this_region = "nominal";
@@ -69,6 +72,7 @@ public:
   void show();
   void muteregion(TString region);
   void unmuteregion(TString region);
+  void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
 
   void overlay(TString _overlaysample);
   TH1D* grabhist(TString sample, TString region, int ivar);
@@ -89,7 +93,7 @@ public:
   void init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
   void set_weight(Float_t* _weight){ fweight = _weight; weight_type = 1;}
   void set_weight(Double_t* _weight){ dweight = _weight; weight_type = 2;}
-  void write();
+  void write(TFile *outputfile);
 };
 
 

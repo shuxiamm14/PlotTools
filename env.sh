@@ -1,20 +1,20 @@
 #!/bin/bash
-if [ -z ${CUR_DIR+x} ] ; then
+if [ -z ${PLOT_LIB_DIR+x} ] ; then
 	if [ "$0" = "-bash" ]; then
-		export CUR_DIR=$(dirname "$(pwd)/"$(dirname "$BASH_SOURCE")"/$(basename "$BASH_SOURCE")")
+		export PLOT_LIB_DIR=$(dirname "$(pwd)/"$(dirname "$BASH_SOURCE")"/$(basename "$BASH_SOURCE")")
 	else
         if [ $? -eq 0 ]; then
             CUR_FILE=$0
     	else
             CUR_FILE=$(pwd)/$0
     	fi
-		export CUR_DIR=$(dirname "$CUR_FILE")
+		export PLOT_LIB_DIR=$(dirname "$CUR_FILE")
 	fi
-	export PATH+=:$CUR_DIR/bin:$CUR_DIR/scripts
+	export PATH+=:$PLOT_LIB_DIR/bin:$PLOT_LIB_DIR/scripts
 	if [ $(uname) = "Darwin" ]; then
-		export DYLD_LIBRARY_PATH+=:$CUR_DIR/lib
+		export DYLD_LIBRARY_PATH+=:$PLOT_LIB_DIR/lib
 	else
-		export LD_LIBRARY_PATH+=:$CUR_DIR/bin
+		export LD_LIBRARY_PATH+=:$PLOT_LIB_DIR/bin
 	fi
-	alias fcncmake='cd $CUR_DIR; make; cd -'
+	alias fcncmake='cd $PLOT_LIB_DIR; make; cd -'
 fi

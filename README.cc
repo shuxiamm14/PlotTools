@@ -2,7 +2,7 @@ install:
 
 make
 add ./include/fcnc ./include/atlasstyle ./include/external into your Makefile include flag
-add ./lib into your Makefile link lib flag
+add ./lib into your Makefile link lib flag and DYLD_LIBRARY_PATH
 
 
 
@@ -46,7 +46,7 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
 	if(sampleisGluon && region1cut) tau_plots->fill_hist("ttbar_g","the regions you have 2");
 		//...
 }
-tau_plots->write() // write the histograms into rootfile for further use
+tau_plots->write(TFile* outputfile) // write the histograms into rootfile for further use
 tau_plots->plot_stack();
 
 //=====================================Read from a histogram=====================================
@@ -108,3 +108,6 @@ printf("%s, ptbin: %d, b: %f+/-%f, c: %f+/-%f, g: %f+/-%f, j: %f+/-%f;  Chi2:%f\
 fitter->calculateEigen();
 fitter->clear();
 
+//Usage3: EigenVector calculator: Calculate the eigen vector and eigen value for a given matrix.
+#include "EigenVectorCalc.h"
+void EigenVectorCalc(float **matrix, int matrixsize, float *eigenval, float **eigenvectors)

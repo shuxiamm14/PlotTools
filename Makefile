@@ -6,7 +6,7 @@ ROOTCFLAGS      := $(shell root-config --cflags) $(INCLUDE)
 ROOTLIBS := $(shell root-config --libs)
 ROOTGLIBS:= $(shell root-config --glibs)
 
-EIGEN_DIR :=/Users/Liby/work/tools/eigen-eigen-323c052e1731
+EIGEN_DIR :=/Users/Liby/work/tools/eigen
 EXTRALIBS +=$(ROOTLIBS) -L./lib
 EXTRALIBS +=$(ROOTGLIBS) -lMinuit -lTMVA
 

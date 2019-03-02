@@ -107,6 +107,7 @@ float histSaver::binwidth(int i){
 
 void histSaver::merge_regions(TString inputregion1, TString inputregion2, TString outputregion){
   if(debug) printf("histSaver::merge_regions\t %s and %s into %s\n",inputregion1.Data(),inputregion2.Data(),outputregion.Data());
+  bool exist = 0;
   for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
     if(iter->second.find(inputregion1) == iter->second.end()){
       printf("histSaver::merge_regions\t inputregion1: %s not found",inputregion1.Data());
@@ -121,17 +122,19 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
     bool outputexist = 0;
     if(iter->second.find(outputregion) != iter->second.end()){
       printf("histSaver::merge_regions\t outputregion %s exist, overwrite it\n",outputregion.Data());
+      exist = 1;
       for (int i = 0; i < nvar; ++i) deletepointer(iter->second[outputregion][i]);
       iter->second[outputregion].clear();
     }
     for (int i = 0; i < nvar; ++i)
     {
-      TH1D* newhist = (TH1D*)iter->second[inputregion1][i]->Clone(iter->first+"_"+outputregion+"_"+name[i]);
-      newhist->Add(iter->second[inputregion2][i]);
-      iter->second[outputregion].push_back(newhist);
+      iter->second[outputregion].push_back((TH1D*)iter->second[inputregion1][i]->Clone(iter->first+"_"+outputregion+"_"+name[i]));
+      if(debug)
+        printf("add %s to %s as %s\n", iter->second[inputregion2][i]->GetName(),iter->second[inputregion1][i]->GetName(),(iter->first+"_"+outputregion+"_"+name[i]).Data());
+      iter->second[outputregion][i]->Add(iter->second[inputregion2][i]);
     }
   }
-  regions.push_back(outputregion);
+  if(!exist) regions.push_back(outputregion);
 }
 
 void histSaver::init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
@@ -139,30 +142,19 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
   current_sample = samplename;
 
   if(plot_lib.find(samplename) != plot_lib.end()) return;
-
-  if(debug) printf("reading hist file: %s\n", (histfilename + ".root").Data());
-  if(fromntuple){
-    inputfile = new TFile(histfilename + ".root", "recreate");
-  }else{
-    inputfile = new TFile(histfilename + ".root", "read");
-  }
   
   if(debug) printf("add new sample: %s\n", samplename.Data());
 
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
-      if(inputfile->Get(histname + "_" + region + "_" + name[i]))
-        plot_lib[samplename][region].push_back((TH1D*)inputfile->Get(histname + "_" + region + "_" + name[i]));
-      else{
-        plot_lib[samplename][region].push_back(new TH1D(histname + "_" + region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
-        if (samplename != "data")
-        {
-          plot_lib[samplename][region][i]->Sumw2();
-          plot_lib[samplename][region][i]->SetFillColor(color);
-          plot_lib[samplename][region][i]->SetLineWidth(1);
-          plot_lib[samplename][region][i]->SetLineColor(kBlack);
-          plot_lib[samplename][region][i]->SetMarkerSize(0);
-        }
+      plot_lib[samplename][region].push_back(new TH1D(histname + "_" + region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
+      if (samplename != "data")
+      {
+        plot_lib[samplename][region][i]->Sumw2();
+        plot_lib[samplename][region][i]->SetFillColor(color);
+        plot_lib[samplename][region][i]->SetLineWidth(1);
+        plot_lib[samplename][region][i]->SetLineColor(kBlack);
+        plot_lib[samplename][region][i]->SetMarkerSize(0);
       }
     }
     if(debug == 1) printf("plot_lib[%s][%s]\n", samplename.Data(), region.Data());
@@ -204,7 +196,8 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
           show();
           exit(1);
         }
-        plot_lib[samplename][region].push_back((TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i]+ "_" + samplename)));
+        plot_lib[samplename][region].push_back((TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i])));
+        plot_lib[samplename][region][i]->SetName(samplename+"_"+region+"_"+name[i]);
         plot_lib[samplename][region][i]->Scale(norm);
         plot_lib[samplename][region][i]->SetTitle(sampleTitle);
         plot_lib[samplename][region][i]->SetFillColorAlpha(color,1);
@@ -256,11 +249,11 @@ void histSaver::fill_hist(){
   fill_hist("nominal");
 }
 
-void histSaver::write(){
+void histSaver::write(TFile *outputfile){
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
-        inputfile->cd();
+        outputfile->cd();
         iter->second[region][i]->Write("",TObject::kWriteDelete);
       }
     }
@@ -290,6 +283,12 @@ void histSaver::unmuteregion(TString region){
   std::vector<TString>::iterator it = find(mutedregions.begin(), mutedregions.end(), region);
   if(it != mutedregions.end()) mutedregions.erase(it);
   else printf("histSaver::unmuteregion WARNING: region %s is not in the mute list\n",region.Data());
+}
+
+void histSaver::SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow){
+  lumi = _lumi;
+  analysis = _analysis;
+  workflow = _workflow;
 }
 void histSaver::plot_stack(TString outputdir){
   SetAtlasStyle();
@@ -345,19 +344,12 @@ void histSaver::plot_stack(TString outputdir){
         histoverlay->SetLineWidth(3);
         histoverlay->SetLineColor(kRed);
         histoverlay->SetFillColor(0);
+        SetMax(hsk,histoverlay,1);
       }
-      //hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
       if (dataref) {
         lg1->AddEntry(plot_lib["data"][region][i],"data","LP");
-        //plot_lib["data"][region][i]->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
-        //plot_lib["data"][region][i]->GetXaxis()->SetLabelColor(kWhite);
-        //char str[30];
-        //sprintf(str,"Events / %4.2f %s",binwidth(i)*rebin[i], unit[i].Data());
-        //plot_lib["data"][region][i]->GetYaxis()->SetTitle(str);
-        //plot_lib["data"][region][i]->GetYaxis()->SetTitleOffset(1.2);
         plot_lib["data"][region][i]->SetMarkerStyle(20);
         plot_lib["data"][region][i]->SetMarkerSize(0.4);
-        //plot_lib["data"][region][i]->Draw("E0 same");
         SetMax(hsk,plot_lib["data"][region][i],1.6);
         plot_lib["data"][region][i]->SetMinimum(0);
       }else{
@@ -402,7 +394,7 @@ void histSaver::plot_stack(TString outputdir){
       if(dataref) plot_lib["data"][region][i]->Draw("E same");
       lg1->Draw("same");
 
-      ATLASLabel(0.2,0.900,"work in progress",kBlack, region);
+      ATLASLabel(0.2,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), region.Data());
 
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);

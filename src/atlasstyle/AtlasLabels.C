@@ -7,7 +7,7 @@
 #include "TMarker.h"
 
 
-void ATLASLabel(Double_t x,Double_t y,const char* text,Color_t color, const char* channelname) 
+void ATLASLabel(Double_t x,Double_t y,const char* text,Color_t color, const char* lumi, const char* analysis, const char* channelname) 
 {
   TLatex l; //l.SetTextAlign(12); l.SetTextSize(tsize); 
   l.SetNDC();
@@ -28,8 +28,8 @@ void ATLASLabel(Double_t x,Double_t y,const char* text,Color_t color, const char
     p.SetTextColor(color);
     p.DrawLatex(x+delx,y,text);
     if(channelname){
-      p.DrawLatex(x,y-dely,"#it{#sqrt{s}} = 13TeV, 80 fb^{-1}");
-      p.DrawLatex(x,y-2*dely,"FCNC tqH H#rightarrow tautau");
+      p.DrawLatex(x,y-dely,lumi);
+      p.DrawLatex(x,y-2*dely,analysis);
       p.DrawLatex(x,y-3*dely,channelname);
     }
   }

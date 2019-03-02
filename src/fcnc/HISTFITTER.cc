@@ -1,5 +1,4 @@
 #include "HISTFITTER.h"
-#include "TVirtualFitter.h"
 TMinuit* gM = 0;
 
 HISTFITTER::HISTFITTER(){}
@@ -206,7 +205,6 @@ double HISTFITTER::fit(double *bstvl, double *error, bool asimov){
 	Int_t	istat;
 	gM->mnstat(minf,fedm,errdef,npari,nparx,istat);
 	return minf;
-
 }
 
 void HISTFITTER::debugfile(){
