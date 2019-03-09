@@ -1,6 +1,12 @@
-#include "histSaver.h"
-#include "HISTFITTER.h"
 #include "EigenVectorCalc.h"
+#include <sstream>
+#include <vector>
+#include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+using namespace std;
+
 int main(int argc, char const *argv[])
 {
 	float a[3][3] = {{1,2,3},{4,6,7},{3,2,4}};

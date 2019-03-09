@@ -1,10 +1,10 @@
 install: 
 
 make
+. env.sh
+
 add ./include/fcnc ./include/atlasstyle ./include/external into your Makefile include flag
 add ./lib into your Makefile link lib flag and DYLD_LIBRARY_PATH
-
-
 
 //Usage1: histSaver
 
@@ -108,6 +108,6 @@ printf("%s, ptbin: %d, b: %f+/-%f, c: %f+/-%f, g: %f+/-%f, j: %f+/-%f;  Chi2:%f\
 fitter->calculateEigen();
 fitter->clear();
 
-//Usage3: EigenVector calculator: Calculate the eigen vector and eigen value for a given matrix.
+//Usage3: EigenVector calculator: Calculate the eigen vector and eigen value for a given matrix. Run ./bin/test_run (util/test_run) to see how to use
 #include "EigenVectorCalc.h"
 void EigenVectorCalc(float **matrix, int matrixsize, float *eigenval, float **eigenvectors)
