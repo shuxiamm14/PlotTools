@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(plotTools)
 
-find_package(ROOT REQUIRED)
+find_package(ROOT REQUIRED COMPONENTS Minuit)
 include(${ROOT_USE_FILE})
 
 # Set the output folder where your program will be created
@@ -24,8 +24,10 @@ include_directories(${INCLUDES} ${PROJECT_SOURCE_DIR}/include ${EIGEN3DIR})
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/atlasstyle ATLASSRC)
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/external EXTERNALSRC)
 AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/fcnc FCNCSRC)
-add_library(AtlasStyle ${ATLASSRC})
-add_library(External ${EXTERNALSRC})
-add_library(PlotTool ${FCNCSRC})
+add_library(AtlasStyle SHARED ${ATLASSRC})
+add_library(External SHARED ${EXTERNALSRC})
+add_library(PlotTool SHARED ${FCNCSRC})
+target_link_libraries(PlotTool External AtlasStyle ${ROOT_LIBRARIES})
+target_link_libraries(AtlasStyle ${ROOT_LIBRARIES})
 add_executable(test_run ${PROJECT_SOURCE_DIR}/util/test.cc)
 target_link_libraries(test_run External)
