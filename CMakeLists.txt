@@ -1,0 +1,31 @@
+# Specify the minimum version for CMake
+
+cmake_minimum_required(VERSION 2.8)
+
+# Project's name
+
+project(plotTools)
+
+find_package(ROOT REQUIRED)
+include(${ROOT_USE_FILE})
+
+# Set the output folder where your program will be created
+set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+
+#EIGEN3 package needed if dont have one, go git checkout and put the package path here
+set(EIGEN3DIR /Users/Liby/work/tools/eigen)
+
+# The following folder will be included
+FILE(GLOB INCLUDES ${PROJECT_SOURCE_DIR}/include/ ${PROJECT_SOURCE_DIR}/include/*)
+include_directories(${INCLUDES} ${PROJECT_SOURCE_DIR}/include ${EIGEN3DIR})
+
+AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/atlasstyle ATLASSRC)
+AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/external EXTERNALSRC)
+AUX_SOURCE_DIRECTORY(${PROJECT_SOURCE_DIR}/src/fcnc FCNCSRC)
+add_library(AtlasStyle ${ATLASSRC})
+add_library(External ${EXTERNALSRC})
+add_library(PlotTool ${FCNCSRC})
+add_executable(test_run ${PROJECT_SOURCE_DIR}/util/test.cc)
+target_link_libraries(test_run External)

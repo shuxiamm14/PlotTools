@@ -62,7 +62,7 @@ public:
       else if(Dname.Contains("d"))
         var3[nvar] = (double*)var_;
       else
-        printf("unknown var type: %s\n", name);
+        printf("unknown var type: %s\n", name[nvar].Data());
       unit[nvar] = unit_;
       MeVtoGeV[nvar] = MeVtoGeV_;
       ifRebin[nvar] = 0;

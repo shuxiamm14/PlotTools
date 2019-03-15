@@ -1,10 +1,13 @@
 install: 
 
-make
 . env.sh
+mkdir build
+cd build
+cmake ..
+make
 
 add ./include/fcnc ./include/atlasstyle ./include/external into your Makefile include flag
-add ./lib into your Makefile link lib flag and DYLD_LIBRARY_PATH
+add ./lib into your Makefile link lib flag
 
 //Usage1: histSaver
 
@@ -43,7 +46,7 @@ if("you wanna see the list of input variable") tau_plots->show();
 for (Long64_t jentry=0; jentry<nentries;jentry++) {
 	fChain->GetEntry(jentry);
 
-	if(sampleisGluon && region1cut) tau_plots->fill_hist("ttbar_g","the regions you have 2");
+	if(sampleisGluon && region1cut) tau_plots->fill_hist("ttbar_g","the regions you have 1");
 		//...
 }
 tau_plots->write(TFile* outputfile) // write the histograms into rootfile for further use

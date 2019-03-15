@@ -130,7 +130,7 @@ void HISTFITTER::asimovfit(int fitnumber, TString outfile){
 	fitresultfile->Close();
 	deletepointer(fitresultfile);
 }
-double HISTFITTER::setparam(TString _paramname, double _startpoint, double _stepsize, double _lowrange, double _highrange){
+void HISTFITTER::setparam(TString _paramname, double _startpoint, double _stepsize, double _lowrange, double _highrange){
 	printf("set parameter: %s\n", _paramname.Data());
 	paramname[nparam] = _paramname;
 	startpoint[nparam] = _startpoint;

@@ -13,5 +13,5 @@ if [ -z ${PLOT_LIB_DIR+x} ] ; then
 	else
 		export LD_LIBRARY_PATH+=:$PLOT_LIB_DIR/bin
 	fi
-	alias fcncmake='cd $PLOT_LIB_DIR; make; cd -'
+	alias fcncmake='cd $PLOT_LIB_DIR/build; make; cd -'
 fi
