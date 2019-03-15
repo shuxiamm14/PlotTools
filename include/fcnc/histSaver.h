@@ -6,20 +6,30 @@
 #include "AtlasLabels.h"
 class histSaver{
 public:
+  TString histfilename;
+  int nregion;
+  float blinding;
+  Float_t* fweight;
+  Double_t* dweight;
+  int weight_type;
+  TString overlaysample;
+  TFile* inputfile;
+  TString lumi;
+  TString analysis;
+  TString workflow;
+  bool fromntuple;
+  int histcount;
+  TString this_region;
+  TString read_path;
+  int debug;
+
   Int_t nbin[50];
   Float_t xlo[50];
   Float_t xhi[50];
   TString titleX[50];
-  TString histfilename = "hists";
   int rebin[50];
-  int nregion = 0;
-  float blinding = 0;
   Float_t* var1[50];
   Double_t* var3[50];
-  Float_t* fweight = NULL;
-  Double_t* dweight = NULL;
-  int weight_type = 0;
-  TString overlaysample = "";
   Int_t* var2[50];
   Bool_t MeVtoGeV[50];
   Int_t nvar;
@@ -31,17 +41,8 @@ public:
   TString current_sample;
   map<TString, map<TString, vector<TH1D*>>> plot_lib;
   map<TString, map<TString, vector<TH1D*>>>::iterator iter;
-  TFile* inputfile = 0;
   vector<TString> regions;
   vector<TString> mutedregions;
-  TString lumi = "#it{#sqrt{s}} = 13TeV, 80 fb^{-1}";
-  TString analysis = "FCNC tqH H#rightarrow tautau";
-  TString workflow = "work in progress";
-  bool fromntuple = 1;
-  int histcount = 0;
-  TString this_region = "nominal";
-  TString read_path = "./" ;
-  int debug = 1;
   histSaver();
   virtual ~histSaver();
   void clearhist();

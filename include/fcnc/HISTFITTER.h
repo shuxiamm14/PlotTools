@@ -7,15 +7,16 @@ public:
 	HISTFITTER();
 	~HISTFITTER();
 
+	int nparam;
+	TH1D *htot;
+	bool debug;
+	int nregion;
+
 	map<TString, TH1D*> fithists;
-	int nparam = 0;
 	map<TString, int> iregion;
 	map<TString, TH1D*>::iterator iter;
 	float *eigenval;
 	float **eigenvector;
-	TH1D *htot = NULL;
-	bool debug = 1;
-	int nregion = 100;
 	TString paramname[100];
 	double startpoint[100];
 	double stepsize[100];

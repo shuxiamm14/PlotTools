@@ -2,6 +2,22 @@
 #include "TGaxis.h"
 histSaver::histSaver() {
   nvar = 0;
+  histfilename = "hists";
+  nregion = 0;
+  blinding = 0;
+  fweight = NULL;
+  dweight = NULL;
+  weight_type = 0;
+  overlaysample = "";
+  inputfile = 0;
+  lumi = "#it{#sqrt{s}} = 13TeV, 80 fb^{-1}";
+  analysis = "FCNC tqH H#rightarrow tautau";
+  workflow = "work in progress";
+  fromntuple = 1;
+  histcount = 0;
+  this_region = "nominal";
+  read_path = "./" ;
+  debug = 1;
   for(Int_t i=0; i<50; i++) {
     nbin[i] = 1; xlo[i] = 0; xhi[i] = 1; var1[i] = 0; var2[i] = 0; MeVtoGeV[i] = 0; var3[i] = 0;
   }
