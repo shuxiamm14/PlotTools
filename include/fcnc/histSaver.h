@@ -39,8 +39,8 @@ public:
   bool dataref;
   TString unit[50];
   TString current_sample;
-  map<TString, map<TString, vector<TH1D*>>> plot_lib;
-  map<TString, map<TString, vector<TH1D*>>>::iterator iter;
+  map<TString, map<TString, vector<TH1D*> > > plot_lib;
+  map<TString, map<TString, vector<TH1D*> > >::iterator iter;
   vector<TString> regions;
   vector<TString> mutedregions;
   histSaver();
