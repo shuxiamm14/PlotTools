@@ -1,12 +1,12 @@
 # Specify the minimum version for CMake
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.7)
 
 # Project's name
 
 project(plotTools)
 
-find_package(ROOT REQUIRED COMPONENTS Minuit)
+find_package(ROOT 6 REQUIRED COMPONENTS Minuit)
 include(${ROOT_USE_FILE})
 
 # Set the output folder where your program will be created

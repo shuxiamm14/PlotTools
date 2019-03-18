@@ -266,22 +266,34 @@ void histSaver::fill_hist(){
 }
 
 void histSaver::write(TFile *outputfile){
+  if(debug) printf("histSaver::write()\n");
+  if(!outputfile) {
+    printf("histSaver::write Error: outputfile pointer is empty\n");
+    exit(1);
+  }
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
-      for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
+      for(auto iter : plot_lib){
         outputfile->cd();
-        iter->second[region][i]->Write("",TObject::kWriteDelete);
+        if(iter.second[region][i]) iter.second[region][i]->Write("",TObject::kWriteDelete);
+        else{
+          printf("histSaver::write() Error: histogram not found: sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
+        }
       }
     }
   }
 }
 
 void histSaver::clearhist(){
+  if(debug) printf("histSaver::clearhist()\n");
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
-      map<TString, map<TString, vector<TH1D*>>>::iterator iter;
-      for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
-        iter->second[region][i]->Reset();
+      for(auto iter : plot_lib){
+        if(iter.second[region][i]){
+          iter.second[region][i]->Reset();
+        }else{
+          printf("histSaver::Reset() Error: histogram not found: sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
+        }
       }
     }
   }
