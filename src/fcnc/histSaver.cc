@@ -274,6 +274,7 @@ void histSaver::write(TFile *outputfile){
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       for(auto iter : plot_lib){
+        if(debug) printf("histSaver::write() : writing file %s\n", outputfile->GetName());
         outputfile->cd();
         if(iter.second[region][i]) iter.second[region][i]->Write("",TObject::kWriteDelete);
         else{
