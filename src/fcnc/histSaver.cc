@@ -281,8 +281,8 @@ void histSaver::write(TFile *outputfile){
           printf("histSaver::write() Error: region not found in plot_lib,  sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
           exit(1);
         }
-        if(debug) printf("histSaver::write() Write Hist: %s\n", iter.second[region][i]->GetName());
-        if(iter.second[region][i]) iter.second[region][i]->Write(iter.second[region][i]->GetName(),TObject::kWriteDelete);
+        if(debug) printf("histSaver::write() Write Hist: plot_lib[%s][%s][%d]\n", iter.first.Data(),region.Data(),i);
+        if(iter.second[region][i]) iter.second[region][i]->Write("",TObject::kWriteDelete);
         else{
           printf("histSaver::write() Error: histogram not found: sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
         }
