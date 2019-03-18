@@ -266,7 +266,6 @@ void histSaver::fill_hist(){
 }
 
 void histSaver::write(TFile *outputfile){
-  if(debug) printf("histSaver::write()\n");
   if(!outputfile) {
     printf("histSaver::write Error: outputfile pointer is empty\n");
     exit(1);
@@ -274,8 +273,12 @@ void histSaver::write(TFile *outputfile){
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       for(auto iter : plot_lib){
-        if(debug) printf("histSaver::write() : writing file %s\n", outputfile->GetName());
         outputfile->cd();
+        if(iter.second.find(region) == iter.second.end()){
+          show();
+          printf("histSaver::write() Error: region not found in plot_lib,  sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
+          exit(1);
+        }
         if(iter.second[region][i]) iter.second[region][i]->Write("",TObject::kWriteDelete);
         else{
           printf("histSaver::write() Error: histogram not found: sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
