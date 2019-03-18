@@ -282,7 +282,7 @@ void histSaver::write(TFile *outputfile){
           exit(1);
         }
         if(debug) printf("histSaver::write() Write Hist: %s\n", name[i].Data());
-        if(iter.second[region][i]) iter.second[region][i]->Write("",TObject::kWriteDelete);
+        if(iter.second[region][i]) iter.second[region][i]->Write(iter.second[region][i]->GetName(),TObject::kWriteDelete);
         else{
           printf("histSaver::write() Error: histogram not found: sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
         }
