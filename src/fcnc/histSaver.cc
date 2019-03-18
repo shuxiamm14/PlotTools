@@ -270,15 +270,18 @@ void histSaver::write(TFile *outputfile){
     printf("histSaver::write Error: outputfile pointer is empty\n");
     exit(1);
   }
+  if(debug) printf("histSaver::write() Write to file: %s\n", outputfile->GetName());
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       for(auto iter : plot_lib){
         outputfile->cd();
+        if(debug) printf("histSaver::write() Check if region exist: %s\n", region.Data());
         if(iter.second.find(region) == iter.second.end()){
           show();
           printf("histSaver::write() Error: region not found in plot_lib,  sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
           exit(1);
         }
+        if(debug) printf("histSaver::write() Write Hist: %s\n", name[i].Data());
         if(iter.second[region][i]) iter.second[region][i]->Write("",TObject::kWriteDelete);
         else{
           printf("histSaver::write() Error: histogram not found: sample: %s, variable: %s, region: %s\n",iter.first.Data(), name[i].Data(),region.Data());
