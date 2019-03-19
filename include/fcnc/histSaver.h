@@ -6,7 +6,7 @@
 #include "AtlasLabels.h"
 class histSaver{
 public:
-  TString histfilename;
+  TString inputfilename;
   int nregion;
   float blinding;
   Float_t* fweight;
@@ -22,7 +22,7 @@ public:
   TString this_region;
   TString read_path;
   int debug;
-
+  TFile *outputfile;
   Int_t nbin[50];
   Float_t xlo[50];
   Float_t xhi[50];
@@ -40,10 +40,9 @@ public:
   TString unit[50];
   TString current_sample;
   map<TString, map<TString, vector<TH1D*> > > plot_lib;
-  map<TString, map<TString, vector<TH1D*> > >::iterator iter;
   vector<TString> regions;
   vector<TString> mutedregions;
-  histSaver();
+  histSaver(TString outputfilename);
   virtual ~histSaver();
   void clearhist();
   template<typename I, typename T,typename D>
@@ -94,7 +93,7 @@ public:
   void init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
   void set_weight(Float_t* _weight){ fweight = _weight; weight_type = 1;}
   void set_weight(Double_t* _weight){ dweight = _weight; weight_type = 2;}
-  void write(TFile *outputfile);
+  void write();
 };
 
 

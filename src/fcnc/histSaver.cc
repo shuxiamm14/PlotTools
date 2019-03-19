@@ -1,8 +1,9 @@
 #include "histSaver.h"
 #include "TGaxis.h"
-histSaver::histSaver() {
+histSaver::histSaver(TString outputfilename) {
+  outputfile = new TFile (outputfilename + ".root", "recreate");
   nvar = 0;
-  histfilename = "hists";
+  inputfilename = "hists";
   nregion = 0;
   blinding = 0;
   fweight = NULL;
@@ -103,8 +104,8 @@ Float_t histSaver::getVal(Int_t i) {
 }
 
 void histSaver::show(){
-  for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
-    printf("histSaver::show()\tsample: %s\n", iter->first.Data());
+  for(auto iter:plot_lib ){
+    printf("histSaver::show()\tsample: %s\n", iter.first.Data());
   }
   for(auto const& region: regions) {
     printf("histSaver::show()\tregion: %s\n", region.Data());
@@ -124,30 +125,30 @@ float histSaver::binwidth(int i){
 void histSaver::merge_regions(TString inputregion1, TString inputregion2, TString outputregion){
   if(debug) printf("histSaver::merge_regions\t %s and %s into %s\n",inputregion1.Data(),inputregion2.Data(),outputregion.Data());
   bool exist = 0;
-  for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
-    if(iter->second.find(inputregion1) == iter->second.end()){
+  for(auto iter:plot_lib ){
+    if(iter.second.find(inputregion1) == iter.second.end()){
       printf("histSaver::merge_regions\t inputregion1: %s not found",inputregion1.Data());
       show();
       exit(1);
     }
-    if(iter->second.find(inputregion2) == iter->second.end()){
+    if(iter.second.find(inputregion2) == iter.second.end()){
       printf("histSaver::merge_regions\t inputregion2: %s not found",inputregion2.Data());
       show();
       exit(1);
     }
     bool outputexist = 0;
-    if(iter->second.find(outputregion) != iter->second.end()){
+    if(iter.second.find(outputregion) != iter.second.end()){
       printf("histSaver::merge_regions\t outputregion %s exist, overwrite it\n",outputregion.Data());
       exist = 1;
-      for (int i = 0; i < nvar; ++i) deletepointer(iter->second[outputregion][i]);
-      iter->second[outputregion].clear();
+      for (int i = 0; i < nvar; ++i) deletepointer(iter.second[outputregion][i]);
+      iter.second[outputregion].clear();
     }
     for (int i = 0; i < nvar; ++i)
     {
-      iter->second[outputregion].push_back((TH1D*)iter->second[inputregion1][i]->Clone(iter->first+"_"+outputregion+"_"+name[i]));
+      iter.second[outputregion].push_back((TH1D*)iter.second[inputregion1][i]->Clone(iter.first+"_"+outputregion+"_"+name[i]));
       if(debug)
-        printf("add %s to %s as %s\n", iter->second[inputregion2][i]->GetName(),iter->second[inputregion1][i]->GetName(),(iter->first+"_"+outputregion+"_"+name[i]).Data());
-      iter->second[outputregion][i]->Add(iter->second[inputregion2][i]);
+        printf("add %s to %s as %s\n", iter.second[inputregion2][i]->GetName(),iter.second[inputregion1][i]->GetName(),(iter.first+"_"+outputregion+"_"+name[i]).Data());
+      iter.second[outputregion][i]->Add(iter.second[inputregion2][i]);
     }
   }
   if(!exist) regions.push_back(outputregion);
@@ -155,6 +156,7 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
 
 void histSaver::init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
 
+  outputfile->cd();
   current_sample = samplename;
 
   if(plot_lib.find(samplename) != plot_lib.end()) return;
@@ -182,7 +184,7 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
 
 void histSaver::read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm){
 
-  if(!inputfile) inputfile = new TFile(histfilename + ".root", "read");
+  if(!inputfile) inputfile = new TFile(inputfilename + ".root", "read");
 
   if (samplename == "data") dataref = 1;
   bool newsample = plot_lib.find(samplename) == plot_lib.end();
@@ -265,7 +267,7 @@ void histSaver::fill_hist(){
   fill_hist("nominal");
 }
 
-void histSaver::write(TFile *outputfile){
+void histSaver::write(){
   if(!outputfile) {
     printf("histSaver::write Error: outputfile pointer is empty\n");
     exit(1);
@@ -358,19 +360,19 @@ void histSaver::plot_stack(TString outputdir){
       lg1 = new TLegend(0.43,0.75,0.90,0.90,"");
       lg1->SetNColumns(2);
       TH1D *histoverlay;
-      for(iter=plot_lib.begin(); iter!=plot_lib.end(); iter++){
-        if(rebin[i] != 1) iter->second[region][i]->Rebin(rebin[i]);
-        if(iter->first == "data") continue;
-        if(iter->first == overlaysample){
-          histoverlay = iter->second[region][i];
+      for(auto iter:plot_lib ){
+        if(rebin[i] != 1) iter.second[region][i]->Rebin(rebin[i]);
+        if(iter.first == "data") continue;
+        if(iter.first == overlaysample){
+          histoverlay = iter.second[region][i];
           continue;
         }
         if(debug) {
-          printf("plot_lib[%s][%s][%d]\n", iter->first.Data(), region.Data(), i);
+          printf("plot_lib[%s][%s][%d]\n", iter.first.Data(), region.Data(), i);
         }
-        hsk->Add(iter->second[region][i]);
-        hmc.Add(iter->second[region][i]);
-        lg1->AddEntry(iter->second[region][i],iter->second[region][i]->GetTitle(),"F");
+        hsk->Add(iter.second[region][i]);
+        hmc.Add(iter.second[region][i]);
+        lg1->AddEntry(iter.second[region][i],iter.second[region][i]->GetTitle(),"F");
       }
       if(overlaysample != ""){
         if(debug) { printf("overlay: %s\n", overlaysample.Data()); }

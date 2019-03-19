@@ -1,6 +1,7 @@
 # Specify the minimum version for CMake
 
 cmake_minimum_required(VERSION 3.7)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Project's name
 
