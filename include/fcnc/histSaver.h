@@ -39,6 +39,7 @@ public:
   bool dataref;
   TString unit[50];
   TString current_sample;
+  vector<TString> stackorder;
   map<TString, map<TString, vector<TH1D*> > > plot_lib;
   vector<TString> regions;
   vector<TString> mutedregions;
@@ -70,6 +71,7 @@ public:
     }
   }
   void show();
+  void templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap);
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
