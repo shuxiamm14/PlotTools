@@ -1,7 +1,8 @@
 #include "histSaver.h"
 #include "TGaxis.h"
-histSaver::histSaver(TString outputfilename) {
-  outputfile = new TFile (outputfilename + ".root", "recreate");
+histSaver::histSaver(TString _outputfilename) {
+  outputfile = new TFile (_outputfilename + ".root", "recreate");
+  outputfilename = _outputfilename;
   nvar = 0;
   inputfilename = "hists";
   nregion = 0;
@@ -19,6 +20,7 @@ histSaver::histSaver(TString outputfilename) {
   this_region = "nominal";
   read_path = "./" ;
   debug = 1;
+  sensitivevariable = "";
   for(Int_t i=0; i<50; i++) {
     nbin[i] = 1; xlo[i] = 0; xhi[i] = 1; var1[i] = 0; var2[i] = 0; MeVtoGeV[i] = 0; var3[i] = 0;
   }
@@ -63,7 +65,7 @@ void histSaver::add(const char* titleX_, const char* name_, const char* unit_, i
   fromntuple = 0;
   if(nvar>=0 && nvar<50) {
     titleX[nvar] = titleX_;
-    name[nvar] = name_;
+    name[nvar] = name_ ;
     unit[nvar] = unit_;
     rebin[nvar] = _rebin;
     nvar++;
@@ -410,8 +412,8 @@ void histSaver::plot_stack(TString outputdir){
         lg1->AddEntry(tmphist,tmphist->GetTitle(),"F");
       }
       if(!hsk->GetMaximum()){
-        printf("ERROR: stack has no entry\n");
-        exit(1);
+        printf("ERROR: stack has no entry, continue\n");
+        continue;
       }
       double histmax = hsk->GetMaximum();
       if(debug) printf("set overlay\n");
@@ -456,6 +458,17 @@ void histSaver::plot_stack(TString outputdir){
       hsk->GetXaxis()->SetLabelSize(hsk->GetXaxis()->GetLabelSize()*0.7);
       hsk->GetYaxis()->SetTitleSize(hsk->GetYaxis()->GetTitleSize()*0.7);
       if(debug) printf("set blinding\n");
+
+      if(sensitivevariable == name[i]){
+        double _significance = 0;
+        for(Int_t j=1; j<nbin[i]+1; j++) {
+          if(histoverlay->GetBinContent(j) && hmc.GetBinContent(j)) {
+            _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
+          }
+        }
+        printf("significance: %f\n", sqrt(_significance));
+      }
+
       if(blinding && dataref && overlaysample != ""){
         for(Int_t j=1; j<nbin[i]+1; j++) {
           if(histoverlay->GetBinContent(j)/sqrt(datahist->GetBinContent(j)) > blinding) {

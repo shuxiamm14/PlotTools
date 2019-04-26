@@ -40,6 +40,8 @@ public:
   TString unit[50];
   TString current_sample;
   vector<TString> stackorder;
+  TString outputfilename;
+  TString sensitivevariable;
   map<TString, map<TString, vector<TH1D*> > > plot_lib;
   vector<TString> regions;
   vector<TString> mutedregions;
