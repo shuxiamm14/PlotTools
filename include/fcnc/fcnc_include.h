@@ -27,6 +27,7 @@
 #include "TMVA/Factory.h"
 #include "TMVA/Reader.h"
 #include "TKey.h"
+
 const Double_t GeV=1000;
 const Double_t PI=3.1415926536;
 using namespace std;
@@ -36,6 +37,8 @@ Double_t significance(Double_t b0, Double_t s0, Double_t db=0);
 void SetMax(TH1* h1, TH1* h2, Double_t scale);
 
 void SetMax(THStack* h1, TH1* h2, Double_t scale);
+
+void PrintTime(int timeInSec);
 
 Float_t AtoF(const char* str);
 

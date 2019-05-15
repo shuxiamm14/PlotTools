@@ -1,5 +1,10 @@
 #include "fcnc_include.h"
 
+#include <chrono>
+#include <unistd.h>
+#include <cstdlib>
+#include <thread>
+#include <sys/ioctl.h>
 Double_t significance(Double_t b0, Double_t s0, Double_t db) {
   if(db==0) return sqrt(2*(s0+b0)*log(1+s0/b0)-2*s0);
   else {
@@ -40,4 +45,22 @@ Float_t AtoF(const char* str) {
     num *= atof(tmp.c_str());
   }
   return num;
+}
+
+
+void PrintTime(int timeInSec){
+
+  struct winsize w; 
+  ioctl(0, TIOCGWINSZ, &w);
+  auto start = chrono::steady_clock::now();
+  for(;;){
+    sleep(timeInSec);
+    auto end = chrono::steady_clock::now();
+    stringstream ss;
+    ss<<"Elapsed time in seconds : "<< chrono::duration_cast<chrono::seconds>(end - start).count()
+    << " sec";
+
+    printf("%*s\n" , w.ws_col, ss.str().c_str());
+    
+  }
 }

@@ -466,7 +466,7 @@ void histSaver::plot_stack(TString outputdir){
             _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
           }
         }
-        printf("significance: %f\n", sqrt(_significance));
+        printf("signal yield: %f, background yield: %f, significance: %f\n", histoverlay->Integral(), hmc.Integral(), sqrt(_significance));
       }
 
       if(blinding && dataref && overlaysample != ""){
