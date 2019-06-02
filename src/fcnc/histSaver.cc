@@ -27,7 +27,7 @@ histSaver::histSaver(TString _outputfilename) {
 }
 
 histSaver::~histSaver() {
-    deletepointer(inputfile);
+  deletepointer(inputfile);
 }
 
 TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
@@ -195,14 +195,17 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
   if(!inputfile) inputfile = new TFile(inputfilename + ".root", "read");
 
   if (samplename == "data") dataref = 1;
-  bool newsample = plot_lib.find(samplename) == plot_lib.end();
   for(auto const& region: regions) {
     if (debug == 1)
     {
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
     ++histcount;
-    if (!newsample)
+    if(!(TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[0]))) {
+      printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[0]).Data());
+      continue;
+    }
+    if (plot_lib[samplename][region].size())
     {
       for (int i = 0; i < nvar; ++i)
       {
@@ -271,8 +274,9 @@ void histSaver::write(){
   }
   if(debug) printf("histSaver::write() Write to file: %s\n", outputfile->GetName());
   for(auto const& region: regions) {
-    for (int i = 0; i < nvar; ++i){
-      for(auto& iter : plot_lib){
+    for(auto& iter : plot_lib){
+      if(grabhist(iter.first,region,0)->Integral() == 0) continue;
+      for (int i = 0; i < nvar; ++i){
         outputfile->cd();
         //if(grabhist(iter.first,region,i)->Integral() == 0) {
         //  printf("Warning: histogram is empty: %s, %s, %d\n", iter.first.Data(),region.Data(),i);
@@ -387,11 +391,13 @@ void histSaver::plot_stack(TString outputdir){
       padhi->Draw();
 //===============================upper pad===============================
       padhi->SetBottomMargin(0.017);
+      padhi->SetRightMargin(0.08);
+      padhi->SetLeftMargin(0.12);
       padhi->cd();
       hmc.Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
       TLegend* lg1 = 0;
-      lg1 = new TLegend(0.43,0.75,0.90,0.90,"");
+      lg1 = new TLegend(0.38,0.7,0.90,0.9,"");
       lg1->SetNColumns(2);
       TH1D *histoverlay;
       if(debug) printf("set hists\n");
@@ -453,7 +459,7 @@ void histSaver::plot_stack(TString outputdir){
       char str[30];
       sprintf(str,"Events / %4.2f %s",binwidth(i)*rebin[i], unit[i].Data());
       hsk->GetYaxis()->SetTitle(str);
-      hsk->GetYaxis()->SetTitleOffset(1.4);
+      hsk->GetYaxis()->SetTitleOffset(1.6);
       hsk->GetYaxis()->SetLabelSize(hsk->GetYaxis()->GetLabelSize()*0.7);
       hsk->GetXaxis()->SetLabelSize(hsk->GetXaxis()->GetLabelSize()*0.7);
       hsk->GetYaxis()->SetTitleSize(hsk->GetYaxis()->GetTitleSize()*0.7);
@@ -466,12 +472,18 @@ void histSaver::plot_stack(TString outputdir){
             _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
           }
         }
-        printf("signal yield: %f, background yield: %f, significance: %f\n", histoverlay->Integral(), hmc.Integral(), sqrt(_significance));
+        printf("signal yield: %4.2f, background yield: %4.2f, significance: %4.2f\n", histoverlay->Integral(), hmc.Integral(), sqrt(_significance));
       }
 
       if(blinding && dataref && overlaysample != ""){
         for(Int_t j=1; j<nbin[i]+1; j++) {
           if(histoverlay->GetBinContent(j)/sqrt(datahist->GetBinContent(j)) > blinding) {
+            datahist->SetBinContent(j,0);
+            datahist->SetBinError(j,0);
+          }
+        }
+        if(sensitivevariable == name[i]){
+          for(int j = nbin[i]*3/4/rebin[i] ; j <= nbin[i] ; j++){
             datahist->SetBinContent(j,0);
             datahist->SetBinError(j,0);
           }
@@ -497,13 +509,15 @@ void histSaver::plot_stack(TString outputdir){
       lg1->Draw("same");
 
       if(debug) printf("atlas label\n");
-      ATLASLabel(0.2,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), region.Data());
+      ATLASLabel(0.15,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), region.Data());
 
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
       padlow->SetGrid(1,1);
       padlow->SetTopMargin(0.03);
       padlow->SetBottomMargin(0.35);
+      padlow->SetRightMargin(0.08);
+      padlow->SetLeftMargin(0.12);
       padlow->cd();
 
       if(debug) printf("plot data ratio\n");
@@ -514,7 +528,7 @@ void histSaver::plot_stack(TString outputdir){
         hdataR.SetMinimum(0.5);
         hdataR.GetYaxis()->SetNdivisions(504,false);
         hdataR.GetYaxis()->SetTitle("Data/Bkg");
-        hdataR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.06);
+        hdataR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.08);
         hdataR.GetYaxis()->CenterTitle();
         hdataR.GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
         hdataR.GetXaxis()->SetTitleSize(hdataR.GetXaxis()->GetTitleSize()*0.7);
