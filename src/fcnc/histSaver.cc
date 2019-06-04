@@ -1,5 +1,6 @@
 #include "histSaver.h"
 #include "TGaxis.h"
+#include "TGraph.h"
 histSaver::histSaver(TString _outputfilename) {
   outputfile = new TFile (_outputfilename + ".root", "recreate");
   outputfilename = _outputfilename;
@@ -10,6 +11,7 @@ histSaver::histSaver(TString _outputfilename) {
   fweight = NULL;
   dweight = NULL;
   weight_type = 0;
+  doROC = 0;
   overlaysample = "";
   inputfile = 0;
   lumi = "#it{#sqrt{s}} = 13TeV, 80 fb^{-1}";
@@ -32,17 +34,19 @@ histSaver::~histSaver() {
 
 TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
   if(plot_lib.find(sample) == plot_lib.end()){
-    if(debug) show();
-    printf("histSaver:grabhist  Warning: sample %s not found\n", sample.Data());
+    if(debug) {
+      //show();
+      printf("histSaver:grabhist  Warning: sample %s not found\n", sample.Data());
+    }
     return 0;
   }
 
   if(plot_lib[sample].find(region) == plot_lib[sample].end()){
-    printf("histSaver:grabhist  Warning: region %s for sample %s not found\n", region.Data(), sample.Data());
+    if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s not found\n", region.Data(), sample.Data());
     if(debug) show();
     return 0;
   }
-  if(!plot_lib[sample][region][ivar]) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
+  if(!plot_lib[sample][region][ivar]) if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
   return plot_lib[sample][region][ivar];
 }
 
@@ -127,38 +131,43 @@ float histSaver::binwidth(int i){
 void histSaver::merge_regions(TString inputregion1, TString inputregion2, TString outputregion){
   if(debug) printf("histSaver::merge_regions\t %s and %s into %s\n",inputregion1.Data(),inputregion2.Data(),outputregion.Data());
   bool exist = 0;
+  bool input1exist = 1;
+  bool input2exist = 1;
+
   for(auto& iter:plot_lib ){
     if(iter.second.find(inputregion1) == iter.second.end()){
-      printf("histSaver::merge_regions\t inputregion1: %s not found",inputregion1.Data());
-      show();
-      exit(1);
+      if(debug) printf("histSaver::merge_regions\t inputregion1: %s not found for sample %s\n",inputregion1.Data(), iter.first.Data());
+      input1exist = 0;
     }
     if(iter.second.find(inputregion2) == iter.second.end()){
-      printf("histSaver::merge_regions\t inputregion2: %s not found",inputregion2.Data());
-      show();
-      exit(1);
+      if(debug) printf("histSaver::merge_regions\t inputregion2: %s not found for sample %s\n",inputregion2.Data(), iter.first.Data());
+      input2exist = 0;
     }
+    if(input1exist == 0 && input2exist == 0) continue;
     bool outputexist = 0;
     if(iter.second.find(outputregion) != iter.second.end()){
-      printf("histSaver::merge_regions\t outputregion %s exist, overwrite it\n",outputregion.Data());
+      if(debug) printf("histSaver::merge_regions\t outputregion %s exist, overwrite it\n",outputregion.Data());
       exist = 1;
       for (int i = 0; i < nvar; ++i) deletepointer(iter.second[outputregion][i]);
       iter.second[outputregion].clear();
     }
     for (int i = 0; i < nvar; ++i)
     {
-      iter.second[outputregion].push_back((TH1D*)iter.second[inputregion1][i]->Clone(iter.first+"_"+outputregion+"_"+name[i]));
-      if(debug)
-        printf("add %s to %s as %s\n", iter.second[inputregion2][i]->GetName(),iter.second[inputregion1][i]->GetName(),(iter.first+"_"+outputregion+"_"+name[i]).Data());
-      iter.second[outputregion][i]->Add(iter.second[inputregion2][i]);
+      if(input1exist == 1) iter.second[outputregion].push_back((TH1D*)iter.second[inputregion1][i]->Clone(iter.first+"_"+outputregion+"_"+name[i]));
+      else iter.second[outputregion].push_back((TH1D*)iter.second[inputregion2][i]->Clone(iter.first+"_"+outputregion+"_"+name[i]));
+      if(input1exist == 1 && input2exist == 1) {
+        iter.second[outputregion][i]->Add(iter.second[inputregion2][i]);
+        if(debug)
+          printf("add %s to %s as %s\n", iter.second[inputregion2][i]->GetName(),iter.second[inputregion1][i]->GetName(),(iter.first+"_"+outputregion+"_"+name[i]).Data());
+      }
     }
   }
-  for(auto& iter:plot_lib ){
-    if(iter.second.find(outputregion) == iter.second.end()){
-      printf("histSaver::merge_regions merge regions failed\n");
-      exit(1);
-    }
-  }
+  //for(auto& iter:plot_lib ){
+  //  if(iter.second.find(outputregion) == iter.second.end()){
+  //    printf("histSaver::merge_regions merge regions failed\n");
+  //    exit(1);
+  //  }
+  //}
   if(!exist) regions.push_back(outputregion);
 }
 
@@ -202,7 +211,7 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
     }
     ++histcount;
     if(!(TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[0]))) {
-      printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[0]).Data());
+      if(debug) printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[0]).Data());
       continue;
     }
     if (plot_lib[samplename][region].size())
@@ -210,7 +219,7 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
       for (int i = 0; i < nvar; ++i)
       {
         if(!(TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i]))) {
-          printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[i]).Data());
+          if(debug) printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[i]).Data());
           printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
           show();
           exit(1);
@@ -220,7 +229,7 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
     }else{
       for (int i = 0; i < nvar; ++i){
         if(!(TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i]))) {
-          printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[i]).Data());
+          if(debug) printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[i]).Data());
           printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
           show();
           exit(1);
@@ -287,6 +296,18 @@ void histSaver::write(){
   }
 }
 
+void histSaver::write_trexinput(TString NPname){
+  for (int i = 0; i < nvar; ++i){
+    gSystem->mkdir(name[i]);
+    for(auto const& region: regions) {
+      gSystem->mkdir(name[i] + "/" + region);
+      for(auto& iter : plot_lib){
+        TFile outputfile(name[i] + "/" + region + "/" + iter.first + ".root");
+        if(grabhist(iter.first,region,i)) grabhist(iter.first,region,i)->Write(NPname,TObject::kWriteDelete);
+      }
+    }
+  }
+}
 void histSaver::clearhist(){
   if(debug) printf("histSaver::clearhist()\n");
   for(auto const& region: regions) {
@@ -331,10 +352,12 @@ void histSaver::templatesample(TString fromregion,string formula,TString toregio
       printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 real -1 zll ...", formula.c_str());
       exit(1);
     }
-    if(scaletogap) scaleto += numb*grabhist(tokens[icompon+1],toregion,0)->Integral();
-    for (int ivar = 0; ivar < nvar; ++ivar)
-    {
-      newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion,ivar),numb);
+    if(grabhist(tokens[icompon+1],toregion,0)){
+      if(scaletogap) scaleto += numb*grabhist(tokens[icompon+1],toregion,0)->Integral();
+      for (int ivar = 0; ivar < nvar; ++ivar)
+      {
+        newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion,ivar),numb);
+      }
     }
   }
   double scalefrom = 0;
@@ -371,6 +394,14 @@ void histSaver::plot_stack(TString outputdir){
   gSystem->mkdir(outputdir);
   int iregion = 0;
   TCanvas cv("cv","cv",600,600);
+  TGraph* ROC;
+  TH1D *ROC_sig = 0;
+  TH1D *ROC_bkg = 0;
+  if(doROC){
+    ROC = new TGraph();
+    ROC -> SetName("ROC");
+    ROC -> SetTitle("ROC");
+  }
   for (int i = 0; i < nvar; ++i){
     cv.SaveAs(outputdir + "/" + name[i] + ".pdf[");
     for(auto const& region: regions) {
@@ -386,7 +417,6 @@ void histSaver::plot_stack(TString outputdir){
       TH1D hmc("hmc","hmc",nbin[i]/rebin[i],xlo[i],xhi[i]);
       TH1D hmcR("hmcR","hmcR",nbin[i]/rebin[i],xlo[i],xhi[i]);
       TH1D hdataR("hdataR","hdataR",nbin[i]/rebin[i],xlo[i],xhi[i]);
-
       cv.cd();
       padhi->Draw();
 //===============================upper pad===============================
@@ -405,6 +435,7 @@ void histSaver::plot_stack(TString outputdir){
         if(iter == "data") continue;
         if(iter == overlaysample){
           histoverlay = grabhist(iter,region,i);
+          if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
           continue;
         }
         if(debug) {
@@ -412,6 +443,11 @@ void histSaver::plot_stack(TString outputdir){
         }
         TH1D * tmphist = grabhist(iter,region,i);
         if(!tmphist) continue;
+        if(doROC && sensitivevariable == name[i])
+        {
+          if(!ROC_bkg) ROC_bkg = (TH1D*) tmphist->Clone();
+          else ROC_bkg->Add(tmphist);
+        }
         if(rebin[i] != 1) tmphist->Rebin(rebin[i]);
         hsk->Add(tmphist);
         hmc.Add(tmphist);
@@ -421,7 +457,7 @@ void histSaver::plot_stack(TString outputdir){
         printf("ERROR: stack has no entry, continue\n");
         continue;
       }
-      double histmax = hsk->GetMaximum();
+      double histmax = hmc.GetMaximum() + hmc.GetBinError(hmc.GetMaximumBin());
       if(debug) printf("set overlay\n");
       if(overlaysample != ""){
         if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
@@ -433,7 +469,7 @@ void histSaver::plot_stack(TString outputdir){
         histoverlay->SetLineColor(kRed);
         histoverlay->SetFillColor(0);
         histoverlay->SetMinimum(0);
-        histmax = max(histmax, histoverlay->GetMaximum());
+        histmax = max(histmax, histoverlay->GetMaximum() + histoverlay->GetBinError(histoverlay->GetMaximumBin()));
       }
       TH1D * datahist;
       if(debug) printf("set data\n");
@@ -445,13 +481,13 @@ void histSaver::plot_stack(TString outputdir){
         datahist->SetMarkerStyle(20);
         datahist->SetMarkerSize(0.4);
         datahist->SetMinimum(0);
-        histmax = max(histmax, datahist->GetMaximum());
+        histmax = max(histmax, datahist->GetMaximum() + datahist->GetBinError(datahist->GetMaximumBin()));
       }else{
         hsk->SetMinimum(0);
       }
 
       if(debug) printf("set hsk\n");
-      hsk->SetMaximum(1.6*histmax);
+      hsk->SetMaximum(1.7*histmax);
 
       hsk->Draw("hist");
       hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
@@ -472,7 +508,10 @@ void histSaver::plot_stack(TString outputdir){
             _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
           }
         }
-        printf("signal yield: %4.2f, background yield: %4.2f, significance: %4.2f\n", histoverlay->Integral(), hmc.Integral(), sqrt(_significance));
+        if(doROC){
+
+        }
+        printf("region %s:\nsignal yield: %4.2f, background yield: %4.2f, significance: %4.2f\n", region.Data(), histoverlay->Integral(), hmc.Integral(), sqrt(_significance));
       }
 
       if(blinding && dataref && overlaysample != ""){
@@ -565,5 +604,25 @@ void histSaver::plot_stack(TString outputdir){
     if(debug) printf("end loop region\n");
     cv.SaveAs(outputdir + "/" + name[i] + ".pdf]");
     cv.Clear();
+  }
+  if(doROC){
+    double bkgintegral = ROC_bkg->Integral();
+    double sigintegral = ROC_sig->Integral();
+    double sigeff = 1;
+    double bkgrej = 0;
+    ROC->SetPoint(0,sigeff,bkgrej);
+    for (int i = 1; i < ROC_sig->GetNbinsX()+1; ++i)
+    {
+      sigeff -= ROC_sig->GetBinContent(i)/sigintegral;
+      bkgrej += ROC_bkg->GetBinContent(i)/bkgintegral;
+      ROC->SetPoint(i,sigeff,bkgrej);
+    }
+    outputfile->cd();
+    ROC->Write("ROC");
+    ROC_sig->Write("ROC_sig");
+    ROC_bkg->Write("ROC_bkg");
+    deletepointer(ROC);
+    deletepointer(ROC_sig);
+    deletepointer(ROC_bkg);
   }
 }

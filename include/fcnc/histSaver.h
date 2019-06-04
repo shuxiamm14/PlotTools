@@ -18,6 +18,7 @@ public:
   TString analysis;
   TString workflow;
   bool fromntuple;
+  bool doROC;
   int histcount;
   TString this_region;
   TString read_path;
@@ -77,7 +78,7 @@ public:
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
-
+  void write_trexinput(TString NPname);
   void overlay(TString _overlaysample);
   TH1D* grabhist(TString sample, TString region, int ivar);
   void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);

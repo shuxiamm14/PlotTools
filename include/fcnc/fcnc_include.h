@@ -90,6 +90,12 @@ void deletepointer(T *&a){
   }
 }
 
+template<typename T,typename D>
+double rms(T aa, D bb){
+  return sqrt(pow(aa,2) + pow(bb,2));
+}
+
+
 template<typename T, typename D>
 int FindBin(T* ary, int nbins, D nb){
   int hibin = nbins;
@@ -107,6 +113,9 @@ int FindBin(T* ary, int nbins, D nb){
     if(newlimit == (hibin + lowbin)/2) return newlimit;
   }
 }
+
+
+
 template<typename T>
 T Max(T a, T b) {
   if(a>b) return a;
