@@ -397,6 +397,7 @@ void histSaver::plot_stack(TString outputdir){
   TGraph* ROC;
   TH1D *ROC_sig = 0;
   TH1D *ROC_bkg = 0;
+  vector<TH1D*> buffer;
   if(doROC){
     ROC = new TGraph();
     ROC -> SetName("ROC");
@@ -427,31 +428,26 @@ void histSaver::plot_stack(TString outputdir){
       hmc.Sumw2();
       THStack *hsk = new THStack(name[i].Data(),name[i].Data());
       TLegend* lg1 = 0;
-      lg1 = new TLegend(0.38,0.7,0.90,0.9,"");
+      lg1 = new TLegend(0.45,0.7,0.90,0.9,"");
       lg1->SetNColumns(2);
       TH1D *histoverlay;
       if(debug) printf("set hists\n");
       for(auto& iter:stackorder ){
         if(iter == "data") continue;
-        if(iter == overlaysample){
-          histoverlay = grabhist(iter,region,i);
-          if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
-          continue;
-        }
         if(debug) {
           printf("plot_lib[%s][%s][%d]\n", iter.Data(), region.Data(), i);
         }
-        TH1D * tmphist = grabhist(iter,region,i);
-        if(!tmphist) continue;
+        if(grabhist(iter,region,i)) buffer.push_back((TH1D*)grabhist(iter,region,i)->Clone());
+        else continue;
         if(doROC && sensitivevariable == name[i])
         {
-          if(!ROC_bkg) ROC_bkg = (TH1D*) tmphist->Clone();
-          else ROC_bkg->Add(tmphist);
+          if(!ROC_bkg) ROC_bkg = (TH1D*) buffer.back()->Clone();
+          else ROC_bkg->Add(buffer.back());
         }
-        if(rebin[i] != 1) tmphist->Rebin(rebin[i]);
-        hsk->Add(tmphist);
-        hmc.Add(tmphist);
-        lg1->AddEntry(tmphist,tmphist->GetTitle(),"F");
+        if(rebin[i] != 1) buffer.back()->Rebin(rebin[i]);
+        hsk->Add(buffer.back());
+        hmc.Add(buffer.back());
+        lg1->AddEntry(buffer.back(),buffer.back()->GetTitle(),"F");
       }
       if(!hsk->GetMaximum()){
         printf("ERROR: stack has no entry, continue\n");
@@ -461,9 +457,11 @@ void histSaver::plot_stack(TString outputdir){
       if(debug) printf("set overlay\n");
       if(overlaysample != ""){
         if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
+        if(grabhist(overlaysample,region,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,i)->Clone();
+        if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
         if(!histoverlay) continue;
         lg1->AddEntry(histoverlay,histoverlay->GetTitle(),"LP");
-        histoverlay->Rebin(rebin[i]);
+        if(rebin[i] != 1) histoverlay->Rebin(rebin[i]);
         histoverlay->SetLineStyle(9);
         histoverlay->SetLineWidth(3);
         histoverlay->SetLineColor(kRed);
@@ -474,7 +472,7 @@ void histSaver::plot_stack(TString outputdir){
       TH1D * datahist;
       if(debug) printf("set data\n");
       if (dataref) {
-        datahist = grabhist("data",region,i);
+        if(grabhist("data",region,i)) datahist = (TH1D*)grabhist("data",region,i)->Clone();
         datahist->Rebin(rebin[i]);
         if(datahist->Integral() == 0) printf("Warning: data hist is empty\n");
         lg1->AddEntry(datahist,"data","LP");
@@ -487,7 +485,7 @@ void histSaver::plot_stack(TString outputdir){
       }
 
       if(debug) printf("set hsk\n");
-      hsk->SetMaximum(1.7*histmax);
+      hsk->SetMaximum(1.35*histmax);
 
       hsk->Draw("hist");
       hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
@@ -599,6 +597,9 @@ void histSaver::plot_stack(TString outputdir){
       deletepointer(lg1);
       deletepointer(padlow );
       deletepointer(padhi  );
+      deletepointer(histoverlay);
+      deletepointer(datahist);
+      for(auto &iter : buffer) deletepointer(iter);
       if(debug) printf("end region %s\n",region.Data());
     }
     if(debug) printf("end loop region\n");
@@ -618,9 +619,9 @@ void histSaver::plot_stack(TString outputdir){
       ROC->SetPoint(i,sigeff,bkgrej);
     }
     outputfile->cd();
-    ROC->Write("ROC");
-    ROC_sig->Write("ROC_sig");
-    ROC_bkg->Write("ROC_bkg");
+    ROC->Write(overlaysample + "_ROC");
+    ROC_sig->Write(overlaysample + "_ROC_sig");
+    ROC_bkg->Write(overlaysample + "_ROC_bkg");
     deletepointer(ROC);
     deletepointer(ROC_sig);
     deletepointer(ROC_bkg);
