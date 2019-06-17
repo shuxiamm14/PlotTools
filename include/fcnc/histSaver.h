@@ -74,11 +74,12 @@ public:
     }
   }
   void show();
+  double gethisterror(TH1* hist);
   void templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap);
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
-  void write_trexinput(TString NPname);
+  void write_trexinput(TString NPname = "NOMINAL", TString writeoption = "recreate");
   void overlay(TString _overlaysample);
   TH1D* grabhist(TString sample, TString region, int ivar);
   void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);

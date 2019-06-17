@@ -29,7 +29,17 @@ histSaver::histSaver(TString _outputfilename) {
 }
 
 histSaver::~histSaver() {
+  if(debug) printf("histSaver::~histSaver()\n");
+  for(auto const& region: regions) {
+    for (int i = 0; i < nvar; ++i){
+      for(auto& iter : plot_lib){
+        TH1D *target = grabhist(iter.first,region,i);
+          deletepointer(target);
+      }
+    }
+  }
   deletepointer(inputfile);
+  deletepointer(outputfile);
 }
 
 TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
@@ -281,7 +291,7 @@ void histSaver::write(){
     printf("histSaver::write Error: outputfile pointer is empty\n");
     exit(1);
   }
-  if(debug) printf("histSaver::write() Write to file: %s\n", outputfile->GetName());
+  printf("histSaver::write() Write to file: %s\n", outputfile->GetName());
   for(auto const& region: regions) {
     for(auto& iter : plot_lib){
       if(grabhist(iter.first,region,0)->Integral() == 0) continue;
@@ -296,13 +306,23 @@ void histSaver::write(){
   }
 }
 
-void histSaver::write_trexinput(TString NPname){
+void histSaver::write_trexinput(TString NPname, TString writeoption){
+  TString trexdir = "trexinput";
+  gSystem->mkdir("trexinput");
   for (int i = 0; i < nvar; ++i){
-    gSystem->mkdir(name[i]);
+    gSystem->mkdir(trexdir + "/" + name[i]);
     for(auto const& region: regions) {
-      gSystem->mkdir(name[i] + "/" + region);
+      bool muted = 0;
+      for (auto const& mutedregion: mutedregions)
+      {
+        if(region.Contains(mutedregion))
+          muted = 1;
+      }
+      if(muted) continue;
+
+      gSystem->mkdir(trexdir + "/" + name[i] + "/" + region);
       for(auto& iter : plot_lib){
-        TFile outputfile(name[i] + "/" + region + "/" + iter.first + ".root");
+        TFile outputfile(trexdir + "/" + name[i] + "/" + region + "/" + iter.first + ".root", writeoption);
         if(grabhist(iter.first,region,i)) grabhist(iter.first,region,i)->Write(NPname,TObject::kWriteDelete);
       }
     }
@@ -334,6 +354,7 @@ void histSaver::templatesample(TString fromregion,string formula,TString toregio
   if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 real -1 zll ...", formula.c_str());
   vector<TH1D*> newvec;
   double scaleto = 0;
+  double scaletoerror = 0;
   for (int ivar = 0; ivar < nvar; ++ivar)
   {
     newvec.push_back((TH1D*)grabhist(tokens[1],fromregion,ivar)->Clone(newsamplename+"_"+toregion+name[ivar]));
@@ -353,7 +374,10 @@ void histSaver::templatesample(TString fromregion,string formula,TString toregio
       exit(1);
     }
     if(grabhist(tokens[icompon+1],toregion,0)){
-      if(scaletogap) scaleto += numb*grabhist(tokens[icompon+1],toregion,0)->Integral();
+      if(scaletogap) {
+        scaleto += numb*grabhist(tokens[icompon+1],toregion,0)->Integral();
+        scaletoerror += pow(fabs(numb)*gethisterror(grabhist(tokens[icompon+1],toregion,0)),2);
+      }
       for (int ivar = 0; ivar < nvar; ++ivar)
       {
         newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion,ivar),numb);
@@ -363,7 +387,10 @@ void histSaver::templatesample(TString fromregion,string formula,TString toregio
   double scalefrom = 0;
   if(scaletogap) {
     scalefrom = newvec[0]->Integral();
-    printf("sclalefrom: %f, to %f\n", scalefrom, scaleto);
+    printf("scale from: %f +/- %f, to %f +/- %f, ratio: %f +/- %f\n",
+      scalefrom, gethisterror(newvec[0]),
+      scaleto, sqrt(scaletoerror),
+      scaleto/scalefrom, rms(sqrt(scaletoerror)/scalefrom,scaleto*gethisterror(newvec[0])/scalefrom/scalefrom));
     for(auto & hists : newvec){
       hists->Scale(scaleto/scalefrom);
     }
@@ -371,6 +398,15 @@ void histSaver::templatesample(TString fromregion,string formula,TString toregio
   for(int ivar = 0; ivar < nvar; ivar++){
     plot_lib[newsamplename][toregion] = newvec;
   }
+}
+
+double histSaver::gethisterror(TH1* hist){
+  double error = 0;
+  for (int i = 0; i < hist->GetNbinsX(); ++i)
+  {
+    error+=pow(hist->GetBinError(i+1),2);
+  }
+  return sqrt(error);
 }
 
 void histSaver::muteregion(TString region){
