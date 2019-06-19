@@ -1,6 +1,7 @@
 #include "histSaver.h"
 #include "TGaxis.h"
 #include "TGraph.h"
+#include "observable.h"
 histSaver::histSaver(TString _outputfilename) {
   outputfile = new TFile (_outputfilename + ".root", "recreate");
   outputfilename = _outputfilename;
@@ -58,6 +59,33 @@ TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
   }
   if(!plot_lib[sample][region][ivar]) if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
   return plot_lib[sample][region][ivar];
+}
+
+TH1D* histSaver::grabbkghist(TString region, int ivar){
+  TH1D *hist = 0;
+  for(auto iter: stackorder){
+    if(iter != overlaysample && iter != "data"){
+      TH1D *target = grabhist(iter,region,ivar);
+      if(target){
+        if(hist == 0) hist = (TH1D*)target->Clone();
+        else hist->Add(target);
+      }
+    }
+  }
+  return hist;
+}
+
+TH1D* histSaver::grabsighist(TString region, int ivar){
+  TH1D *hist = 0;
+  if(overlaysample == "") {
+    printf("signal not defined, please call overlaysample(\"signal\")\n");
+    exit(0);
+  }
+  return grabhist(overlaysample, region, ivar);
+}
+
+TH1D* histSaver::grabdatahist(TString region, int ivar){
+  return grabhist("data",region,ivar);
 }
 
 void histSaver::add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Int_t* var_, const char* unit_) {
@@ -307,8 +335,8 @@ void histSaver::write(){
 }
 
 void histSaver::write_trexinput(TString NPname, TString writeoption){
-  TString trexdir = "trexinput";
-  gSystem->mkdir("trexinput");
+  TString trexdir = "trexinputs";
+  gSystem->mkdir("trexinputs");
   for (int i = 0; i < nvar; ++i){
     gSystem->mkdir(trexdir + "/" + name[i]);
     for(auto const& region: regions) {
@@ -324,6 +352,7 @@ void histSaver::write_trexinput(TString NPname, TString writeoption){
       for(auto& iter : plot_lib){
         TFile outputfile(trexdir + "/" + name[i] + "/" + region + "/" + iter.first + ".root", writeoption);
         if(grabhist(iter.first,region,i)) grabhist(iter.first,region,i)->Write(NPname,TObject::kWriteDelete);
+        outputfile.Close();
       }
     }
   }
@@ -347,14 +376,13 @@ void histSaver::overlay(TString _overlaysample){
   overlaysample = _overlaysample;
 }
 
-void histSaver::templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap){
+double histSaver::templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap){
   istringstream iss(formula);
   vector<string> tokens{istream_iterator<string>{iss},
     istream_iterator<string>{}};
   if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 real -1 zll ...", formula.c_str());
   vector<TH1D*> newvec;
-  double scaleto = 0;
-  double scaletoerror = 0;
+  observable scaleto(0,0);
   for (int ivar = 0; ivar < nvar; ++ivar)
   {
     newvec.push_back((TH1D*)grabhist(tokens[1],fromregion,ivar)->Clone(newsamplename+"_"+toregion+name[ivar]));
@@ -375,8 +403,9 @@ void histSaver::templatesample(TString fromregion,string formula,TString toregio
     }
     if(grabhist(tokens[icompon+1],toregion,0)){
       if(scaletogap) {
-        scaleto += numb*grabhist(tokens[icompon+1],toregion,0)->Integral();
-        scaletoerror += pow(fabs(numb)*gethisterror(grabhist(tokens[icompon+1],toregion,0)),2);
+        double error = 0;
+        observable tmp(grabhist(tokens[icompon+1],toregion,0)->Integral(),gethisterror(grabhist(tokens[icompon+1],toregion,0)));
+        scaleto += tmp*numb;
       }
       for (int ivar = 0; ivar < nvar; ++ivar)
       {
@@ -384,20 +413,22 @@ void histSaver::templatesample(TString fromregion,string formula,TString toregio
       }
     }
   }
-  double scalefrom = 0;
+  observable scalefactor;
   if(scaletogap) {
-    scalefrom = newvec[0]->Integral();
+    observable scalefrom(newvec[0]->Integral(),gethisterror(newvec[0]));
+    scalefactor = scaleto/scalefrom;
     printf("scale from: %f +/- %f, to %f +/- %f, ratio: %f +/- %f\n",
-      scalefrom, gethisterror(newvec[0]),
-      scaleto, sqrt(scaletoerror),
-      scaleto/scalefrom, rms(sqrt(scaletoerror)/scalefrom,scaleto*gethisterror(newvec[0])/scalefrom/scalefrom));
+      scalefrom.nominal, scalefrom.error,
+      scaleto.nominal, scaleto.error,
+      scalefactor.nominal, scalefactor.error);
     for(auto & hists : newvec){
-      hists->Scale(scaleto/scalefrom);
+      hists->Scale(scalefactor.nominal);
     }
   }
   for(int ivar = 0; ivar < nvar; ivar++){
     plot_lib[newsamplename][toregion] = newvec;
   }
+  return scalefactor.nominal;
 }
 
 double histSaver::gethisterror(TH1* hist){

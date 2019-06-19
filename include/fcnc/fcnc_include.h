@@ -34,6 +34,8 @@ using namespace std;
 
 Double_t significance(Double_t b0, Double_t s0, Double_t db=0);
 
+double integral(TH1 *hist, double xlow, double xhigh, double *error);
+
 void SetMax(TH1* h1, TH1* h2, Double_t scale);
 
 void SetMax(THStack* h1, TH1* h2, Double_t scale);

@@ -5,6 +5,11 @@
 #include <cstdlib>
 #include <thread>
 #include <sys/ioctl.h>
+
+double integral(TH1 *hist, double xlow, double xhigh, double *error){
+  return hist->IntegralAndError(hist->FindBin(xlow), hist->FindBin(xhigh)-1, *error);
+}
+
 Double_t significance(Double_t b0, Double_t s0, Double_t db) {
   if(db==0) return sqrt(2*(s0+b0)*log(1+s0/b0)-2*s0);
   else {

@@ -74,8 +74,13 @@ public:
     }
   }
   void show();
+
+  TH1D* grabbkghist(TString region, int ivar);
+  TH1D* grabsighist(TString region, int ivar);
+  TH1D* grabdatahist(TString region, int ivar);
+
   double gethisterror(TH1* hist);
-  void templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap);
+  double templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap);
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
