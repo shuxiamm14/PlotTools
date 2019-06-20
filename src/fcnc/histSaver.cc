@@ -30,7 +30,7 @@ histSaver::histSaver(TString _outputfilename) {
 }
 
 histSaver::~histSaver() {
-  if(debug) printf("histSaver::~histSaver()\n");
+  printf("histSaver::~histSaver()\n");
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       for(auto& iter : plot_lib){
@@ -41,6 +41,7 @@ histSaver::~histSaver() {
   }
   deletepointer(inputfile);
   deletepointer(outputfile);
+  printf("histSaver::~histSaver() destructed\n");
 }
 
 TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
@@ -332,6 +333,7 @@ void histSaver::write(){
       }
     }
   }
+  printf("histSaver::write() Written\n");
 }
 
 void histSaver::write_trexinput(TString NPname, TString writeoption){
