@@ -35,6 +35,7 @@ histSaver::~histSaver() {
     for (int i = 0; i < nvar; ++i){
       for(auto& iter : plot_lib){
         TH1D *target = grabhist(iter.first,region,i);
+        cout<<std::flush<<"deleting histogram: "<<target->GetName();
           deletepointer(target);
       }
     }
