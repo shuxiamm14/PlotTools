@@ -37,7 +37,7 @@ histSaver::~histSaver() {
         TH1D *target = reg.second[i];
         cout<<"\rdeleting histogram: "<<target->GetName()<<std::flush;
           deletepointer(target);
-        cout<<"\rdone deleting histogram: "<<target->GetName()<<std::flush;
+        cout<<"\rdone deleting histogram"<<std::flush;
       }
     }
   }
