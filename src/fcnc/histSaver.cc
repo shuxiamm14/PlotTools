@@ -31,11 +31,11 @@ histSaver::histSaver(TString _outputfilename) {
 
 histSaver::~histSaver() {
   printf("histSaver::~histSaver()\n");
-  for(auto const& region: regions) {
-    for (int i = 0; i < nvar; ++i){
-      for(auto& iter : plot_lib){
+  for(auto& iter : plot_lib){
+    for(auto const& region: regions) {
+      for (int i = 0; i < nvar; ++i){
         TH1D *target = grabhist(iter.first,region,i);
-        cout<<std::flush<<"deleting histogram: "<<target->GetName();
+        cout<<"\rdeleting histogram: "<<target->GetName()<<std::flush;
           deletepointer(target);
       }
     }
