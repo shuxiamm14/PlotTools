@@ -32,9 +32,9 @@ histSaver::histSaver(TString _outputfilename) {
 histSaver::~histSaver() {
   printf("histSaver::~histSaver()\n");
   for(auto& samp : plot_lib){
-    for(auto &reg: samp) {
+    for(auto &reg: samp.second) {
       for (int i = 0; i < nvar; ++i){
-        TH1D *target = reg[i];
+        TH1D *target = reg.second[i];
         cout<<"\rdeleting histogram: "<<target->GetName()<<std::flush;
           deletepointer(target);
       }
