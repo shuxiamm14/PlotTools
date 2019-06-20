@@ -335,7 +335,6 @@ void histSaver::write(){
       }
     }
   }
-  outputfile->Close();
   printf("histSaver::write() Written\n");
 }
 
