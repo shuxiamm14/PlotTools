@@ -255,7 +255,7 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
       if(debug) printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[0]).Data());
       continue;
     }
-    if (plot_lib[samplename][region].size())
+    if (plot_lib[samplename].find(region) != plot_lib[samplename].end())
     {
       for (int i = 0; i < nvar; ++i)
       {
@@ -265,6 +265,13 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
           show();
           exit(1);
         }
+
+        double tmp = ((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i]))->Integral();
+        if(tmp!=tmp){
+          printf("Warning: %s->Integral() is nan, skip\n", (histname+"_"+region+"_"+name[i]).Data());
+          continue;
+        }
+
         plot_lib[samplename][region][i]->Add((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i]),norm);
       }
     }else{
@@ -275,7 +282,13 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
           show();
           exit(1);
         }
+        double tmp = ((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i]))->Integral();
+        if(tmp!=tmp){
+          printf("Warning: New hist: %s->Integral() is nan, continue\n", plot_lib[samplename][region][i]->GetName());
+          continue;
+        }
         plot_lib[samplename][region].push_back((TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i])));
+
         plot_lib[samplename][region][i]->SetName(samplename+"_"+region+"_"+name[i]);
         plot_lib[samplename][region][i]->Scale(norm);
         plot_lib[samplename][region][i]->SetTitle(sampleTitle);
@@ -304,8 +317,13 @@ void histSaver::fill_hist(TString sample, TString region){
     printf("ERROR: weight not set\n");
   }
   for (int i = 0; i < nvar; ++i){
-    if(debug == 1) printf("plot_lib[%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), i, getVal(i), weight_type == 1? *fweight : *dweight);
-    grabhist(sample,region,i)->Fill(getVal(i),weight_type == 1? *fweight : *dweight);
+    double fillval = getVal(i);
+    if(fillval!=fillval) {
+      printf("Warning: fill val is nan: \n");
+      printf("plot_lib[%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), i, fillval, weight_type == 1? *fweight : *dweight);
+    }
+    if(debug == 1) printf("plot_lib[%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), i, fillval, weight_type == 1? *fweight : *dweight);
+    grabhist(sample,region,i)->Fill(fillval,weight_type == 1? *fweight : *dweight);
   }
 }
 
@@ -325,7 +343,11 @@ void histSaver::write(){
   printf("histSaver::write() Write to file: %s\n", outputfile->GetName());
   for(auto const& region: regions) {
     for(auto& iter : plot_lib){
-      if(grabhist(iter.first,region,0)->Integral() == 0) continue;
+      double tmp = grabhist(iter.first,region,0)->Integral();
+      if(tmp == 0) continue;
+      if(tmp != tmp) {
+        continue;
+      }
       for (int i = 0; i < nvar; ++i){
         outputfile->cd();
         //if(grabhist(iter.first,region,i)->Integral() == 0) {
