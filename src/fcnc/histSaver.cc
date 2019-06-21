@@ -265,7 +265,6 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
           show();
           exit(1);
         }
-
         double tmp = ((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i]))->Integral();
         if(tmp!=tmp){
           printf("Warning: %s->Integral() is nan, skip\n", (histname+"_"+region+"_"+name[i]).Data());
@@ -284,9 +283,10 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
         }
         double tmp = ((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i]))->Integral();
         if(tmp!=tmp){
-          printf("Warning: New hist: %s->Integral() is nan, continue\n", plot_lib[samplename][region][i]->GetName());
+          printf("Warning: New hist: %s->Integral() is nan, continue\n", (histname+"_"+region+"_"+name[i]).Data());
           continue;
         }
+
         plot_lib[samplename][region].push_back((TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i])));
 
         plot_lib[samplename][region][i]->SetName(samplename+"_"+region+"_"+name[i]);
@@ -346,6 +346,7 @@ void histSaver::write(){
       double tmp = grabhist(iter.first,region,0)->Integral();
       if(tmp == 0) continue;
       if(tmp != tmp) {
+        printf("Warning: hist integral is nan, skip writing for %s\n", grabhist(iter.first,region,0)->GetName());
         continue;
       }
       for (int i = 0; i < nvar; ++i){
