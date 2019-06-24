@@ -46,6 +46,19 @@ histSaver::~histSaver() {
   printf("histSaver::~histSaver() destructed\n");
 }
 
+void histSaver::printyield(TString region){
+  printf("Print Yeild: %s\n", region.Data());
+  double er;
+  for(auto iter: plot_lib){
+    TH1D* target = grabhist(iter.first,region,0);
+    if(target){
+      printf("%s: %4.3f \\pm %4.3f\n", iter.first.Data(), target->IntegralAndError(1,target->GetNbinsX(), er), er);
+    }else{
+      printf("Warning: histogram not found: %s, %s, %s\n", iter.first.Data(), region.Data(), name[0].Data());
+    }
+  }
+}
+
 TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
   if(plot_lib.find(sample) == plot_lib.end()){
     if(debug) {
@@ -403,7 +416,7 @@ void histSaver::overlay(TString _overlaysample){
   overlaysample = _overlaysample;
 }
 
-double histSaver::templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap){
+double histSaver::templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
   istringstream iss(formula);
   vector<string> tokens{istream_iterator<string>{iss},
     istream_iterator<string>{}};
@@ -450,6 +463,10 @@ double histSaver::templatesample(TString fromregion,string formula,TString toreg
       scalefactor.nominal, scalefactor.error);
     for(auto & hists : newvec){
       hists->Scale(scalefactor.nominal);
+    }
+  }else{
+    for(auto & hists : newvec){
+      hists->Scale(SF);
     }
   }
   for(int ivar = 0; ivar < nvar; ivar++){

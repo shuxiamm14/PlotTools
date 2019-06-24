@@ -78,9 +78,9 @@ public:
   TH1D* grabbkghist(TString region, int ivar);
   TH1D* grabsighist(TString region, int ivar);
   TH1D* grabdatahist(TString region, int ivar);
-
+  void printyield(TString region);
   double gethisterror(TH1* hist);
-  double templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap);
+  double templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
