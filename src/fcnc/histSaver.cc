@@ -77,6 +77,32 @@ TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
   return plot_lib[sample][region][ivar];
 }
 
+TH1D* histSaver::grabhist(TString sample, TString region, TString varname){
+  int ivar = -1;
+  for (int i = 0; i < nvar; ++i)
+  {
+    if(varname == name[i]){
+      ivar = i;
+      break;
+    }
+  }
+  if(plot_lib.find(sample) == plot_lib.end()){
+    if(debug) {
+      //show();
+      printf("histSaver:grabhist  Warning: sample %s not found\n", sample.Data());
+    }
+    return 0;
+  }
+
+  if(plot_lib[sample].find(region) == plot_lib[sample].end()){
+    if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s not found\n", region.Data(), sample.Data());
+    if(debug) show();
+    return 0;
+  }
+  if(!plot_lib[sample][region][ivar]) if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
+  return plot_lib[sample][region][ivar];
+}
+
 TH1D* histSaver::grabbkghist(TString region, int ivar){
   TH1D *hist = 0;
   for(auto iter: stackorder){
@@ -457,9 +483,9 @@ double histSaver::templatesample(TString fromregion,string formula,TString toreg
   if(scaletogap) {
     observable scalefrom(newvec[0]->Integral(),gethisterror(newvec[0]));
     scalefactor = scaleto/scalefrom;
-    printf("scale from: %f +/- %f, to %f +/- %f, ratio: %f +/- %f\n",
-      scalefrom.nominal, scalefrom.error,
-      scaleto.nominal, scaleto.error,
+    printf("scale from %s: %f +/- %f\nto %s: %f +/- %f\nratio: %f +/- %f\n\n",
+      fromregion.Data(), scalefrom.nominal, scalefrom.error,
+      toregion.Data(), scaleto.nominal, scaleto.error,
       scalefactor.nominal, scalefactor.error);
     for(auto & hists : newvec){
       hists->Scale(scalefactor.nominal);
@@ -565,21 +591,7 @@ void histSaver::plot_stack(TString outputdir){
         continue;
       }
       double histmax = hmc.GetMaximum() + hmc.GetBinError(hmc.GetMaximumBin());
-      if(debug) printf("set overlay\n");
-      if(overlaysample != ""){
-        if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
-        if(grabhist(overlaysample,region,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,i)->Clone();
-        if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
-        if(!histoverlay) continue;
-        lg1->AddEntry(histoverlay,histoverlay->GetTitle(),"LP");
-        if(rebin[i] != 1) histoverlay->Rebin(rebin[i]);
-        histoverlay->SetLineStyle(9);
-        histoverlay->SetLineWidth(3);
-        histoverlay->SetLineColor(kRed);
-        histoverlay->SetFillColor(0);
-        histoverlay->SetMinimum(0);
-        histmax = max(histmax, histoverlay->GetMaximum() + histoverlay->GetBinError(histoverlay->GetMaximumBin()));
-      }
+
       TH1D * datahist;
       if(debug) printf("set data\n");
       if (dataref) {
@@ -595,6 +607,27 @@ void histSaver::plot_stack(TString outputdir){
         hsk->SetMinimum(0);
       }
 
+      if(debug) printf("set overlay\n");
+      int ratio = 0;
+
+      if(overlaysample != ""){
+        if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
+        if(grabhist(overlaysample,region,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,i)->Clone();
+        if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
+        if(!histoverlay) continue;
+        if(rebin[i] != 1) histoverlay->Rebin(rebin[i]);
+        histoverlay->SetLineStyle(9);
+        histoverlay->SetLineWidth(3);
+        histoverlay->SetLineColor(kRed);
+        histoverlay->SetFillColor(0);
+        histoverlay->SetMinimum(0);
+        ratio = histmax/histoverlay->GetMaximum()/3;
+        if(ratio>10) ratio -= ratio%10;
+        if(ratio>100) ratio -= ratio%100;
+        if(ratio>1000) ratio -= ratio%1000;
+        lg1->AddEntry(histoverlay,(histoverlay->GetTitle() + (ratio > 0? "#times" + to_string(ratio) : "")).c_str(),"LP");
+        histmax = max(histmax, histoverlay->GetMaximum() + histoverlay->GetBinError(histoverlay->GetMaximumBin()));
+      }
       if(debug) printf("set hsk\n");
       hsk->SetMaximum(1.35*histmax);
 
@@ -651,6 +684,7 @@ void histSaver::plot_stack(TString outputdir){
       hmc.SetMarkerSize(0);
       hmc.SetMarkerColor(1);
       hmc.SetFillStyle(3004);
+      if(ratio > 0) histoverlay->Scale(ratio);
       if(overlaysample != "") histoverlay->Draw("hist same");
       hmc.Draw("E2 same");
       if(dataref) datahist->Draw("E same");

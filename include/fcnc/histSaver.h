@@ -78,6 +78,7 @@ public:
   TH1D* grabbkghist(TString region, int ivar);
   TH1D* grabsighist(TString region, int ivar);
   TH1D* grabdatahist(TString region, int ivar);
+
   void printyield(TString region);
   double gethisterror(TH1* hist);
   double templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
@@ -87,6 +88,7 @@ public:
   void write_trexinput(TString NPname = "NOMINAL", TString writeoption = "recreate");
   void overlay(TString _overlaysample);
   TH1D* grabhist(TString sample, TString region, int ivar);
+  TH1D* grabhist(TString sample, TString region, TString varname);
   void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);
   //void add(int nbin_, double xlo_, double xhi_, const char* titleX_, const char* name_, float* var_, bool MeVtoGeV_, char* unit_ = "");
   Float_t getVal(Int_t i);
