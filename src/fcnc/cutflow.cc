@@ -40,6 +40,10 @@ void cutflow::fill(){
 
 void cutflow::print(){
 	printf("cutflow:");
+	if(nCuts == 0) {
+		printf("no Cut applied\n");
+		continue;
+	}
 	for (int i = 0; i < nCuts-1; ++i)
 	{
 		printf(" %f +/- %f,", cutflowweighted[i], sqrt(cutflow2[i]));
