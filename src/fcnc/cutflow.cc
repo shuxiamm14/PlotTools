@@ -42,7 +42,7 @@ void cutflow::print(){
 	printf("cutflow:");
 	if(nCuts == 0) {
 		printf("no Cut applied\n");
-		continue;
+		return;
 	}
 	for (int i = 0; i < nCuts-1; ++i)
 	{
