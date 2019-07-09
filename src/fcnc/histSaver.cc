@@ -279,9 +279,13 @@ void histSaver::init_sample(TString samplename, TString histname, TString sample
   if(debug) printf("finished initializing %s\n", samplename.Data() );
 }
 
-void histSaver::read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm){
+void histSaver::read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile){
 
   if(!inputfile) inputfile = new TFile(inputfilename + ".root", "read");
+  TFile *readfromfile;
+
+  if(_inputfile) readfromfile = _inputfile;
+  else readfromfile = inputfile;
 
   if (samplename == "data") dataref = 1;
   for(auto const& region: regions) {
@@ -290,7 +294,7 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
     ++histcount;
-    if(!(TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[0]))) {
+    if(!(TH1D*)(readfromfile->Get(histname+"_"+region+"_"+name[0]))) {
       if(debug) printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[0]).Data());
       continue;
     }
@@ -298,35 +302,35 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
     {
       for (int i = 0; i < nvar; ++i)
       {
-        if(!(TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i]))) {
+        if(!(TH1D*)(readfromfile->Get(histname+"_"+region+"_"+name[i]))) {
           if(debug) printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[i]).Data());
           printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
           show();
           exit(1);
         }
-        double tmp = ((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i]))->Integral();
+        double tmp = ((TH1D*)readfromfile->Get(histname+"_"+region+"_"+name[i]))->Integral();
         if(tmp!=tmp){
           printf("Warning: %s->Integral() is nan, skip\n", (histname+"_"+region+"_"+name[i]).Data());
           continue;
         }
 
-        plot_lib[samplename][region][i]->Add((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i]),norm);
+        plot_lib[samplename][region][i]->Add((TH1D*)readfromfile->Get(histname+"_"+region+"_"+name[i]),norm);
       }
     }else{
       for (int i = 0; i < nvar; ++i){
-        if(!(TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i]))) {
+        if(!(TH1D*)(readfromfile->Get(histname+"_"+region+"_"+name[i]))) {
           if(debug) printf("histogram name not found: %s\n", (histname+"_"+region+"_"+name[i]).Data());
           printf("plot_lib[%s][%s][%d]\n", samplename.Data(), region.Data(), i);
           show();
           exit(1);
         }
-        double tmp = ((TH1D*)inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i]))->Integral();
+        double tmp = ((TH1D*)readfromfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i]))->Integral();
         if(tmp!=tmp){
           printf("Warning: New hist: %s->Integral() is nan, continue\n", (histname+"_"+region+"_"+name[i]).Data());
           continue;
         }
 
-        plot_lib[samplename][region].push_back((TH1D*)(inputfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i])));
+        plot_lib[samplename][region].push_back((TH1D*)(readfromfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i])));
 
         plot_lib[samplename][region][i]->SetName(samplename+"_"+region+"_"+name[i]);
         plot_lib[samplename][region][i]->Scale(norm);
@@ -416,8 +420,13 @@ void histSaver::write_trexinput(TString NPname, TString writeoption){
 
       gSystem->mkdir(trexdir + "/" + name[i] + "/" + region);
       for(auto& iter : plot_lib){
-        TFile outputfile(trexdir + "/" + name[i] + "/" + region + "/" + iter.first + ".root", writeoption);
-        if(grabhist(iter.first,region,i)) grabhist(iter.first,region,i)->Write(NPname,TObject::kWriteDelete);
+        if(NPname == "NOMINAL" && iter.first.Contains("data")) continue;
+        TString filename = trexdir + "/" + name[i] + "/" + region + "/" + iter.first + ".root";
+        TFile outputfile(filename, writeoption);
+        if(debug) printf("Writing to file: %s, histoname: %s\n", filename.Data(), NPname.Data());
+        TH1D *target = grabhist(iter.first,region,i);
+        if(target) target->Write(NPname,TObject::kWriteDelete);
+        else if(debug) printf("Warning: histogram plot_lib[%s][%s][%d] not found\n", iter.first.Data(),region.Data(),i);
         outputfile.Close();
       }
     }

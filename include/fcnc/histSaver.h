@@ -97,7 +97,7 @@ public:
   void add(const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
   float binwidth(int i);
   void add(const char* titleX_, const char* name_, const char* unit_ = "", int _rebin = 1);
-  void read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm);
+  void read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile=0);
   void plot_stack(TString outputdir);
   void fill_hist(TString sample, TString region);
   void fill_hist(TString sample);
