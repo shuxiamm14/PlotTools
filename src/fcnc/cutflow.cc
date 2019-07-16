@@ -35,6 +35,11 @@ void cutflow::fill(){
 		cutflowweighted[iCut] += weight;
 		cutflow2[iCut] += weight*weight;
 	}
+	if(n_tracked_event)
+		for(auto evt: eventtrack[iCut]){
+			if(*eventnumber == evt)
+				eventtrack[iCut+1].push_back(*eventnumber);
+		}
 	iCut ++;
 }
 
@@ -55,4 +60,12 @@ void cutflow::print(){
 		printf(" %ld,", cutflowraw[i]);
 	}
 	printf(" %ld\n", cutflowraw[nCuts-1]);
+	if(n_tracked_event){
+		for(auto cut: eventtrack){
+			printf("cut: ");
+			for(auto evt : cut)
+				printf("%llu,",evt);
+			printf("\n");
+		}
+	}
 }
