@@ -20,12 +20,17 @@ void cutflow::clear(){
 }
 
 void cutflow::newEvent(){
+	iftrack = 0;
+	for(auto evt: eventtrack[0]){
+		if(*eventnumber == evt)
+			iftrack = 1;
+	}
 	iCut = 0;
 }
 
 void cutflow::trackevent(ULong64_t evtnumber) {
 	n_tracked_event++;
-	if(n_tracked_event == 0)
+	if(n_tracked_event == 1)
 		eventtrack.push_back(std::vector<ULong64_t>());
 	eventtrack[0].push_back(evtnumber);
 
@@ -44,13 +49,10 @@ void cutflow::fill(){
 		cutflowweighted[iCut] += weight;
 		cutflow2[iCut] += weight*weight;
 	}
-	if(n_tracked_event)
-		for(auto evt: eventtrack[iCut]){
-			if(*eventnumber == evt){
-				if(eventtrack.size() != iCut+2) eventtrack.push_back(std::vector<ULong64_t>());
-				eventtrack[iCut+1].push_back(*eventnumber);
-			}
-		}
+	if(iftrack){
+		if(eventtrack.size() <= iCut+1) eventtrack.push_back(std::vector<ULong64_t>());
+		eventtrack[iCut+1].push_back(*eventnumber);
+	}
 	iCut ++;
 }
 

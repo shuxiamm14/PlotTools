@@ -10,7 +10,9 @@ public:
 	Float_t* fweight;
 	Double_t* dweight;
 	ULong64_t* eventnumber;
+	bool iftrack;
 	int weight_type;
+	int ievttrack;
 	std::vector<std::vector<ULong64_t>> eventtrack;
 	int n_tracked_event;
 	std::vector<long> cutflowraw;
