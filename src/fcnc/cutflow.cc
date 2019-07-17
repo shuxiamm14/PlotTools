@@ -16,6 +16,9 @@ void cutflow::clear(){
 	for(auto &iter : cutflowraw) iter = 0;
 	for(auto &iter : cutflowweighted) iter = 0;
 	for(auto &iter : cutflow2) iter = 0;
+	std::vector<ULong64_t> tmp = eventtrack[0];
+	eventtrack.clear();
+	eventtrack[0] = tmp;
 	iCut = 0;
 }
 
