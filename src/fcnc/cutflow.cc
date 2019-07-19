@@ -16,18 +16,21 @@ void cutflow::clear(){
 	for(auto &iter : cutflowraw) iter = 0;
 	for(auto &iter : cutflowweighted) iter = 0;
 	for(auto &iter : cutflow2) iter = 0;
-	std::vector<ULong64_t> tmp = eventtrack[0];
-	eventtrack.clear();
-	eventtrack[0] = tmp;
+	if(n_tracked_event) {
+		std::vector<ULong64_t> tmp = eventtrack[0];
+		eventtrack.clear();
+		eventtrack[0] = tmp;
+	}
 	iCut = 0;
 }
 
 void cutflow::newEvent(){
 	iftrack = 0;
-	for(auto evt: eventtrack[0]){
-		if(*eventnumber == evt)
-			iftrack = 1;
-	}
+	if(n_tracked_event)
+		for(auto evt: eventtrack[0]){
+			if(*eventnumber == evt)
+				iftrack = 1;
+		}
 	iCut = 0;
 }
 
