@@ -13,7 +13,6 @@ histSaver::histSaver(TString _outputfilename) {
   dweight = NULL;
   weight_type = 0;
   doROC = 0;
-  overlaysample = "";
   inputfile = 0;
   lumi = "#it{#sqrt{s}} = 13TeV, 80 fb^{-1}";
   analysis = "FCNC tqH H#rightarrow tautau";
@@ -106,7 +105,7 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString varname){
 TH1D* histSaver::grabbkghist(TString region, int ivar){
   TH1D *hist = 0;
   for(auto iter: stackorder){
-    if(iter != overlaysample && iter != "data"){
+    if(find(overlaysamples.begin(),overlaysamples.end(),iter)== overlaysamples.end() && iter != "data"){
       TH1D *target = grabhist(iter,region,ivar);
       if(target){
         if(hist == 0) hist = (TH1D*)target->Clone();
@@ -117,13 +116,13 @@ TH1D* histSaver::grabbkghist(TString region, int ivar){
   return hist;
 }
 
-TH1D* histSaver::grabsighist(TString region, int ivar){
+TH1D* histSaver::grabsighist(TString region, int ivar, TString signal){
   TH1D *hist = 0;
-  if(overlaysample == "") {
+  if(overlaysamples.size()==0) {
     printf("signal not defined, please call overlaysample(\"signal\")\n");
     exit(0);
   }
-  return grabhist(overlaysample, region, ivar);
+  return grabhist(signal==""?overlaysamples[0]:signal, region, ivar);
 }
 
 TH1D* histSaver::grabdatahist(TString region, int ivar){
@@ -448,7 +447,7 @@ void histSaver::clearhist(){
 }
 
 void histSaver::overlay(TString _overlaysample){
-  overlaysample = _overlaysample;
+  overlaysamples.push_back(_overlaysample);
 }
 
 double histSaver::templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
@@ -538,27 +537,28 @@ void histSaver::plot_stack(TString outputdir){
   SetAtlasStyle();
   TGaxis::SetMaxDigits(3);
   gSystem->mkdir(outputdir);
-  int iregion = 0;
   TCanvas cv("cv","cv",600,600);
   TGraph* ROC;
   TH1D *ROC_sig = 0;
   TH1D *ROC_bkg = 0;
+  TH1D *datahistblinded = 0;
   vector<TH1D*> buffer;
   if(doROC){
     ROC = new TGraph();
     ROC -> SetName("ROC");
     ROC -> SetTitle("ROC");
   }
-  for (int i = 0; i < nvar; ++i){
-    cv.SaveAs(outputdir + "/" + name[i] + ".pdf[");
-    for(auto const& region: regions) {
-      bool muted = 0;
-      for (auto const& mutedregion: mutedregions)
-      {
-        if(region.Contains(mutedregion))
-          muted = 1;
-      }
-      if(muted) continue;
+  for(auto const& region: regions) {
+    bool muted = 0;
+    for (auto const& mutedregion: mutedregions)
+    {
+      if(region.Contains(mutedregion))
+        muted = 1;
+    }
+    if(muted) continue;
+    gSystem->mkdir(outputdir + "/" + region);
+    for (int i = 0; i < nvar; ++i){
+      cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf[");
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
       TH1D hmc("hmc","hmc",nbin[i]/rebin[i],xlo[i],xhi[i]);
@@ -566,7 +566,7 @@ void histSaver::plot_stack(TString outputdir){
       TH1D hdataR("hdataR","hdataR",nbin[i]/rebin[i],xlo[i],xhi[i]);
       cv.cd();
       padhi->Draw();
-//===============================upper pad===============================
+//===============================upper pad bkg and unblinded data===============================
       padhi->SetBottomMargin(0.017);
       padhi->SetRightMargin(0.08);
       padhi->SetLeftMargin(0.12);
@@ -619,24 +619,6 @@ void histSaver::plot_stack(TString outputdir){
       if(debug) printf("set overlay\n");
       int ratio = 0;
 
-      if(overlaysample != ""){
-        if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
-        if(grabhist(overlaysample,region,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,i)->Clone();
-        if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
-        if(!histoverlay) continue;
-        if(rebin[i] != 1) histoverlay->Rebin(rebin[i]);
-        histoverlay->SetLineStyle(9);
-        histoverlay->SetLineWidth(3);
-        histoverlay->SetLineColor(kRed);
-        histoverlay->SetFillColor(0);
-        histoverlay->SetMinimum(0);
-        ratio = histmax/histoverlay->GetMaximum()/3;
-        if(ratio>10) ratio -= ratio%10;
-        if(ratio>100) ratio -= ratio%100;
-        if(ratio>1000) ratio -= ratio%1000;
-        lg1->AddEntry(histoverlay,(histoverlay->GetTitle() + (ratio > 0? "#times" + to_string(ratio) : "")).c_str(),"LP");
-        histmax = max(histmax, histoverlay->GetMaximum() + histoverlay->GetBinError(histoverlay->GetMaximumBin()));
-      }
       if(debug) printf("set hsk\n");
       hsk->SetMaximum(1.35*histmax);
 
@@ -652,33 +634,6 @@ void histSaver::plot_stack(TString outputdir){
       hsk->GetYaxis()->SetTitleSize(hsk->GetYaxis()->GetTitleSize()*0.7);
       if(debug) printf("set blinding\n");
 
-      if(sensitivevariable == name[i]){
-        double _significance = 0;
-        for(Int_t j=1; j<nbin[i]+1; j++) {
-          if(histoverlay->GetBinContent(j) && hmc.GetBinContent(j)) {
-            _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
-          }
-        }
-        if(doROC){
-
-        }
-        printf("region %s:\nsignal yield: %4.2f, background yield: %4.2f, significance: %4.2f\n", region.Data(), histoverlay->Integral(), hmc.Integral(), sqrt(_significance));
-      }
-
-      if(blinding && dataref && overlaysample != ""){
-        for(Int_t j=1; j<nbin[i]+1; j++) {
-          if(histoverlay->GetBinContent(j)/sqrt(datahist->GetBinContent(j)) > blinding) {
-            datahist->SetBinContent(j,0);
-            datahist->SetBinError(j,0);
-          }
-        }
-        if(sensitivevariable == name[i]){
-          for(int j = nbin[i]*3/4/rebin[i] ; j <= nbin[i] ; j++){
-            datahist->SetBinContent(j,0);
-            datahist->SetBinError(j,0);
-          }
-        }
-      }
       for(Int_t j=1; j<nbin[i]+1; j++) {
         hmcR.SetBinContent(j,1);
         hmcR.SetBinError(j,hmc.GetBinContent(j)>0 ? hmc.GetBinError(j)/hmc.GetBinContent(j) : 0);
@@ -693,10 +648,7 @@ void histSaver::plot_stack(TString outputdir){
       hmc.SetMarkerSize(0);
       hmc.SetMarkerColor(1);
       hmc.SetFillStyle(3004);
-      if(ratio > 0) histoverlay->Scale(ratio);
-      if(overlaysample != "") histoverlay->Draw("hist same");
       hmc.Draw("E2 same");
-      if(dataref) datahist->Draw("E same");
       lg1->Draw("same");
 
       if(debug) printf("atlas label\n");
@@ -744,40 +696,102 @@ void histSaver::plot_stack(TString outputdir){
       cv.cd();
       if(debug) printf("draw low pad\n");
       padlow->Draw();
-      ++iregion;
       if(debug) printf("printing\n");
-      cv.SaveAs(outputdir + "/" + name[i] + ".pdf");
+
+//===============================upper pad signal and blinded data===============================
+
+      padhi->cd();
+      if(!overlaysamples.size()) {
+        if(dataref) datahist->Draw("E same");
+        cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf");
+      }
+      if(sensitivevariable == name[i]) printf("region %s, background yield: %4.2f\n", region.Data(), hmc.Integral());
+
+      for(auto overlaysample: overlaysamples){
+        
+        TLegend *lgsig = (TLegend*) lg1->Clone();
+        if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
+        if(grabhist(overlaysample,region,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,i)->Clone();
+        if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
+        if(!histoverlay) continue;
+        if(rebin[i] != 1) histoverlay->Rebin(rebin[i]);
+        histoverlay->SetLineStyle(9);
+        histoverlay->SetLineWidth(3);
+        histoverlay->SetLineColor(kRed);
+        histoverlay->SetFillColor(0);
+        histoverlay->SetMinimum(0);
+        ratio = histmax/histoverlay->GetMaximum()/3;
+        if(ratio>10) ratio -= ratio%10;
+        if(ratio>100) ratio -= ratio%100;
+        if(ratio>1000) ratio -= ratio%1000;
+        lgsig->AddEntry(histoverlay,(histoverlay->GetTitle() + (ratio > 0? "#times" + to_string(ratio) : "")).c_str(),"LP");
+
+        if(sensitivevariable == name[i]){
+          double _significance = 0;
+          for(Int_t j=1; j<nbin[i]+1; j++) {
+            if(histoverlay->GetBinContent(j) && hmc.GetBinContent(j)) {
+              _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
+            }
+          }
+          if(doROC && sensitivevariable == name[i]){
+            double bkgintegral = ROC_bkg->Integral();
+            double sigintegral = ROC_sig->Integral();
+            double sigeff = 1;
+            double bkgrej = 0;
+            ROC->SetPoint(0,sigeff,bkgrej);
+            for (int i = 1; i < ROC_sig->GetNbinsX()+1; ++i)
+            {
+              sigeff -= ROC_sig->GetBinContent(i)/sigintegral;
+              bkgrej += ROC_bkg->GetBinContent(i)/bkgintegral;
+              ROC->SetPoint(i,sigeff,bkgrej);
+            }
+            outputfile->cd();
+            ROC->Write(overlaysample + "_ROC");
+            ROC_sig->Write(overlaysample + "_ROC_sig");
+            ROC_bkg->Write(overlaysample + "_ROC_bkg");
+            deletepointer(ROC);
+            deletepointer(ROC_sig);
+            deletepointer(ROC_bkg);
+          }
+          printf("signal %s yield: %4.2f, significance: %4.2f\n",overlaysample.Data(), histoverlay->Integral(), sqrt(_significance));
+        }
+        if(dataref) datahistblinded = (TH1D*)datahist->Clone();
+
+        if(blinding && dataref){
+          for(Int_t j=1; j<nbin[i]+1; j++) {
+            if(histoverlay->GetBinContent(j)/sqrt(datahistblinded->GetBinContent(j)) > blinding) {
+              datahistblinded->SetBinContent(j,0);
+              datahistblinded->SetBinError(j,0);
+            }
+          }
+          if(sensitivevariable == name[i]){
+            for(int j = nbin[i]*3/4/rebin[i] ; j <= nbin[i] ; j++){
+              datahistblinded->SetBinContent(j,0);
+              datahistblinded->SetBinError(j,0);
+            }
+          }
+        }
+        if(ratio > 0) histoverlay->Scale(ratio);
+        if(overlaysample != "") histoverlay->Draw("hist same");
+        if(dataref) datahistblinded->Draw("E same");
+        lgsig->SetBorderSize(0);
+        lgsig->Draw();
+        padhi->Update();
+        cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf");
+        deletepointer(histoverlay);
+        deletepointer(lgsig);
+        if(dataref) deletepointer(datahistblinded);
+      }
       deletepointer(hsk);
       deletepointer(lg1);
       deletepointer(padlow );
       deletepointer(padhi  );
-      deletepointer(histoverlay);
       deletepointer(datahist);
       for(auto &iter : buffer) deletepointer(iter);
       if(debug) printf("end region %s\n",region.Data());
+      cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf]");
+      cv.Clear();
     }
     if(debug) printf("end loop region\n");
-    cv.SaveAs(outputdir + "/" + name[i] + ".pdf]");
-    cv.Clear();
-  }
-  if(doROC){
-    double bkgintegral = ROC_bkg->Integral();
-    double sigintegral = ROC_sig->Integral();
-    double sigeff = 1;
-    double bkgrej = 0;
-    ROC->SetPoint(0,sigeff,bkgrej);
-    for (int i = 1; i < ROC_sig->GetNbinsX()+1; ++i)
-    {
-      sigeff -= ROC_sig->GetBinContent(i)/sigintegral;
-      bkgrej += ROC_bkg->GetBinContent(i)/bkgintegral;
-      ROC->SetPoint(i,sigeff,bkgrej);
-    }
-    outputfile->cd();
-    ROC->Write(overlaysample + "_ROC");
-    ROC_sig->Write(overlaysample + "_ROC_sig");
-    ROC_bkg->Write(overlaysample + "_ROC_bkg");
-    deletepointer(ROC);
-    deletepointer(ROC_sig);
-    deletepointer(ROC_bkg);
   }
 }

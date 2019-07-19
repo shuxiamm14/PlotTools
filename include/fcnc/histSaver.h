@@ -12,7 +12,7 @@ public:
   Float_t* fweight;
   Double_t* dweight;
   int weight_type;
-  TString overlaysample;
+  vector<TString> overlaysamples;
   TFile* inputfile;
   TString lumi;
   TString analysis;
@@ -76,7 +76,7 @@ public:
   void show();
 
   TH1D* grabbkghist(TString region, int ivar);
-  TH1D* grabsighist(TString region, int ivar);
+  TH1D* grabsighist(TString region, int ivar, TString signal="");
   TH1D* grabdatahist(TString region, int ivar);
 
   void printyield(TString region);
