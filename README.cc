@@ -1,17 +1,26 @@
-install: 
+Author: Boyang Li
+
+email: boyang.li@cern.ch
+
+Project git: https://gitlab.cern.ch/boyang/plotTools
+
+//=====================================installation=====================================
+
+need external package: eigen3 (http://eigen.tuxfamily.org/index.php?title=Main_Page)
+in CMakelist.txt: set(EIGEN3DIR <PATH TO EIGEN>)
 
 . env.sh
 mkdir build
 cd build
 cmake ..
-make
+make install
 
 add ./include/fcnc ./include/atlasstyle ./include/external into your Makefile include flag
 add ./lib into your Makefile link lib flag
 
-//Usage1: histSaver
+//=====================================Usage1: histSaver=====================================
 
-//=====================================Plot stacks with n-tuples=====================================
+//==========Plot stacks with n-tuples=========
 #include "histSaver.h"
 
 // sequence matters : variable -> region -> samples
@@ -52,7 +61,7 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
 tau_plots->write(TFile* outputfile) // write the histograms into rootfile for further use
 tau_plots->plot_stack();
 
-//=====================================Read from a histogram=====================================
+//=============Read from a histogram============
 tau_plots = new histSaver();
 
 tau_plots->histfile = "yourhistfile.root" //histogram in the file with name: samplefillname_regionname_varname
@@ -78,7 +87,7 @@ tau_plots->read_sample("ttbar_nomatch","ttbar_nomatch","t#bar{t}(no truth matche
 
 tau_plots->plot_stack();
 
-//=====================================features=====================================
+//================features===========
 void muteregion(TString keyword);			
 void unmuteregion(TString keyword);			//decide if the region contains the keyword is plotted
 void overlay(TString _overlaysample);		//the sample _overlaysample is shown as overlay in the plots instead of stack
@@ -87,8 +96,9 @@ void merge_regions(TString inputregion1, TString inputregion2, TString outputreg
 
 
 
-//Usage2: HISTFITTER: fit the data with norm of different component (1 bin per addfithist call)
-					  //give the fitresult and calculate the eigen vector, eigen value of covariance matrix
+//=====================================Usage2: HISTFITTER=====================================
+//fit the data with norm of different component (1 bin per addfithist call)
+//give the fitresult and calculate the eigen vector, eigen value of covariance matrix
 #include "HISTFITTER.h"
 HISTFITTER* fitter = new HISTFITTER();
 //setparam and addfit should follow the same order
@@ -111,6 +121,33 @@ printf("%s, ptbin: %d, b: %f+/-%f, c: %f+/-%f, g: %f+/-%f, j: %f+/-%f;  Chi2:%f\
 fitter->calculateEigen();
 fitter->clear();
 
-//Usage3: EigenVector calculator: Calculate the eigen vector and eigen value for a given matrix. Run ./bin/test_run (util/test_run) to see how to use
+//=====================================Usage3: EigenVector=====================================
+//calculator: Calculate the eigen vector and eigen value for a given matrix. Run ./bin/test_run (util/test_run) to see how to use
 #include "EigenVectorCalc.h"
 void EigenVectorCalc(float **matrix, int matrixsize, float *eigenval, float **eigenvectors)
+
+
+//=====================================Usage4: cutflow=====================================
+#include "cutflow.h"
+
+cutflow mycut;
+
+mycut->trackevent(event_Number1);
+mycut->trackevent(event_Number2);
+mycut->trackevent(event_Number3);
+mycut->trackevent(event_Number4);
+...
+
+mycut.set_weight(&weight);
+
+for (int i = 0; i < entries; ++i)
+{
+	tree->GetEntry(i);
+	mycut->newEvent();
+	if(failcut1) continue;
+	mycut->fill();
+	if(failcut2) continue;
+	mycut->fill();
+	...
+}
+mycut.print();
