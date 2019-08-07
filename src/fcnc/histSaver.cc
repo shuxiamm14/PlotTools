@@ -236,6 +236,7 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
       else iter.second[outputregion].push_back((TH1D*)iter.second[inputregion2][i]->Clone(iter.first+"_"+outputregion+"_"+name[i]));
       if(input1exist == 1 && input2exist == 1) {
         iter.second[outputregion][i]->Add(iter.second[inputregion2][i]);
+        if(!iter.second[outputregion][i]->Integral()) printf("merged histogram %s is empty\n", iter.second[outputregion][i]->GetName());
         if(debug)
           printf("add %s to %s as %s\n", iter.second[inputregion2][i]->GetName(),iter.second[inputregion1][i]->GetName(),(iter.first+"_"+outputregion+"_"+name[i]).Data());
       }
@@ -312,6 +313,10 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
           printf("Warning: %s->Integral() is nan, skip\n", (histname+"_"+region+"_"+name[i]).Data());
           continue;
         }
+        if(tmp==0){
+          printf("Warning: %s->Integral() is 0, skip\n", (histname+"_"+region+"_"+name[i]).Data());
+          continue;
+        }
 
         plot_lib[samplename][region][i]->Add((TH1D*)readfromfile->Get(histname+"_"+region+"_"+name[i]),norm);
       }
@@ -328,8 +333,12 @@ void histSaver::read_sample(TString samplename, TString histname, TString sample
           printf("Warning: New hist: %s->Integral() is nan, continue\n", (histname+"_"+region+"_"+name[i]).Data());
           continue;
         }
+        if(tmp==0){
+          printf("Warning: New hist: %s->Integral() is 0, continue\n", (histname+"_"+region+"_"+name[i]).Data());
+          continue;
+        }
 
-        plot_lib[samplename][region].push_back((TH1D*)(readfromfile->Get(histname+"_"+region+"_"+name[i])->Clone(histname+"_"+region+"_"+name[i])));
+        plot_lib[samplename][region].push_back((TH1D*)(readfromfile->Get(histname+"_"+region+"_"+name[i])->Clone()));
 
         plot_lib[samplename][region][i]->SetName(samplename+"_"+region+"_"+name[i]);
         plot_lib[samplename][region][i]->Scale(norm);
@@ -419,12 +428,15 @@ void histSaver::write_trexinput(TString NPname, TString writeoption){
 
       gSystem->mkdir(trexdir + "/" + name[i] + "/" + region);
       for(auto& iter : plot_lib){
-        if(NPname == "NOMINAL" && iter.first.Contains("data")) continue;
+        if(NPname != "NOMINAL" && iter.first.Contains("data")) continue;
         TString filename = trexdir + "/" + name[i] + "/" + region + "/" + iter.first + ".root";
         TFile outputfile(filename, writeoption);
         if(debug) printf("Writing to file: %s, histoname: %s\n", filename.Data(), NPname.Data());
         TH1D *target = grabhist(iter.first,region,i);
-        if(target) target->Write(NPname,TObject::kWriteDelete);
+        if(target) {
+          target->Write(NPname,TObject::kWriteDelete);
+          if(!target->Integral()) printf("Warinig: plot_lib[%s][%s][%d] is empty\n", iter.first.Data(),region.Data(),i);
+        }
         else if(debug) printf("Warning: histogram plot_lib[%s][%s][%d] not found\n", iter.first.Data(),region.Data(),i);
         outputfile.Close();
       }
@@ -541,7 +553,6 @@ void histSaver::plot_stack(TString outputdir){
   TGraph* ROC;
   TH1D *ROC_sig = 0;
   TH1D *ROC_bkg = 0;
-  TH1D *datahistblinded = 0;
   vector<TH1D*> buffer;
   if(doROC){
     ROC = new TGraph();
@@ -653,6 +664,33 @@ void histSaver::plot_stack(TString outputdir){
 
       if(debug) printf("atlas label\n");
       ATLASLabel(0.15,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), region.Data());
+//===============================blinded data===============================
+      if(blinding && dataref){
+        for(auto overlaysample: overlaysamples){
+          TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,i);
+          if(!histoverlaytmp){
+            printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
+            continue;
+          }
+          for(Int_t j=1; j<nbin[i]+1; j++) {
+            if(histoverlaytmp->GetBinContent(j)/sqrt(datahist->GetBinContent(j)) > blinding) {
+              datahist->SetBinContent(j,0);
+              datahist->SetBinError(j,0);
+              hdataR.SetBinContent(j,0);
+              hdataR.SetBinError(j,0);
+            }
+          }
+        }
+        if(sensitivevariable == name[i]){
+          for(int j = nbin[i]*3/4/rebin[i] ; j <= nbin[i] ; j++){
+            datahist->SetBinContent(j,0);
+            datahist->SetBinError(j,0);
+            hdataR.SetBinContent(j,0);
+            hdataR.SetBinError(j,0);
+          }
+        }
+      }
+      if(dataref) datahist->Draw("E same");
 
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
@@ -698,11 +736,10 @@ void histSaver::plot_stack(TString outputdir){
       padlow->Draw();
       if(debug) printf("printing\n");
 
-//===============================upper pad signal and blinded data===============================
+//===============================upper pad signal===============================
 
       padhi->cd();
       if(!overlaysamples.size()) {
-        if(dataref) datahist->Draw("E same");
         cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf");
       }
       if(sensitivevariable == name[i]) printf("region %s, background yield: %4.2f\n", region.Data(), hmc.Integral());
@@ -755,32 +792,15 @@ void histSaver::plot_stack(TString outputdir){
           }
           printf("signal %s yield: %4.2f, significance: %4.2f\n",overlaysample.Data(), histoverlay->Integral(), sqrt(_significance));
         }
-        if(dataref) datahistblinded = (TH1D*)datahist->Clone();
 
-        if(blinding && dataref){
-          for(Int_t j=1; j<nbin[i]+1; j++) {
-            if(histoverlay->GetBinContent(j)/sqrt(datahistblinded->GetBinContent(j)) > blinding) {
-              datahistblinded->SetBinContent(j,0);
-              datahistblinded->SetBinError(j,0);
-            }
-          }
-          if(sensitivevariable == name[i]){
-            for(int j = nbin[i]*3/4/rebin[i] ; j <= nbin[i] ; j++){
-              datahistblinded->SetBinContent(j,0);
-              datahistblinded->SetBinError(j,0);
-            }
-          }
-        }
         if(ratio > 0) histoverlay->Scale(ratio);
         if(overlaysample != "") histoverlay->Draw("hist same");
-        if(dataref) datahistblinded->Draw("E same");
         lgsig->SetBorderSize(0);
         lgsig->Draw();
         padhi->Update();
         cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf");
         deletepointer(histoverlay);
         deletepointer(lgsig);
-        if(dataref) deletepointer(datahistblinded);
       }
       deletepointer(hsk);
       deletepointer(lg1);

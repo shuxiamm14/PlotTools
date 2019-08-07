@@ -49,6 +49,9 @@ tau_plots->init_sample("ttbar_real","ttbar_real","t#bar{t}(real #tau)",kRed);
 tau_plots->init_sample("ttbar_c","ttbar_c","t#bar{t}(c-jets fake #tau)",kOrange);
 tau_plots->init_sample("ttbar_nomatch","ttbar_nomatch","t#bar{t}(no truth matched fake #tau)",kGray);
 
+tau_plots->init_sample("signal1","signal1","signal1",kRed);
+tau_plots->init_sample("signal2","signal2","signal2",kRed);
+tau_plots->init_sample("signal2","signal2","signal2",kRed);
 //plot_lib[sample][region][ivar]
 if("you wanna see the list of input variable") tau_plots->show();
 
@@ -58,6 +61,15 @@ for (Long64_t jentry=0; jentry<nentries;jentry++) {
 	if(sampleisGluon && region1cut) tau_plots->fill_hist("ttbar_g","the regions you have 1");
 		//...
 }
+tau_plots->stackorder.push_back("ttbar_g")
+tau_plots->stackorder.push_back("ttbar_j")
+tau_plots->stackorder.push_back("ttbar_b")
+...
+
+tau_plots->overlay("signal1")
+tau_plots->overlay("signal2")
+tau_plots->overlay("signal3")
+
 tau_plots->write(TFile* outputfile) // write the histograms into rootfile for further use
 tau_plots->plot_stack();
 
@@ -85,6 +97,15 @@ tau_plots->read_sample("ttbar_real","ttbar_real","t#bar{t}(real #tau)",kRed);
 tau_plots->read_sample("ttbar_c","ttbar_c","t#bar{t}(c-jets fake #tau)",kOrange);
 tau_plots->read_sample("ttbar_nomatch","ttbar_nomatch","t#bar{t}(no truth matched fake #tau)",kGray);
 
+tau_plots->stackorder.push_back("ttbar_g")
+tau_plots->stackorder.push_back("ttbar_j")
+tau_plots->stackorder.push_back("ttbar_b")
+...
+
+tau_plots->overlay("signal1")
+tau_plots->overlay("signal2")
+tau_plots->overlay("signal3")
+
 tau_plots->plot_stack();
 
 //================features===========
@@ -94,6 +115,10 @@ void overlay(TString _overlaysample);		//the sample _overlaysample is shown as o
 TH1D* grabhist(TString sample, TString region, int ivar);	//get specific histogram
 void merge_regions(TString inputregion1, TString inputregion2, TString outputregion); //merge 2 regions into another region and keeps the inputs
 
+double templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1); //used for fake estimation methods.
+//example: tau_plots->templatesample("ss_region","1 data -1 smhiggs -1 wjet -1 diboson -1 zll -1 ztautau -1 top -1 fake","os_region","fakeSS","Fake",kYellow,0,1.31597);
+
+void write_trexinput(TString NPname = "NOMINAL", TString writeoption = "recreate"); //in case you are using TRexFitter (https://gitlab.cern.ch/TRExStats/TRExFitter) This function will generate the histogram inputs.
 
 
 //=====================================Usage2: HISTFITTER=====================================
