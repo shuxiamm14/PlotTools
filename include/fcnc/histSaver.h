@@ -1,9 +1,9 @@
 #ifndef histSaver_h
 #define histSaver_h
-
-#include "fcnc_include.h"
-#include "AtlasStyle.h"
-#include "AtlasLabels.h"
+#include <iostream>
+#include <map>
+#include "TH1D.h"
+#include "TFile.h"
 class histSaver{
 public:
   TString inputfilename;
@@ -12,7 +12,7 @@ public:
   Float_t* fweight;
   Double_t* dweight;
   int weight_type;
-  vector<TString> overlaysamples;
+  std::vector<TString> overlaysamples;
   TFile* inputfile;
   TString lumi;
   TString analysis;
@@ -39,13 +39,14 @@ public:
   bool ifRebin[50];
   bool dataref;
   TString unit[50];
+  TString trexdir;
   TString current_sample;
-  vector<TString> stackorder;
+  std::vector<TString> stackorder;
   TString outputfilename;
   TString sensitivevariable;
-  map<TString, map<TString, vector<TH1D*> > > plot_lib;
-  vector<TString> regions;
-  vector<TString> mutedregions;
+  std::map<TString, std::map<TString, std::vector<TH1D*> > > plot_lib;
+  std::vector<TString> regions;
+  std::vector<TString> mutedregions;
   histSaver(TString outputfilename);
   virtual ~histSaver();
   void clearhist();
@@ -81,7 +82,7 @@ public:
 
   void printyield(TString region);
   double gethisterror(TH1* hist);
-  double templatesample(TString fromregion,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
+  double templatesample(TString fromregion,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);

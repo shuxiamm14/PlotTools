@@ -1,8 +1,12 @@
 #include "histSaver.h"
+#include "fcnc_include.h"
 #include "TGaxis.h"
 #include "TGraph.h"
 #include "observable.h"
+#include "AtlasStyle.h"
+#include "AtlasLabels.h"
 histSaver::histSaver(TString _outputfilename) {
+  trexdir = "trexinputs";
   outputfile = new TFile (_outputfilename + ".root", "recreate");
   outputfilename = _outputfilename;
   nvar = 0;
@@ -413,8 +417,7 @@ void histSaver::write(){
 }
 
 void histSaver::write_trexinput(TString NPname, TString writeoption){
-  TString trexdir = "trexinputs";
-  gSystem->mkdir("trexinputs");
+  gSystem->mkdir(trexdir);
   for (int i = 0; i < nvar; ++i){
     gSystem->mkdir(trexdir + "/" + name[i]);
     for(auto const& region: regions) {
@@ -607,7 +610,7 @@ void histSaver::plot_stack(TString outputdir){
         lg1->AddEntry(buffer.back(),buffer.back()->GetTitle(),"F");
       }
       if(!hsk->GetMaximum()){
-        printf("ERROR: stack has no entry, continue\n");
+        printf("histSaver::plot_stack(): ERROR: stack has no entry for region %s, var %s, continue\n", region.Data(), name[i].Data());
         continue;
       }
       double histmax = hmc.GetMaximum() + hmc.GetBinError(hmc.GetMaximumBin());

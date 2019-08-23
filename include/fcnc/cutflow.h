@@ -1,3 +1,6 @@
+#ifndef CUTFLOW
+#define CUTFLOW
+
 #include <vector>
 #include <iostream>
 #include "TString.h"
@@ -30,3 +33,4 @@ public:
 	void print();
 	void fill();
 };
+#endif

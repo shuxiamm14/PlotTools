@@ -1,12 +1,11 @@
 #include <iostream> 
-using namespace std; 
   
 class observable { 
 public: 
     double nominal, error; 
     observable(double n = 0, double e =0)  {nominal = n;   error = e;} 
       
-    void print() { cout << nominal << " +/- " << error << endl; } 
+    void print() { std::cout << nominal << " +/- " << error << std::endl; } 
 
 	observable operator = (observable const &obj);
 	observable operator + (observable const &obj);
