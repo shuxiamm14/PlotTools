@@ -32,6 +32,8 @@ const Double_t GeV=1000;
 const Double_t PI=3.1415926536;
 using namespace std;
 
+std::vector<TString> readTovecString(TString filename);
+
 Double_t significance(Double_t b0, Double_t s0, Double_t db=0);
 
 double integral(TH1 *hist, double xlow, double xhigh, double *error);

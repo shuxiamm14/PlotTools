@@ -6,6 +6,17 @@
 #include <thread>
 #include <sys/ioctl.h>
 
+std::vector<TString> readTovecString(TString filename){
+  std::vector<TString> v;
+  std::ifstream file(filename.Data());
+  std::string ss;
+  while(!file.eof()){
+    getline(file,ss,'\n');
+    v.push_back(TString(ss));
+  }
+  return v;
+}
+
 double integral(TH1 *hist, double xlow, double xhigh, double *error){
   return hist->IntegralAndError(hist->FindBin(xlow), hist->FindBin(xhigh)-1, *error);
 }
