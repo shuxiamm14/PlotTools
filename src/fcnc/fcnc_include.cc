@@ -10,6 +10,10 @@ std::vector<TString> readTovecString(TString filename){
   std::vector<TString> v;
   std::ifstream file(filename.Data());
   std::string ss;
+  if(!file.good()) {
+    printf("file not fould %s\n", filename.Data());
+    exit(0);
+  }
   while(!file.eof()){
     getline(file,ss,'\n');
     v.push_back(TString(ss));
