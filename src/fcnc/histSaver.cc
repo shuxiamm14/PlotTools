@@ -5,9 +5,11 @@
 #include "observable.h"
 #include "AtlasStyle.h"
 #include "AtlasLabels.h"
+
+TFile *histSaver::bufferfile = 0;
 histSaver::histSaver(TString _outputfilename) {
+  if(!bufferfile) bufferfile = new TFile("it_is_buffer_can_delete.root");
   trexdir = "trexinputs";
-  outputfile = new TFile (_outputfilename + ".root", "recreate");
   outputfilename = _outputfilename;
   nvar = 0;
   inputfilename = "hists";
@@ -38,14 +40,13 @@ histSaver::~histSaver() {
     for(auto &reg: samp.second) {
       for (int i = 0; i < nvar; ++i){
         TH1D *target = reg.second[i];
-        cout<<"\rdeleting histogram: "<<target->GetName()<<std::flush;
+        cout<<"\rdeleting histogram:"<<target->GetName()<<std::endl<<std::flush;
           deletepointer(target);
-        cout<<"\rdone deleting histogram"<<std::flush;
+        cout<<"\rdone deleting histogram"<<std::endl<<std::flush;
       }
     }
   }
   deletepointer(inputfile);
-  deletepointer(outputfile);
   printf("histSaver::~histSaver() destructed\n");
 }
 
@@ -257,7 +258,7 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
 
 void histSaver::init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color){
 
-  outputfile->cd();
+  bufferfile->cd();
   current_sample = samplename;
 
   if(plot_lib.find(samplename) != plot_lib.end()) return;
@@ -391,10 +392,7 @@ void histSaver::fill_hist(){
 }
 
 void histSaver::write(){
-  if(!outputfile) {
-    printf("histSaver::write Error: outputfile pointer is empty\n");
-    exit(1);
-  }
+  TFile *outputfile = new TFile (outputfilename + ".root", "recreate");
   printf("histSaver::write() Write to file: %s\n", outputfile->GetName());
   for(auto const& region: regions) {
     for(auto& iter : plot_lib){
@@ -414,6 +412,8 @@ void histSaver::write(){
     }
   }
   printf("histSaver::write() Written\n");
+  outputfile->Close();
+  deletepointer(outputfile);
 }
 
 void histSaver::write_trexinput(TString NPname, TString writeoption){
@@ -562,6 +562,7 @@ void histSaver::plot_stack(TString outputdir){
     ROC -> SetName("ROC");
     ROC -> SetTitle("ROC");
   }
+  TFile *outputfile = new TFile (outputfilename + ".root", "recreate");
   for(auto const& region: regions) {
     bool muted = 0;
     for (auto const& mutedregion: mutedregions)
@@ -817,4 +818,6 @@ void histSaver::plot_stack(TString outputdir){
     }
     if(debug) printf("end loop region\n");
   }
+  outputfile->Close();
+  deletepointer(outputfile);
 }

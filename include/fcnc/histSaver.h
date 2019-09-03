@@ -23,7 +23,6 @@ public:
   TString this_region;
   TString read_path;
   int debug;
-  TFile *outputfile;
   Int_t nbin[50];
   Float_t xlo[50];
   Float_t xhi[50];
@@ -47,6 +46,7 @@ public:
   std::map<TString, std::map<TString, std::vector<TH1D*> > > plot_lib;
   std::vector<TString> regions;
   std::vector<TString> mutedregions;
+  static TFile *bufferfile;
   histSaver(TString outputfilename);
   virtual ~histSaver();
   void clearhist();
