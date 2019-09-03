@@ -8,7 +8,7 @@
 
 TFile *histSaver::bufferfile = 0;
 histSaver::histSaver(TString _outputfilename) {
-  if(!bufferfile) bufferfile = new TFile("it_is_buffer_can_delete.root");
+  if(!bufferfile) bufferfile = new TFile("it_is_buffer_can_delete.root","recreate");
   trexdir = "trexinputs";
   outputfilename = _outputfilename;
   nvar = 0;
