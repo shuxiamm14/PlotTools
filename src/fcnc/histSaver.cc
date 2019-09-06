@@ -420,9 +420,9 @@ void histSaver::write(){
           printf("Warning: hist integral is nan, skip writing for %s\n", variation.second[0]->GetName());
           continue;
         }
+        printf("histSaver::write() Write to file: %s\n", outputfile[variation.first]->GetName());
+        outputfile[variation.first]->cd();
         for (int i = 0; i < nvar; ++i){
-          outputfile[variation.first]->cd();
-          printf("histSaver::write() Write to file: %s\n", outputfile[variation.first]->GetName());
           //if(grabhist(iter.first,region,i)->Integral() == 0) {
           //  printf("Warning: histogram is empty: %s, %s, %d\n", iter.first.Data(),region.Data(),i);
           //}
@@ -430,6 +430,7 @@ void histSaver::write(){
           writename.Remove(writename.Sizeof()-8,7); //remove "_buffer"
           variation.second[i]->Write(writename,TObject::kWriteDelete);
         }
+        outputfile[variation.first]->Close();
       }
     }
   }
