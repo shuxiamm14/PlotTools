@@ -7,9 +7,9 @@
 #include "AtlasLabels.h"
 using namespace std;
 histSaver::histSaver(TString _outputfilename) {
+  outputfilename = _outputfilename;
   TFile *outputfile = new TFile (outputfilename + ".root", "recreate");
   trexdir = "trexinputs";
-  outputfilename = _outputfilename;
   nvar = 0;
   inputfilename = "hists";
   nregion = 0;
