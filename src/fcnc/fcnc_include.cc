@@ -1,15 +1,31 @@
 #include "fcnc_include.h"
-
+#include <string>
 #include <chrono>
 #include <unistd.h>
 #include <cstdlib>
 #include <thread>
 #include <sys/ioctl.h>
+using namespace std;
+void findAndReplaceAll(string & data, string toSearch, string replaceStr)
+{
+  // Get the first occurrence
+  size_t pos = data.find(toSearch);
+ 
+  // Repeat till end is reached
+  while( pos != string::npos)
+  {
+    // Replace this occurrence of Sub String
+    data.replace(pos, toSearch.size(), replaceStr);
+    // Get the next occurrence from the current position
+    pos =data.find(toSearch, pos + replaceStr.size());
+  }
+}
+ 
 
-std::vector<TString> readTovecString(TString filename){
-  std::vector<TString> v;
-  std::ifstream file(filename.Data());
-  std::string ss;
+vector<TString> readTovecString(TString filename){
+  vector<TString> v;
+  ifstream file(filename.Data());
+  string ss;
   if(!file.good()) {
     printf("file not fould %s\n", filename.Data());
     exit(0);
@@ -57,11 +73,11 @@ void Copy(TH1F* h1, TH1F* h2) {
 Float_t AtoF(const char* str) {
   Float_t num = 1.;
   // split by '*'
-  std::string Str = str;
+  string Str = str;
   for(size_t i=0,n; i <= Str.length(); i=n+1) {
     n = Str.find_first_of('*',i);
-    if (n == std::string::npos) n = Str.length();
-    std::string tmp = Str.substr(i,n-i);
+    if (n == string::npos) n = Str.length();
+    string tmp = Str.substr(i,n-i);
     num *= atof(tmp.c_str());
   }
   return num;

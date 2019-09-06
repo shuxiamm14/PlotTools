@@ -1,4 +1,5 @@
 #include "HISTFITTER.h"
+using namespace std;
 TMinuit* gM = 0;
 
 HISTFITTER::HISTFITTER(){

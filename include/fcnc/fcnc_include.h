@@ -30,7 +30,8 @@
 
 const Double_t GeV=1000;
 const Double_t PI=3.1415926536;
-using namespace std;
+
+void findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr);
 
 std::vector<TString> readTovecString(TString filename);
 
@@ -49,8 +50,8 @@ Float_t AtoF(const char* str);
 void Copy(TH1F* h1, TH1F* h2);
 template<typename T,typename D>
 TString CharAppend(T* aa, D* bb){
-  stringstream ss;
-  string str;
+  std::stringstream ss;
+  std::string str;
   ss<<aa<<bb;
   str = ss.str();
   return str;
@@ -58,8 +59,8 @@ TString CharAppend(T* aa, D* bb){
 
 template<typename T,typename D>
 TString CharAppend(T aa, D bb){
-  stringstream ss;
-  string str;
+  std::stringstream ss;
+  std::string str;
   ss<<aa<<bb;
   str = ss.str();
   return str;
@@ -68,8 +69,8 @@ TString CharAppend(T aa, D bb){
 
 template<typename T,typename D>
 TString CharAppend(T* aa, D bb){
-  stringstream ss;
-  string str;
+  std::stringstream ss;
+  std::string str;
   ss<<aa<<bb;
   str = ss.str();
   return str;
@@ -78,8 +79,8 @@ TString CharAppend(T* aa, D bb){
 
 template<typename T,typename D>
 TString CharAppend(T aa, D* bb){
-  stringstream ss;
-  string str;
+  std::stringstream ss;
+  std::string str;
   ss<<aa<<bb;
   str = ss.str();
   return str;

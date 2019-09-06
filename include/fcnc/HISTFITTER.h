@@ -12,9 +12,9 @@ public:
 	bool debug;
 	int nregion;
 
-	map<TString, TH1D*> fithists;
-	map<TString, int> iregion;
-	map<TString, TH1D*>::iterator iter;
+	std::map<TString, TH1D*> fithists;
+	std::map<TString, int> iregion;
+	std::map<TString, TH1D*>::iterator iter;
 	float *eigenval;
 	float **eigenvector;
 	TString paramname[100];

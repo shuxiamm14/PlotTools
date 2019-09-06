@@ -40,10 +40,11 @@ public:
   TString unit[50];
   TString trexdir;
   TString current_sample;
+  std::map<TString, TString> variations; //variations[sample] = variation_name
   std::vector<TString> stackorder;
   TString outputfilename;
   TString sensitivevariable;
-  std::map<TString, std::map<TString, std::vector<TH1D*> > > plot_lib;
+  std::map<TString, std::map<TString, std::map<TString, std::vector<TH1D*> > > > plot_lib; //plot_lib[sample][region][variation][var]
   std::vector<TString> regions;
   std::vector<TString> mutedregions;
   static TFile *bufferfile;
@@ -75,20 +76,21 @@ public:
     }
   }
   void show();
-
+  bool find_sample(TString sample);
   TH1D* grabbkghist(TString region, int ivar);
   TH1D* grabsighist(TString region, int ivar, TString signal="");
   TH1D* grabdatahist(TString region, int ivar);
-
+  bool add_variation(TString sample,TString variation);
   void printyield(TString region);
   double gethisterror(TH1* hist);
-  double templatesample(TString fromregion,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
+  double templatesample(TString fromregion, TString variation,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
   void write_trexinput(TString NPname = "NOMINAL", TString writeoption = "recreate");
   void overlay(TString _overlaysample);
   TH1D* grabhist(TString sample, TString region, int ivar);
+  TH1D* grabhist(TString sample, TString region, TString variation, int ivar);
   TH1D* grabhist(TString sample, TString region, TString varname);
   void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);
   //void add(int nbin_, double xlo_, double xhi_, const char* titleX_, const char* name_, float* var_, bool MeVtoGeV_, char* unit_ = "");
@@ -98,11 +100,10 @@ public:
   void add(const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
   float binwidth(int i);
   void add(const char* titleX_, const char* name_, const char* unit_ = "", int _rebin = 1);
-  void read_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile=0);
+  void read_sample(TString samplename, TString savehistname, TString NPname, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile=0);
   void plot_stack(TString outputdir);
+  void fill_hist(TString sample, TString region, TString variation);
   void fill_hist(TString sample, TString region);
-  void fill_hist(TString sample);
-  void fill_hist();
   void add_region(TString region);
   void init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
   void set_weight(Float_t* _weight){ fweight = _weight; weight_type = 1;}
