@@ -383,10 +383,10 @@ void histSaver::fill_hist(TString sample, TString region, TString variation){
     TH1D *target = grabhist(sample,region,variation,i);
     if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
     else {
-      add_variation(sample,variation);
+      if(!add_variation(sample,variation)) printf("add variation %s failed, sample %s doesnt exist\n", variation.Data(), sample.Data());
       TH1D *target = grabhist(sample,region,variation,i);
       if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
-      else printf("histogram %s doesn't exist\n", target->GetName());
+      else printf("add_variation didnt work in fill_hist\n");
     }
   }
 }
@@ -398,14 +398,11 @@ bool histSaver::find_sample(TString sample){
 
 bool histSaver::add_variation(TString sample,TString variation){
   if(!find_sample(sample)) return 0;
-  TH1D *prototype = (TH1D*) plot_lib[sample].begin()->second.begin()->second[0]->Clone();
-  for(auto reg : regions){
-    for (int i = 0; i < nvar; ++i)
-    {
-      plot_lib[sample][reg][variation].push_back((TH1D*)prototype->Clone(sample + "_" + variation + "_" + reg + name[i]));
+  for (int i = 0; i < nvar; ++i){
+    for(auto reg : regions){
+      plot_lib[sample][reg][variation].push_back( (TH1D*) plot_lib[sample][reg].begin()->second[i]->Clone(sample + "_" + variation + "_" + reg + "_" + name[i] + "_buffer"));
     }
   }
-  deletepointer(prototype);
   return 1;
 }
 
