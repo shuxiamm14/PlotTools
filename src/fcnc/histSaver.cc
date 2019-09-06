@@ -8,7 +8,6 @@
 using namespace std;
 histSaver::histSaver(TString _outputfilename) {
   outputfilename = _outputfilename;
-  outputfile = new TFile (outputfilename + ".root", "recreate");
   trexdir = "trexinputs";
   nvar = 0;
   inputfilename = "hists";
@@ -48,7 +47,9 @@ histSaver::~histSaver() {
     }
   }
   deletepointer(inputfile);
-  deletepointer(outputfile);
+  for(auto &file : outputfile)
+    deletepointer(file.second);
+  outputfile.clear();
   printf("histSaver::~histSaver() destructed\n");
 }
 
@@ -257,13 +258,13 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
 }
 
 void histSaver::init_sample(TString samplename, TString variation, TString sampleTitle, enum EColor color){
-
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root","recreate");
+  else outputfile[variation]->cd();
   current_sample = samplename;
 
   if(find_sample(samplename)) return;
   
   if(debug) printf("add new sample: %s\n", samplename.Data());
-  outputfile->cd();
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       plot_lib[samplename][region][variation].push_back(new TH1D(samplename + "_" + variation  + "_" +  region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
@@ -399,6 +400,8 @@ bool histSaver::find_sample(TString sample){
 
 bool histSaver::add_variation(TString sample,TString variation){
   if(!find_sample(sample)) return 0;
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root");
+  else outputfile[variation]->cd();
   for (int i = 0; i < nvar; ++i){
     for(auto reg : regions){
       plot_lib[sample][reg][variation].push_back( (TH1D*) plot_lib[sample][reg].begin()->second[i]->Clone(sample + "_" + variation + "_" + reg + "_" + name[i] + "_buffer"));
@@ -408,7 +411,6 @@ bool histSaver::add_variation(TString sample,TString variation){
 }
 
 void histSaver::write(){
-  printf("histSaver::write() Write to file: %s\n", outputfile->GetName());
   for(auto& sample : plot_lib){
     for(auto& region: sample.second) {
       for(auto& variation : region.second){
@@ -419,7 +421,8 @@ void histSaver::write(){
           continue;
         }
         for (int i = 0; i < nvar; ++i){
-          outputfile->cd();
+          outputfile[variation.first]->cd();
+          printf("histSaver::write() Write to file: %s\n", outputfile[variation.first]->GetName());
           //if(grabhist(iter.first,region,i)->Integral() == 0) {
           //  printf("Warning: histogram is empty: %s, %s, %d\n", iter.first.Data(),region.Data(),i);
           //}
@@ -431,8 +434,6 @@ void histSaver::write(){
     }
   }
   printf("histSaver::write() Written\n");
-  outputfile->Close();
-  deletepointer(outputfile);
 }
 
 void histSaver::write_trexinput(TString NPname, TString writeoption){
@@ -583,7 +584,7 @@ void histSaver::plot_stack(TString outputdir){
     ROC -> SetName("ROC");
     ROC -> SetTitle("ROC");
   }
-  TFile *outputfile = new TFile (outputfilename + ".root", "recreate");
+  TFile *outputrocfile = new TFile (outputfilename + "_roc.root", "recreate");
   for(auto const& region: regions) {
     bool muted = 0;
     for (auto const& mutedregion: mutedregions)
@@ -807,7 +808,7 @@ void histSaver::plot_stack(TString outputdir){
               bkgrej += ROC_bkg->GetBinContent(i)/bkgintegral;
               ROC->SetPoint(i,sigeff,bkgrej);
             }
-            outputfile->cd();
+            outputrocfile->cd();
             ROC->Write(overlaysample + "_ROC");
             ROC_sig->Write(overlaysample + "_ROC_sig");
             ROC_bkg->Write(overlaysample + "_ROC_bkg");
@@ -839,6 +840,6 @@ void histSaver::plot_stack(TString outputdir){
     }
     if(debug) printf("end loop region\n");
   }
-  outputfile->Close();
-  deletepointer(outputfile);
+  outputrocfile->Close();
+  deletepointer(outputrocfile);
 }
