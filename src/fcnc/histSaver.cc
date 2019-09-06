@@ -384,6 +384,7 @@ void histSaver::fill_hist(TString sample, TString region, TString variation){
     if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
     else {
       if(!add_variation(sample,variation)) printf("add variation %s failed, sample %s doesnt exist\n", variation.Data(), sample.Data());
+      else printf("add variation %s to sample %s.\n", variation.Data(), sample.Data());
       TH1D *target = grabhist(sample,region,variation,i);
       if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
       else printf("add_variation didnt work in fill_hist\n");
