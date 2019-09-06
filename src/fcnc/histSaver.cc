@@ -6,9 +6,8 @@
 #include "AtlasStyle.h"
 #include "AtlasLabels.h"
 using namespace std;
-TFile *histSaver::bufferfile = 0;
 histSaver::histSaver(TString _outputfilename) {
-  if(!bufferfile) bufferfile = new TFile("it_is_buffer_can_delete.root","recreate");
+  TFile *outputfile = new TFile (outputfilename + ".root", "recreate");
   trexdir = "trexinputs";
   outputfilename = _outputfilename;
   nvar = 0;
@@ -49,6 +48,7 @@ histSaver::~histSaver() {
     }
   }
   deletepointer(inputfile);
+  deletepointer(outputfile);
   printf("histSaver::~histSaver() destructed\n");
 }
 
@@ -258,7 +258,6 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
 
 void histSaver::init_sample(TString samplename, TString variation, TString sampleTitle, enum EColor color){
 
-  bufferfile->cd();
   current_sample = samplename;
 
   if(find_sample(samplename)) return;
@@ -411,7 +410,6 @@ bool histSaver::add_variation(TString sample,TString variation){
 }
 
 void histSaver::write(){
-  TFile *outputfile = new TFile (outputfilename + ".root", "recreate");
   printf("histSaver::write() Write to file: %s\n", outputfile->GetName());
   for(auto& sample : plot_lib){
     for(auto& region: sample.second) {

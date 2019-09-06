@@ -14,6 +14,7 @@ public:
   int weight_type;
   std::vector<TString> overlaysamples;
   TFile* inputfile;
+  TFile* outputfile;
   TString lumi;
   TString analysis;
   TString workflow;
