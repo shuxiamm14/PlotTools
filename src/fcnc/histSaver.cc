@@ -263,7 +263,7 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
   if(find_sample(samplename)) return;
   
   if(debug) printf("add new sample: %s\n", samplename.Data());
-  outputfile.cd();
+  outputfile->cd();
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       plot_lib[samplename][region][variation].push_back(new TH1D(samplename + "_" + variation  + "_" +  region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
