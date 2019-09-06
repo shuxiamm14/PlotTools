@@ -8,7 +8,7 @@
 using namespace std;
 histSaver::histSaver(TString _outputfilename) {
   outputfilename = _outputfilename;
-  TFile *outputfile = new TFile (outputfilename + ".root", "recreate");
+  outputfile = new TFile (outputfilename + ".root", "recreate");
   trexdir = "trexinputs";
   nvar = 0;
   inputfilename = "hists";
