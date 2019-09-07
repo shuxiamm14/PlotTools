@@ -403,7 +403,7 @@ bool histSaver::find_sample(TString sample){
 
 bool histSaver::add_variation(TString sample,TString variation){
   if(!find_sample(sample)) return 0;
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
   else outputfile[variation]->cd();
   for (int i = 0; i < nvar; ++i){
     for(auto reg : regions){
