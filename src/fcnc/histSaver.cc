@@ -269,7 +269,7 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
       TH1D *created = new TH1D(samplename + "_" + variation  + "_" +  region + "_" + name[i] + "_buffer",sampleTitle,nbin[i],xlo[i],xhi[i]);
-      created->SetDirectory(outputfile[variation]);
+      created->SetDirectory(0);
       plot_lib[samplename][region][variation].push_back(created);
       if (samplename != "data")
       {
@@ -408,7 +408,7 @@ bool histSaver::add_variation(TString sample,TString variation){
   for (int i = 0; i < nvar; ++i){
     for(auto reg : regions){
       TH1D *created = (TH1D*) plot_lib[sample][reg].begin()->second[i]->Clone(sample + "_" + variation + "_" + reg + "_" + name[i] + "_buffer");
-      created->SetDirectory(outputfile[variation]);
+      created->SetDirectory(0);
       plot_lib[sample][reg][variation].push_back(created);
     }
   }
