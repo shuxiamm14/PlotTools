@@ -238,8 +238,8 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
     for(auto &variation : iter.second[inputregion1])
     for (int i = 0; i < nvar; ++i)
     {
-      if(input1exist == 1) iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion1][variation.first][i]->Clone(variation.first+"_"+outputregion+"_"+name[i]));
-      else iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion2][variation.first][i]->Clone(variation.first+"_"+outputregion+"_"+name[i]));
+      if(input1exist == 1) iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion1][variation.first][i]->Clone(iter.first + variation.first+"_"+outputregion+"_"+name[i] + "_buffer"));
+      else iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion2][variation.first][i]->Clone(iter.first + variation.first+"_"+outputregion+"_"+name[i] + +"_buffer"));
       if(input1exist == 1 && input2exist == 1) {
         iter.second[outputregion][variation.first][i]->Add(iter.second[inputregion2][variation.first][i]);
         if(!iter.second[outputregion][variation.first][i]->Integral()) printf("merged histogram %s is empty\n", iter.second[outputregion][variation.first][i]->GetName());
@@ -267,7 +267,7 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
   if(debug) printf("add new sample: %s\n", samplename.Data());
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
-      plot_lib[samplename][region][variation].push_back(new TH1D(samplename + "_" + variation  + "_" +  region + "_" + name[i],sampleTitle,nbin[i],xlo[i],xhi[i]));
+      plot_lib[samplename][region][variation].push_back(new TH1D(samplename + "_" + variation  + "_" +  region + "_" + name[i] + "_buffer",sampleTitle,nbin[i],xlo[i],xhi[i]));
       if (samplename != "data")
       {
         plot_lib[samplename][region][variation][i]->Sumw2();
@@ -430,10 +430,10 @@ void histSaver::write(){
           writename.Remove(writename.Sizeof()-8,7); //remove "_buffer"
           variation.second[i]->Write(writename,TObject::kWriteDelete);
         }
-        outputfile[variation.first]->Close();
       }
     }
   }
+  for(auto& iter: outputfile) iter.second->Close();
   printf("histSaver::write() Written\n");
 }
 
