@@ -258,16 +258,19 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
 }
 
 void histSaver::init_sample(TString samplename, TString variation, TString sampleTitle, enum EColor color){
+
+  if(find_sample(samplename)) return;
+
   if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root","recreate");
   else outputfile[variation]->cd();
   current_sample = samplename;
-
-  if(find_sample(samplename)) return;
   
   if(debug) printf("add new sample: %s\n", samplename.Data());
   for(auto const& region: regions) {
     for (int i = 0; i < nvar; ++i){
-      plot_lib[samplename][region][variation].push_back(new TH1D(samplename + "_" + variation  + "_" +  region + "_" + name[i] + "_buffer",sampleTitle,nbin[i],xlo[i],xhi[i]));
+      TH1D *created = new TH1D(samplename + "_" + variation  + "_" +  region + "_" + name[i] + "_buffer",sampleTitle,nbin[i],xlo[i],xhi[i]);
+      created->SetDirectory(outputfile[variation]);
+      plot_lib[samplename][region][variation].push_back(created);
       if (samplename != "data")
       {
         plot_lib[samplename][region][variation][i]->Sumw2();
@@ -404,7 +407,9 @@ bool histSaver::add_variation(TString sample,TString variation){
   else outputfile[variation]->cd();
   for (int i = 0; i < nvar; ++i){
     for(auto reg : regions){
-      plot_lib[sample][reg][variation].push_back( (TH1D*) plot_lib[sample][reg].begin()->second[i]->Clone(sample + "_" + variation + "_" + reg + "_" + name[i] + "_buffer"));
+      TH1D *created = (TH1D*) plot_lib[sample][reg].begin()->second[i]->Clone(sample + "_" + variation + "_" + reg + "_" + name[i] + "_buffer");
+      created->SetDirectory(outputfile[variation]);
+      plot_lib[sample][reg][variation].push_back(created);
     }
   }
   return 1;
@@ -489,6 +494,9 @@ void histSaver::overlay(TString _overlaysample){
 }
 
 double histSaver::templatesample(TString fromregion, TString variation,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
+
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root");
+  else outputfile[variation]->cd();
   istringstream iss(formula);
   vector<string> tokens{istream_iterator<string>{iss},
     istream_iterator<string>{}};
