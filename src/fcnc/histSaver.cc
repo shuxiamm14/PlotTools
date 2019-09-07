@@ -416,29 +416,32 @@ bool histSaver::add_variation(TString sample,TString variation){
 }
 
 void histSaver::write(){
-  for(auto& sample : plot_lib){
-    for(auto& region: sample.second) {
-      for(auto& variation : region.second){
-        double tmp = variation.second[0]->Integral();
-        if(tmp == 0) continue;
-        if(tmp != tmp) {
-          printf("Warning: hist integral is nan, skip writing for %s\n", variation.second[0]->GetName());
-          continue;
-        }
-        printf("histSaver::write() Write to file: %s\n", outputfile[variation.first]->GetName());
-        outputfile[variation.first]->cd();
-        for (int i = 0; i < nvar; ++i){
-          //if(grabhist(iter.first,region,i)->Integral() == 0) {
-          //  printf("Warning: histogram is empty: %s, %s, %d\n", iter.first.Data(),region.Data(),i);
-          //}
-          TString writename = variation.second[i]->GetName();
-          writename.Remove(writename.Sizeof()-8,7); //remove "_buffer"
-          variation.second[i]->Write(writename,TObject::kWriteDelete);
+  for(auto& iter: outputfile){
+    for(auto& sample : plot_lib){
+      for(auto& region: sample.second) {
+        for(auto& variation : region.second){
+          if(variation.first != iter.first) continue;
+          double tmp = variation.second[0]->Integral();
+          if(tmp == 0) continue;
+          if(tmp != tmp) {
+            printf("Warning: hist integral is nan, skip writing for %s\n", variation.second[0]->GetName());
+            continue;
+          }
+          printf("histSaver::write() Write to file: %s\n", outputfile[variation.first]->GetName());
+          outputfile[variation.first]->cd();
+          for (int i = 0; i < nvar; ++i){
+            //if(grabhist(iter.first,region,i)->Integral() == 0) {
+            //  printf("Warning: histogram is empty: %s, %s, %d\n", iter.first.Data(),region.Data(),i);
+            //}
+            TString writename = variation.second[i]->GetName();
+            writename.Remove(writename.Sizeof()-8,7); //remove "_buffer"
+            variation.second[i]->Write(writename,TObject::kWriteDelete);
+          }
         }
       }
     }
+    iter.second->Close();
   }
-  for(auto& iter: outputfile) iter.second->Close();
   printf("histSaver::write() Written\n");
 }
 
