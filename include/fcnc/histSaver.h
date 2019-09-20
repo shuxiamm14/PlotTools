@@ -23,6 +23,7 @@ public:
   int histcount;
   TString this_region;
   TString read_path;
+  TString createdNP;
   int debug;
   Int_t nbin[50];
   Float_t xlo[50];

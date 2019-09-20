@@ -258,6 +258,7 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
 }
 
 void histSaver::init_sample(TString samplename, TString variation, TString sampleTitle, enum EColor color){
+  createdNP = variation;
 
   if(find_sample(samplename)) return;
 
@@ -388,7 +389,6 @@ void histSaver::fill_hist(TString sample, TString region, TString variation){
     if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
     else {
       if(!add_variation(sample,variation)) printf("add variation %s failed, sample %s doesnt exist\n", variation.Data(), sample.Data());
-      else printf("add variation %s to sample %s.\n", variation.Data(), sample.Data());
       TH1D *target = grabhist(sample,region,variation,i);
       if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
       else printf("add_variation didnt work in fill_hist\n");
@@ -407,7 +407,17 @@ bool histSaver::add_variation(TString sample,TString variation){
   else outputfile[variation]->cd();
   for (int i = 0; i < nvar; ++i){
     for(auto reg : regions){
-      TH1D *created = (TH1D*) plot_lib[sample][reg].begin()->second[i]->Clone(sample + "_" + variation + "_" + reg + "_" + name[i] + "_buffer");
+      if(plot_lib[sample][reg].begin() == plot_lib[sample][reg].end()) {
+        printf("histSaver::add_variation() ERROR: No variation defined yet, cant add new variation\n");
+        exit(0);
+      }
+      TH1D *created = (TH1D*) plot_lib[sample][reg][createdNP].at(i);
+      if(!created){
+        printf("histSaver::add_variation() ERROR: hist doesn't exist: plot_lib[%s][%s][%s][%d]\n",sample.Data(), reg.Data(), plot_lib[sample][reg].begin()->first.Data(),i);
+        exit(0);
+      }
+      created = (TH1D*) created->Clone(sample + "_" + variation + "_" + reg + "_" + name[i] + "_buffer");
+      created->Reset();
       created->SetDirectory(0);
       plot_lib[sample][reg][variation].push_back(created);
     }
@@ -427,7 +437,6 @@ void histSaver::write(){
             printf("Warning: hist integral is nan, skip writing for %s\n", variation.second[0]->GetName());
             continue;
           }
-          printf("histSaver::write() Write to file: %s\n", outputfile[variation.first]->GetName());
           outputfile[variation.first]->cd();
           for (int i = 0; i < nvar; ++i){
             //if(grabhist(iter.first,region,i)->Integral() == 0) {
