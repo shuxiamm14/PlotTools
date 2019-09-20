@@ -507,7 +507,7 @@ void histSaver::overlay(TString _overlaysample){
 
 double histSaver::templatesample(TString fromregion, TString variation,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
 
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
   else outputfile[variation]->cd();
   istringstream iss(formula);
   vector<string> tokens{istream_iterator<string>{iss},
