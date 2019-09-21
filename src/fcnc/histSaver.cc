@@ -11,6 +11,7 @@ histSaver::histSaver(TString _outputfilename) {
   trexdir = "trexinputs";
   nvar = 0;
   inputfilename = "hists";
+  nominalfilename = "";
   nregion = 0;
   blinding = 0;
   fweight = NULL;
@@ -291,6 +292,7 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
 void histSaver::read_sample(TString samplename, TString savehistname, TString variation, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile){
 
   if(!inputfile) inputfile = new TFile(inputfilename + ".root", "read");
+  if(!inputfile) inputfile = new TFile(nominalfilename + ".root", "read");
   TFile *readfromfile;
 
   if(_inputfile) readfromfile = _inputfile;
@@ -358,6 +360,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
         plot_lib[samplename][region][variation][i]->SetLineWidth(1);
         plot_lib[samplename][region][variation][i]->SetLineColor(kBlack);
         plot_lib[samplename][region][variation][i]->SetMarkerSize(0);
+        plot_lib[samplename][region][variation][i]->SetDirectory(0);
         if(histcount == 1){
           nbin[i] = plot_lib[samplename][region][variation][i]->GetNbinsX();
           xlo[i] =  plot_lib[samplename][region][variation][i]->GetXaxis()->GetXmin();

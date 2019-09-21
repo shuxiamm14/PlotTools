@@ -20,6 +20,7 @@ public:
   TString workflow;
   bool fromntuple;
   bool doROC;
+  TString nominalfilename;
   int histcount;
   TString this_region;
   TString read_path;
