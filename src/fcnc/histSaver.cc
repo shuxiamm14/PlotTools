@@ -473,7 +473,7 @@ void histSaver::write_trexinput(TString NPname, TString writeoption){
         TString filename = trexdir + "/" + name[i] + "/" + region + "/" + iter.first + ".root";
         TFile outputfile(filename, writeoption);
         if(debug) printf("Writing to file: %s, histoname: %s\n", filename.Data(), NPname.Data());
-        TH1D *target = grabhist(iter.first,region,i);
+        TH1D *target = grabhist(iter.first,region,NPname,i);
         if(target) {
           target->Write(NPname,TObject::kWriteDelete);
           if(!target->Integral()) printf("Warinig: plot_lib[%s][%s][%d] is empty\n", iter.first.Data(),region.Data(),i);
