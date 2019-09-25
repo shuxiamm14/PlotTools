@@ -47,7 +47,9 @@ histSaver::~histSaver() {
       }
     }
   }
+  std::cout<<"plot_lib destructed"<<std::endl;
   deletepointer(inputfile);
+  std::cout<<"inputfile destructed"<<std::endl;
   for(auto &file : outputfile)
     deletepointer(file.second);
   outputfile.clear();
@@ -291,12 +293,14 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
 
 void histSaver::read_sample(TString samplename, TString savehistname, TString variation, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile){
 
-  if(!inputfile) inputfile = new TFile(inputfilename + ".root", "read");
-  if(!inputfile) inputfile = new TFile(nominalfilename + ".root", "read");
   TFile *readfromfile;
 
   if(_inputfile) readfromfile = _inputfile;
-  else readfromfile = inputfile;
+  else{
+    if(!inputfile) inputfile = new TFile(inputfilename + ".root", "read");
+    if(!inputfile) inputfile = new TFile(nominalfilename + ".root", "read");
+    readfromfile = inputfile;
+  }
 
   if (samplename == "data") dataref = 1;
   for(auto const& region: regions) {
