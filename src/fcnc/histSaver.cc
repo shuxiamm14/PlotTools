@@ -304,15 +304,15 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     {
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
-    if(!(TH1D*)(readfromfile->Get(savehistname + "_" + region + "_" + variation + "_" + name[0]))) {
-      if(debug) printf("histogram name not found: %s\n", (savehistname + "_" + region + "_" + variation + "_" + name[0]).Data());
+    if(!(TH1D*)(readfromfile->Get(savehistname + "_" + variation + "_" + region + "_" + name[0]))) {
+      if(debug) printf("histogram name not found: %s\n", (savehistname + "_" + variation + "_" + region + "_" + name[0]).Data());
       continue;
     }
     if (plot_lib[samplename].find(region) != plot_lib[samplename].end())
     {
       for (int i = 0; i < nvar; ++i)
       {
-        TString histname = savehistname + "_" + region + "_" + variation + "_" + name[i];
+        TString histname = savehistname + "_" + variation + "_" + region + "_" + name[i];
         if(!(TH1D*)(readfromfile->Get(histname))) {
           if(debug) printf("histogram name not found: %s\n", (histname).Data());
           printf("plot_lib[%s][%s][%s][%d]\n", samplename.Data(), region.Data(),variation.Data(), i);
@@ -335,7 +335,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
       ++histcount;
       for (int i = 0; i < nvar; ++i)
       {
-        TString histname = savehistname + "_" + region + "_" + variation + "_" + name[i];
+        TString histname = savehistname + "_" + variation + "_" + region + "_" + name[i];
         if(!(TH1D*)(readfromfile->Get(histname))) {
           if(debug) printf("histogram name not found: %s\n", (histname).Data());
           printf("plot_lib[%s][%s][%s][%d]\n", samplename.Data(), region.Data(),variation.Data(), i);
