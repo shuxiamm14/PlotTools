@@ -34,22 +34,22 @@ histSaver::histSaver(TString _outputfilename) {
 }
 
 histSaver::~histSaver() {
-  printf("histSaver::~histSaver()\n");
+  if(debug) printf("histSaver::~histSaver()\n");
   for(auto& samp : plot_lib){
     for(auto &reg: samp.second) {
       for(auto &variation: reg.second) {
         for (int i = 0; i < nvar; ++i){
           TH1D *target = variation.second[i];
-          cout<<"\rdeleting histogram:"<<target->GetName()<<std::endl<<std::flush;
+          if(debug) cout<<"\rdeleting histogram:"<<target->GetName()<<std::endl<<std::flush;
             deletepointer(target);
-          cout<<"\rdone deleting histogram"<<std::endl<<std::flush;
+          if(debug) cout<<"\rdone deleting histogram"<<std::endl<<std::flush;
         }
       }
     }
   }
-  std::cout<<"plot_lib destructed"<<std::endl;
+  if(debug) std::cout<<"plot_lib destructed"<<std::endl;
   deletepointer(inputfile);
-  std::cout<<"inputfile destructed"<<std::endl;
+  if(debug) std::cout<<"inputfile destructed"<<std::endl;
   for(auto &file : outputfile)
     deletepointer(file.second);
   outputfile.clear();
@@ -598,10 +598,10 @@ void histSaver::SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _wo
   analysis = _analysis;
   workflow = _workflow;
 }
-void histSaver::plot_stack(TString outputdir){
+void histSaver::plot_stack(TString NPname, TString outdir){
   SetAtlasStyle();
   TGaxis::SetMaxDigits(3);
-  gSystem->mkdir(outputdir);
+  gSystem->mkdir("plots_" + outdir);
   TCanvas cv("cv","cv",600,600);
   TGraph* ROC;
   TH1D *ROC_sig = 0;
@@ -621,9 +621,9 @@ void histSaver::plot_stack(TString outputdir){
         muted = 1;
     }
     if(muted) continue;
-    gSystem->mkdir(outputdir + "/" + region);
+    gSystem->mkdir("plots_" + outdir + "/" + region);
     for (int i = 0; i < nvar; ++i){
-      cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf[");
+      cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf[");
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
       TH1D hmc("hmc","hmc",nbin[i]/rebin[i],xlo[i],xhi[i]);
@@ -648,7 +648,7 @@ void histSaver::plot_stack(TString outputdir){
         if(debug) {
           printf("plot_lib[%s][%s][%d]\n", iter.Data(), region.Data(), i);
         }
-        if(grabhist(iter,region,i)) buffer.push_back((TH1D*)grabhist(iter,region,i)->Clone());
+        if(grabhist(iter,region,NPname,i)) buffer.push_back((TH1D*)grabhist(iter,region,NPname,i)->Clone());
         else continue;
         if(doROC && sensitivevariable == name[i])
         {
@@ -669,7 +669,7 @@ void histSaver::plot_stack(TString outputdir){
       TH1D * datahist;
       if(debug) printf("set data\n");
       if (dataref) {
-        if(grabhist("data",region,i)) datahist = (TH1D*)grabhist("data",region,i)->Clone();
+        if(grabhist("data",region,"NOMINAL",i)) datahist = (TH1D*)grabhist("data",region,"NOMINAL",i)->Clone();
         datahist->Rebin(rebin[i]);
         if(datahist->Integral() == 0) printf("Warning: data hist is empty\n");
         lg1->AddEntry(datahist,"data","LP");
@@ -721,7 +721,7 @@ void histSaver::plot_stack(TString outputdir){
 //===============================blinded data===============================
       if(blinding && dataref){
         for(auto overlaysample: overlaysamples){
-          TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,i);
+          TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
           if(!histoverlaytmp){
             printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
             continue;
@@ -794,7 +794,7 @@ void histSaver::plot_stack(TString outputdir){
 
       padhi->cd();
       if(!overlaysamples.size()) {
-        cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf");
+        cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf");
       }
       if(sensitivevariable == name[i]) printf("region %s, background yield: %4.2f\n", region.Data(), hmc.Integral());
 
@@ -802,7 +802,7 @@ void histSaver::plot_stack(TString outputdir){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
         if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
-        if(grabhist(overlaysample,region,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,i)->Clone();
+        if(grabhist(overlaysample,region,NPname,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,NPname,i)->Clone();
         if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
         if(!histoverlay) continue;
         if(rebin[i] != 1) histoverlay->Rebin(rebin[i]);
@@ -852,7 +852,7 @@ void histSaver::plot_stack(TString outputdir){
         lgsig->SetBorderSize(0);
         lgsig->Draw();
         padhi->Update();
-        cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf");
+        cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf");
         deletepointer(histoverlay);
         deletepointer(lgsig);
       }
@@ -863,7 +863,7 @@ void histSaver::plot_stack(TString outputdir){
       deletepointer(datahist);
       for(auto &iter : buffer) deletepointer(iter);
       if(debug) printf("end region %s\n",region.Data());
-      cv.SaveAs(outputdir + "/" + region + "/" + name[i] + ".pdf]");
+      cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf]");
       cv.Clear();
     }
     if(debug) printf("end loop region\n");

@@ -104,7 +104,7 @@ public:
   float binwidth(int i);
   void add(const char* titleX_, const char* name_, const char* unit_ = "", int _rebin = 1);
   void read_sample(TString samplename, TString savehistname, TString NPname, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile=0);
-  void plot_stack(TString outputdir);
+  void plot_stack(TString NPname,TString outputdir);
   void fill_hist(TString sample, TString region, TString variation);
   void fill_hist(TString sample, TString region);
   void add_region(TString region);
