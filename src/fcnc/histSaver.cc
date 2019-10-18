@@ -241,8 +241,8 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
     for(auto &variation : iter.second[inputregion1])
     for (int i = 0; i < nvar; ++i)
     {
-      if(input1exist == 1) iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion1][variation.first][i]->Clone(iter.first + variation.first+"_"+outputregion+"_"+name[i] + "_buffer"));
-      else iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion2][variation.first][i]->Clone(iter.first + variation.first+"_"+outputregion+"_"+name[i] + +"_buffer"));
+      if(input1exist == 1) iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion1][variation.first][i]->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+name[i] + "_buffer"));
+      else iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion2][variation.first][i]->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+name[i] + +"_buffer"));
       if(input1exist == 1 && input2exist == 1) {
         iter.second[outputregion][variation.first][i]->Add(iter.second[inputregion2][variation.first][i]);
         if(!iter.second[outputregion][variation.first][i]->Integral()) printf("merged histogram %s is empty\n", iter.second[outputregion][variation.first][i]->GetName());
