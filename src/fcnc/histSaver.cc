@@ -220,6 +220,9 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
   bool input2exist = 1;
 
   for(auto& iter:plot_lib ){
+    if(debug) printf("=====================start merging sample %s=====================\n", iter.first.Data());
+    input1exist = 1
+    input2exist = 1
     if(iter.second.find(inputregion1) == iter.second.end()){
       if(debug) printf("histSaver::merge_regions\t inputregion1: %s not found for sample %s\n",inputregion1.Data(), iter.first.Data());
       input1exist = 0;
