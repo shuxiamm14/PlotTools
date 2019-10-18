@@ -247,7 +247,7 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
         iter.second[outputregion][variation.first][i]->Add(iter.second[inputregion2][variation.first][i]);
         if(!iter.second[outputregion][variation.first][i]->Integral()) printf("merged histogram %s is empty\n", iter.second[outputregion][variation.first][i]->GetName());
         if(debug)
-          printf("add %s to %s as %s\n", iter.second[inputregion2][variation.first][i]->GetName(),iter.second[inputregion1][variation.first][i]->GetName(),(variation.first+"_"+outputregion+"_"+name[i]).Data());
+          printf("add %s to %s as %s\n", iter.second[inputregion2][variation.first][i]->GetName(),iter.second[inputregion1][variation.first][i]->GetName(),iter.second[outputregion][variation.first][i]->GetName());
       }
     }
   }
