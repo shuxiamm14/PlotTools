@@ -406,6 +406,11 @@ void histSaver::fill_hist(TString sample, TString region, TString variation){
   }
 }
 
+void histSaver::fill_hist(TString sample, TString region){
+  fill_hist(sample, region, "NOMINAL");
+}
+
+
 bool histSaver::find_sample(TString sample){
   if(plot_lib.find(sample) == plot_lib.end()) return 0;
   return 1;
