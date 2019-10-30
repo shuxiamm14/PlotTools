@@ -465,7 +465,7 @@ void histSaver::write(){
       }
     }
     iter.second->Close();
-    printf("histSaver::write() Written to file %s\n", iter.first.Data());
+    printf("histSaver::write() Written to file %s\n", iter.second->GetName());
   }
 }
 
