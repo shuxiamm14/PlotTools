@@ -304,7 +304,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     if(!inputfile) inputfile = new TFile(nominalfilename + ".root", "read");
     readfromfile = inputfile;
   }
-
+  if (debug == 1) printf("read from file: %s\n", readfromfile->GetName());
   if (samplename == "data") dataref = 1;
   for(auto const& region: regions) {
     if (debug == 1)
