@@ -2,7 +2,6 @@
 #include "fcnc_include.h"
 #include "TGaxis.h"
 #include "TGraph.h"
-#include "observable.h"
 #include "AtlasStyle.h"
 #include "AtlasLabels.h"
 using namespace std;
@@ -60,7 +59,7 @@ void histSaver::printyield(TString region){
   printf("Print Yeild: %s\n", region.Data());
   double er;
   for(auto iter: plot_lib){
-    TH1D* target = grabhist(iter.first,region,0);
+    TH1D* target = grabhist_int(iter.first,region,0,0);
     if(target){
       printf("%s: %4.3f \\pm %4.3f\n", iter.first.Data(), target->IntegralAndError(1,target->GetNbinsX(), er), er);
     }else{
@@ -69,11 +68,23 @@ void histSaver::printyield(TString region){
   }
 }
 
-TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
-  return grabhist(sample, region, "NOMINAL", ivar);
+TH1D* histSaver::grabhist_int(TString sample, TString region, int ivar, bool vital){
+  return grabhist(sample, region, "NOMINAL", ivar, vital);
 }
 
-TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int ivar){
+TH1D* histSaver::grabhist(TString sample, TString region, TString variation, TString varname, bool vital){
+  int ivar = -1;
+  for (int i = 0; i < nvar; ++i)
+  {
+    if(varname == name[i]){
+      ivar = i;
+      break;
+    }
+  }
+  return grabhist(sample, region, variation, ivar, vital);
+}
+
+TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int ivar, bool vital){
   if(!find_sample(sample)){
     if(debug) {
       //show();
@@ -92,11 +103,17 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int
     if(debug) show();
     return 0;
   }    
-  if(!plot_lib[sample][region][variation][ivar]) if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
+  if(!plot_lib[sample][region][variation][ivar]) {
+    if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
+    if(vital) {
+      printf("histSaver:grabhist  ERROR: empty vital histogram%s\n", name[ivar].Data());
+      exit(0);
+    }
+  }
   return plot_lib[sample][region][variation][ivar];
 }
 
-TH1D* histSaver::grabhist(TString sample, TString region, TString varname){
+TH1D* histSaver::grabhist(TString sample, TString region, TString varname, bool vital){
   int ivar = -1;
   for (int i = 0; i < nvar; ++i)
   {
@@ -105,7 +122,7 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString varname){
       break;
     }
   }
-  return grabhist(sample, region, ivar);
+  return grabhist(sample, region, ivar, vital);
 }
 
 TH1D* histSaver::grabbkghist(TString region, int ivar){
@@ -292,6 +309,90 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
   if (samplename == "data") dataref = 1;
 
   if(debug) printf("finished initializing %s\n", samplename.Data() );
+}
+
+vector<observable> histSaver::scale_to_data(TString scaleregion, TString variation, string formula, TString scaleVariable, double* slices, int nslice){
+
+  int ivar = 0;
+  for (; ivar < nvar; ++ivar)
+  {
+    if(name[ivar] == scaleVariable) break;
+  }
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  else outputfile[variation]->cd();
+  istringstream iss(formula);
+  vector<string> tokens{istream_iterator<string>{iss},
+    istream_iterator<string>{}};
+  if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
+  vector<observable> scalefrom;
+  vector<observable> scaleto;
+  for(int i = 0 ; i < nslice ; i++)
+    scalefrom.push_back(observable(0,0));
+  scaleto = scalefrom;
+  for(auto &sample: plot_lib){
+    auto iter = find(tokens.begin(),tokens.end(), sample.first.Data());
+    TH1D *target = grabhist(*iter,scaleregion,variation,scaleVariable);
+    int islice = -1;
+    if(target){
+      if(iter != tokens.end())
+      {
+        double numb = 0;
+        try{
+          numb = stof(*(iter-1));
+        } 
+        catch(const std::invalid_argument& e){
+          printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
+          exit(1);
+        }
+        
+        if(target->GetBinLowEdge(0) > slices[0]) {
+          printf("WARNING: slice 1 (%f, %f) is lower than the low edge of the histogram %f, please check variable %s\n", slices[0], slices[1], target->GetBinLowEdge(0), scaleVariable.Data());
+        }
+        for (int i = 1; i <= nbin[ivar]; ++i)
+        {
+          if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
+          if(islice == nslice) break;
+          if(islice>=0)
+            scalefrom[islice] += observable(target->GetBinContent(i),target->GetBinError(i))*numb;
+        }
+      }else{
+        for (int i = 1; i <= nbin[ivar]; ++i)
+        {
+          if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
+          if(islice == nslice) break;
+          if(islice>=0){
+            if(sample.first == "data") 
+              scaleto[islice] += observable(target->GetBinContent(i),target->GetBinError(i));
+            else scaleto[islice] -= observable(target->GetBinContent(i),target->GetBinError(i));
+          }
+        }
+      }
+    }
+  }
+    
+  vector<observable> scalefactor;
+  for (int i = 0; i < nslice; ++i)
+  {
+    scalefactor.push_back(scaleto[i]/scalefrom[i]);
+  }
+  printf("scale variable %s in %d slices:\n", scaleVariable.Data(), nslice);
+  for (int i = 0; i < nslice; ++i)
+    printf("(%f, %f): %f +/- %f to %f +/- %f, ratio: %f +/- %f\n",slices[i], slices[i+1],scalefrom[i].nominal,scalefrom[i].error,scaleto[i].nominal,scaleto[i].error,scalefactor[i].nominal,scalefactor[i].error);
+  for (int i = 0; i < tokens.size(); ++i){
+    if(i%2) continue;
+      int islice = -1;
+      TH1D *target = grabhist(tokens[i],scaleregion,variation,scaleVariable);
+      for (int i = 1; i <= nbin[ivar]; ++i)
+      {
+        if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
+        if(islice == nslice) break;
+        if(islice>=0){
+          target->Scale(scalefactor[islice].nominal);
+        }
+      }
+  }
+
+  return scalefactor;
 }
 
 void histSaver::read_sample(TString samplename, TString savehistname, TString variation, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile){

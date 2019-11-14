@@ -4,6 +4,7 @@
 #include <map>
 #include "TH1D.h"
 #include "TFile.h"
+#include "observable.h"
 class histSaver{
 public:
   TString inputfilename;
@@ -87,14 +88,16 @@ public:
   void printyield(TString region);
   double gethisterror(TH1* hist);
   double templatesample(TString fromregion, TString variation,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
+  std::vector<observable> scale_to_data(TString scaleregion, TString variation, std::string formula, TString scaleVariable, double* slices, int nslice);
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
   void write_trexinput(TString NPname = "NOMINAL", TString writeoption = "recreate");
   void overlay(TString _overlaysample);
-  TH1D* grabhist(TString sample, TString region, int ivar);
-  TH1D* grabhist(TString sample, TString region, TString variation, int ivar);
-  TH1D* grabhist(TString sample, TString region, TString varname);
+  TH1D* grabhist_int(TString sample, TString region, int ivar, bool vital = 0);
+  TH1D* grabhist(TString sample, TString region, TString variation, int ivar, bool vital = 0);
+  TH1D* grabhist(TString sample, TString region, TString variation, TString varname, bool vital = 0);
+  TH1D* grabhist(TString sample, TString region, TString varname, bool vital = 0);
   void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);
   //void add(int nbin_, double xlo_, double xhi_, const char* titleX_, const char* name_, float* var_, bool MeVtoGeV_, char* unit_ = "");
   Float_t getVal(Int_t i);

@@ -1,5 +1,6 @@
+#ifndef OBSERVABLE
+#define OBSERVABLE 1
 #include <iostream> 
-  
 class observable { 
 public: 
     double nominal, error; 
@@ -10,8 +11,8 @@ public:
 	observable operator = (observable const &obj);
 	observable operator + (observable const &obj);
 	observable operator - (observable const &obj);
-	void operator += (observable const &obj);
-	void operator -= (observable const &obj);
+	observable operator += (observable const &obj);
+	observable operator -= (observable const &obj);
 	observable operator * (observable const &obj);
 	observable operator / (observable const &obj);
 	observable operator + (double aa);
@@ -20,3 +21,4 @@ public:
 	observable operator / (double aa);
 
 };
+#endif
