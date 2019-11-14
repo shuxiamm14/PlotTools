@@ -2,7 +2,6 @@
 #include "fcnc_include.h"
 #include "TGaxis.h"
 #include "TGraph.h"
-#include "observable.h"
 #include "AtlasStyle.h"
 #include "AtlasLabels.h"
 using namespace std;
@@ -60,7 +59,7 @@ void histSaver::printyield(TString region){
   printf("Print Yeild: %s\n", region.Data());
   double er;
   for(auto iter: plot_lib){
-    TH1D* target = grabhist(iter.first,region,0);
+    TH1D* target = grabhist_int(iter.first,region,0,0);
     if(target){
       printf("%s: %4.3f \\pm %4.3f\n", iter.first.Data(), target->IntegralAndError(1,target->GetNbinsX(), er), er);
     }else{
@@ -69,11 +68,23 @@ void histSaver::printyield(TString region){
   }
 }
 
-TH1D* histSaver::grabhist(TString sample, TString region, int ivar){
-  return grabhist(sample, region, "NOMINAL", ivar);
+TH1D* histSaver::grabhist_int(TString sample, TString region, int ivar, bool vital){
+  return grabhist(sample, region, "NOMINAL", ivar, vital);
 }
 
-TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int ivar){
+TH1D* histSaver::grabhist(TString sample, TString region, TString variation, TString varname, bool vital){
+  int ivar = -1;
+  for (int i = 0; i < nvar; ++i)
+  {
+    if(varname == name[i]){
+      ivar = i;
+      break;
+    }
+  }
+  return grabhist(sample, region, variation, ivar, vital);
+}
+
+TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int ivar, bool vital){
   if(!find_sample(sample)){
     if(debug) {
       //show();
@@ -92,11 +103,17 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int
     if(debug) show();
     return 0;
   }    
-  if(!plot_lib[sample][region][variation][ivar]) if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
+  if(!plot_lib[sample][region][variation][ivar]) {
+    if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
+    if(vital) {
+      printf("histSaver:grabhist  ERROR: empty vital histogram%s\n", name[ivar].Data());
+      exit(0);
+    }
+  }
   return plot_lib[sample][region][variation][ivar];
 }
 
-TH1D* histSaver::grabhist(TString sample, TString region, TString varname){
+TH1D* histSaver::grabhist(TString sample, TString region, TString varname, bool vital){
   int ivar = -1;
   for (int i = 0; i < nvar; ++i)
   {
@@ -105,7 +122,7 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString varname){
       break;
     }
   }
-  return grabhist(sample, region, ivar);
+  return grabhist(sample, region, ivar, vital);
 }
 
 TH1D* histSaver::grabbkghist(TString region, int ivar){
@@ -220,6 +237,9 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
   bool input2exist = 1;
 
   for(auto& iter:plot_lib ){
+    if(debug) printf("=====================start merging sample %s=====================\n", iter.first.Data());
+    input1exist = 1;
+    input2exist = 1;
     if(iter.second.find(inputregion1) == iter.second.end()){
       if(debug) printf("histSaver::merge_regions\t inputregion1: %s not found for sample %s\n",inputregion1.Data(), iter.first.Data());
       input1exist = 0;
@@ -355,7 +375,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   {
     scalefactor.push_back(scaleto[i]/scalefrom[i]);
   }
-  printf("scale variable %s in %d slices:\n", scaleVariable.Data(), nslice);
+  printf("region %s, scale variable %s in %d slices:\n", scaleregion.Data(), scaleVariable.Data(), nslice);
   for (int i = 0; i < nslice; ++i)
     printf("(%f, %f): %f +/- %f to %f +/- %f, ratio: %f +/- %f\n",slices[i], slices[i+1],scalefrom[i].nominal,scalefrom[i].error,scaleto[i].nominal,scaleto[i].error,scalefactor[i].nominal,scalefactor[i].error);
   for (int i = 0; i < tokens.size(); ++i){
@@ -386,7 +406,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     if(!inputfile) inputfile = new TFile(nominalfilename + ".root", "read");
     readfromfile = inputfile;
   }
-
+  if (debug == 1) printf("read from file: %s\n", readfromfile->GetName());
   if (samplename == "data") dataref = 1;
   for(auto const& region: regions) {
     if (debug == 1)
@@ -488,6 +508,11 @@ void histSaver::fill_hist(TString sample, TString region, TString variation){
   }
 }
 
+void histSaver::fill_hist(TString sample, TString region){
+  fill_hist(sample, region, "NOMINAL");
+}
+
+
 bool histSaver::find_sample(TString sample){
   if(plot_lib.find(sample) == plot_lib.end()) return 0;
   return 1;
@@ -542,7 +567,7 @@ void histSaver::write(){
       }
     }
     iter.second->Close();
-    printf("histSaver::write() Written to file %s\n", iter.first.Data());
+    printf("histSaver::write() Written to file %s\n", iter.second->GetName());
   }
 }
 
