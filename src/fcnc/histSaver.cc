@@ -291,6 +291,91 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
   if(debug) printf("finished initializing %s\n", samplename.Data() );
 }
 
+vector<observable> histSaver::scale_to_data(TString scaleregion, TString variation, string formula, TString scaleVariable, double* slices, int nslice){
+
+  int ivar = 0;
+  for (; ivar < nvar; ++ivar)
+  {
+    if(name[ivar] == scaleVariable) break;
+  }
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  else outputfile[variation]->cd();
+  istringstream iss(formula);
+  vector<string> tokens{istream_iterator<string>{iss},
+    istream_iterator<string>{}};
+  if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
+  vector<observable> scalefrom;
+  vector<observable> scaleto;
+  for(int i = 0 ; i < nslice ; i++)
+    scalefrom.push_back(observable(0,0));
+  scaleto = scalefrom;
+  for(auto &sample: plot_lib){
+    TH1D *target = grabhist(sample.first,scaleregion,variation,scaleVariable);
+    int islice = -1;
+    if(target){
+      auto iter = find(tokens.begin(),tokens.end(), sample.first.Data());
+      if(iter != tokens.end())
+      {
+        double numb = 0;
+        try{
+          numb = stof(*(iter-1));
+        } 
+        catch(const std::invalid_argument& e){
+          printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
+          exit(1);
+        }
+        
+        if(target->GetBinLowEdge(0) > slices[0]) {
+          printf("WARNING: slice 1 (%f, %f) is lower than the low edge of the histogram %f, please check variable %s\n", slices[0], slices[1], target->GetBinLowEdge(0), scaleVariable.Data());
+        }
+        for (int i = 1; i <= nbin[ivar]; ++i)
+        {
+          if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
+          if(islice == nslice) break;
+          if(islice>=0)
+            scalefrom[islice] += observable(target->GetBinContent(i),target->GetBinError(i))*numb;
+        }
+      }else{
+        for (int i = 1; i <= nbin[ivar]; ++i)
+        {
+          if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
+          if(islice == nslice) break;
+          if(islice>=0){
+            if(sample.first == "data") 
+              scaleto[islice] += observable(target->GetBinContent(i),target->GetBinError(i));
+            else scaleto[islice] -= observable(target->GetBinContent(i),target->GetBinError(i));
+          }
+        }
+      }
+    }
+  }
+    
+  vector<observable> scalefactor;
+  for (int i = 0; i < nslice; ++i)
+  {
+    scalefactor.push_back(scaleto[i]/scalefrom[i]);
+  }
+  printf("scale variable %s in %d slices:\n", scaleVariable.Data(), nslice);
+  for (int i = 0; i < nslice; ++i)
+    printf("(%f, %f): %f +/- %f to %f +/- %f, ratio: %f +/- %f\n",slices[i], slices[i+1],scalefrom[i].nominal,scalefrom[i].error,scaleto[i].nominal,scaleto[i].error,scalefactor[i].nominal,scalefactor[i].error);
+  for (int i = 0; i < tokens.size(); ++i){
+    if(i%2) continue;
+      int islice = -1;
+      TH1D *target = grabhist(tokens[i],scaleregion,variation,scaleVariable);
+      if(!target) continue;
+      for (int i = 1; i <= nbin[ivar]; ++i)
+      {
+        if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
+        if(islice == nslice) break;
+        if(islice>=0){
+          target->Scale(scalefactor[islice].nominal);
+        }
+      }
+  }
+
+  return scalefactor;
+}
+
 void histSaver::read_sample(TString samplename, TString savehistname, TString variation, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile){
 
   TFile *readfromfile;
