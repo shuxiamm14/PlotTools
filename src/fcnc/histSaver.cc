@@ -375,7 +375,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   {
     scalefactor.push_back(scaleto[i]/scalefrom[i]);
   }
-  printf("scale variable %s in %d slices:\n", scaleVariable.Data(), nslice);
+  printf("region %s, scale variable %s in %d slices:\n", scaleregion.Data(), scaleVariable.Data(), nslice);
   for (int i = 0; i < nslice; ++i)
     printf("(%f, %f): %f +/- %f to %f +/- %f, ratio: %f +/- %f\n",slices[i], slices[i+1],scalefrom[i].nominal,scalefrom[i].error,scaleto[i].nominal,scaleto[i].error,scalefactor[i].nominal,scalefactor[i].error);
   for (int i = 0; i < tokens.size(); ++i){
