@@ -330,10 +330,10 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
     scalefrom.push_back(observable(0,0));
   scaleto = scalefrom;
   for(auto &sample: plot_lib){
-    auto iter = find(tokens.begin(),tokens.end(), sample.first.Data());
-    TH1D *target = grabhist(*iter,scaleregion,variation,scaleVariable);
+    TH1D *target = grabhist(sample.first,scaleregion,variation,scaleVariable);
     int islice = -1;
     if(target){
+      auto iter = find(tokens.begin(),tokens.end(), sample.first.Data());
       if(iter != tokens.end())
       {
         double numb = 0;
@@ -382,6 +382,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
     if(i%2) continue;
       int islice = -1;
       TH1D *target = grabhist(tokens[i],scaleregion,variation,scaleVariable);
+      if(!target) continue;
       for (int i = 1; i <= nbin[ivar]; ++i)
       {
         if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
