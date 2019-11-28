@@ -564,6 +564,7 @@ void histSaver::write(){
             //}
             TString writename = variation.second[i]->GetName();
             writename.Remove(writename.Sizeof()-8,7); //remove "_buffer"
+            printf("write histogram: %s\n", writename.Data());
             variation.second[i]->Write(writename,TObject::kWriteDelete);
           }
         }
@@ -637,7 +638,7 @@ double histSaver::templatesample(TString fromregion, TString variation,string fo
   observable scaleto(0,0);
   for (int ivar = 0; ivar < nvar; ++ivar)
   {
-    newvec.push_back((TH1D*)grabhist(tokens[1],fromregion,variation,ivar)->Clone(newsamplename+"_"+toregion+name[ivar]));
+    newvec.push_back((TH1D*)grabhist(tokens[1],fromregion, tokens[1] == "data" ? "NOMINAL" : variation,ivar)->Clone(newsamplename+"_"+toregion+name[ivar]));
     newvec[ivar]->Reset();
     newvec[ivar]->SetNameTitle(newsamplename,newsampletitle);
     newvec[ivar]->SetFillColor(color);
@@ -653,15 +654,15 @@ double histSaver::templatesample(TString fromregion, TString variation,string fo
       printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 real -1 zll ...", formula.c_str());
       exit(1);
     }
-    if(grabhist(tokens[icompon+1],toregion,variation,0)){
+    if(grabhist(tokens[icompon+1],toregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,0)){
       if(scaletogap) {
         double error = 0;
-        observable tmp(grabhist(tokens[icompon+1],toregion,variation,0)->Integral(),gethisterror(grabhist(tokens[icompon+1],toregion,variation,0)));
+        observable tmp(grabhist(tokens[icompon+1],toregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,0)->Integral(),gethisterror(grabhist(tokens[icompon+1],toregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,0)));
         scaleto += tmp*numb;
       }
       for (int ivar = 0; ivar < nvar; ++ivar)
       {
-        newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion,variation,ivar),numb);
+        newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,ivar),numb);
       }
     }
   }
