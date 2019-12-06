@@ -35,6 +35,8 @@ void findAndReplaceAll(std::string & data, std::string toSearch, std::string rep
 
 std::vector<TString> readTovecString(TString filename);
 
+std::vector<TString> split(const char* str, const char* pattern);
+
 Double_t significance(Double_t b0, Double_t s0, Double_t db=0);
 
 double integral(TH1 *hist, double xlow, double xhigh, double *error);

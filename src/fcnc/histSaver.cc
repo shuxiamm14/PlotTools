@@ -4,6 +4,7 @@
 #include "TGraph.h"
 #include "AtlasStyle.h"
 #include "AtlasLabels.h"
+#include "HISTFITTER.h"
 using namespace std;
 histSaver::histSaver(TString _outputfilename) {
   outputfilename = _outputfilename;
@@ -66,6 +67,15 @@ void histSaver::printyield(TString region){
       printf("Warning: histogram not found: %s, %s, %s\n", iter.first.Data(), region.Data(), name[0].Data());
     }
   }
+}
+
+int histSaver::findvar(TString varname){
+  for (int i = 0; i < nvar; ++i)
+  {
+    if(name[i] == varname) return i;
+  }
+  printf("varname not found: %s\n", varname.Data());
+  exit(0);
 }
 
 TH1D* histSaver::grabhist_int(TString sample, TString region, int ivar, bool vital){
@@ -320,9 +330,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   }
   if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
   else outputfile[variation]->cd();
-  istringstream iss(formula);
-  vector<string> tokens{istream_iterator<string>{iss},
-    istream_iterator<string>{}};
+  vector<TString> tokens = split(formula.c_str()," ");
   if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
   vector<observable> scalefrom;
   vector<observable> scaleto;
@@ -338,7 +346,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
       {
         double numb = 0;
         try{
-          numb = stof(*(iter-1));
+          numb = stof(string((*(iter-1)).Data()));
         } 
         catch(const std::invalid_argument& e){
           printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
@@ -394,6 +402,86 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   }
 
   return scalefactor;
+}
+
+vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regions, TString variable, vector<TString> scalesamples, vector<double> slices, TString variation){
+  vector<vector<observable>> scalefactors;
+  vector<observable> iter;
+  for (int i = 0; i < slices.size()-1; ++i)
+  {
+    scalefactors.push_back(iter);
+  }
+  int nbins = nbin[findvar(variable)];
+  int ihists = 0;
+  vector<int> binslices;
+  HISTFITTER* fitter = new HISTFITTER();
+  for (int i = 0; i < slices.size()-1; ++i)
+  {
+    for(auto sample : scalesamples) fitter->setparam("sf_" + sample, 1, 0.1, 0.,2.);
+    for(auto sample : stackorder){
+      for(auto reg : fit_regions){
+        TH1D *target = grabhist(sample,reg,variation,variable);
+        if(ihists == 0) {
+          binslices = resolveslices(target,slices);
+        }
+        bool scale = 0;
+        for(auto ssample : scalesamples) if(ssample == sample) scale = 1;
+        fitter->addfithist(sample,target,binslices[i],binslices[i+1]-1,scale == 1? "sf_" + sample : "");
+        ihists++;
+      }
+    }
+    Double_t val[10],err[10];
+    //fitter->debug();
+//============================ do fit here============================
+    //fitter->asimovfit(100,nprong[iprong]+"ptbin"+char(ptbin+'0')+".root");
+    double chi2 = fitter->fit(val,err,0);
+    for (int j = 0; j < scalesamples.size(); ++j)
+    {
+      scalefactors[i].push_back(observable(val[j],err[j]));
+    }
+    fitter->clear();
+  }
+
+  printf("fit regions:");
+  for(auto reg: fit_regions){
+    printf(" %s ", reg.Data());
+  }
+  printf("\n");
+  printf("fit samples:");
+  for(auto samp: scalesamples){
+    printf(" %s ", samp.Data());
+  }
+  printf("\n");
+  for (int i = 0; i < slices.size()-1; ++i){
+    printf("(%f, %f)",slices[i], slices[i+1]);
+    for(int j =0; j < scalesamples.size(); j++){
+      printf("%f +/- %f, ", scalefactors[i][j].nominal, scalefactors[i][j].error);
+    }
+    printf("\n");
+  }
+
+  return scalefactors;
+}
+
+vector<int> histSaver::resolveslices(TH1D* target, vector<double> slices){
+  vector<int> ret;
+  if(target->GetBinLowEdge(1) > slices[0]) {
+    printf("WARNING: slice 1 (%f, %f) is lower than the low edge of the histogram %f, please check histogram %s\n", slices[0], slices[1], target->GetBinLowEdge(0), target->GetName());
+  }
+  if(target->GetXaxis()->GetXmax() < slices[slices.size()-1]) {
+          printf("WARNING: last slice (%f, %f) is lower than the low edge of the histogram %f, please check histogram %s\n", slices[slices.size()-2], slices[slices.size()-1], target->GetXaxis()->GetXmax(), target->GetName());
+  }
+  int islice = 0;
+  for (int i = 1; i <= target->GetNbinsX(); ++i)
+  {
+    if(target->GetBinLowEdge(i) >= slices[islice]) {
+      ret.push_back(i);
+      islice+=1;
+    }
+    if(islice == slices.size()) break;
+  }
+  if(target->GetXaxis()->GetXmax() == slices[slices.size()-1]) ret.push_back(target->GetNbinsX());
+  return ret;
 }
 
 void histSaver::read_sample(TString samplename, TString savehistname, TString variation, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile){

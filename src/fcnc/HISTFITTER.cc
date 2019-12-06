@@ -9,7 +9,13 @@ HISTFITTER::HISTFITTER(){
 	nregion = 100;
 }
 HISTFITTER::~HISTFITTER(){}
-void HISTFITTER::addfithist(TString component,  TH1D* inputhist, int begin, int end){
+void HISTFITTER::addfithist(TString component,  TH1D* inputhist, int begin, int end, TString fitparam){
+	if(fitparam != ""){
+		for (int i = 0; i < nparam; ++i)
+		{
+			if(paramname[i] == fitparam) component += ("_fit" + to_string(i)).c_str();
+		}
+	}
 	if ( fithists.find(component) == fithists.end() )
 	{
 		fithists[component] = new TH1D(component, component, nregion, 0, nregion);
@@ -29,13 +35,13 @@ void HISTFITTER::addfithist(TString component,  TH1D* inputhist, int begin, int 
 }
 void HISTFITTER::calculateEigen(){
 
-	double covariance_matrix[4][4];
-	gM->mnemat(&covariance_matrix[0][0],nparam);
+	double covariance_matrix[100];
+	gM->mnemat(&covariance_matrix[100],nparam);
 	if(debug){
 		for (int i = 0; i < nparam; ++i){
 			printf("covariance matrix: ");
 			for (int j = 0; j < nparam; ++j)
-				printf(" %f", covariance_matrix[j][i]);
+				printf(" %f", covariance_matrix[j*nparam + i]);
 			printf("\n");
 		}
 	}
@@ -45,7 +51,7 @@ void HISTFITTER::calculateEigen(){
 		covariance_matrix2[i] = new float[nparam];
 		for (int j = 0; j < nparam; ++j)
 		{
-			covariance_matrix2[i][j] = covariance_matrix[i][j];
+			covariance_matrix2[i][j] = covariance_matrix[i*nparam + j];
 		}
 	}
 	eigenval = new float[nparam];
@@ -82,9 +88,9 @@ void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int
 	
 	TH1D *htot = NULL;
 	TH1D *data;
-	int i = 0;
 	for (iter = histforfit->begin(); iter != histforfit->end(); iter ++)
 	{
+		if(iter->first == "metadata") continue;
 		if(histforfit->find("asimovdata")!=histforfit->end()){
 			if(iter->first == "data") {
 				continue;
@@ -101,19 +107,27 @@ void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int
 				continue;
 			}
 		}
+		int ipar = parsecomponentname(iter->first);
+		double histscale = ipar >=0? par[ipar] : 1;
 		if (!htot)
 		{
 			htot = (TH1D*)iter->second->Clone("htotfcn");
-			htot->Scale(par[0]);
+			htot->Scale(histscale);
 		}else
-			htot->Add(iter->second,i<4?par[i]:1);
-		i++;
+			htot->Add(iter->second,histscale);
 	}
 
 	for (int i = 1; i <= data->GetNbinsX(); ++i)
 		if(htot->GetBinContent(i))
 			f += pow((data->GetBinContent(i) - htot->GetBinContent(i))/htot->GetBinError(i),2);
 	deletepointer(htot);
+}
+
+int HISTFITTER::parsecomponentname(TString name){
+	if(name.Contains("fit")){
+		return int(stof(split(name.Data()," ")[1].Data()));
+	}
+	return -1;
 }
 
 void HISTFITTER::asimovfit(int fitnumber, TString outfile){
@@ -138,11 +152,11 @@ void HISTFITTER::asimovfit(int fitnumber, TString outfile){
 }
 void HISTFITTER::setparam(TString _paramname, double _startpoint, double _stepsize, double _lowrange, double _highrange){
 	printf("set parameter: %s\n", _paramname.Data());
-	paramname[nparam] = _paramname;
-	startpoint[nparam] = _startpoint;
-	stepsize[nparam] = _stepsize;
-	lowrange[nparam] = _lowrange;
-	highrange[nparam] = _highrange;
+	paramname.push_back(_paramname);
+	startpoint.push_back(_startpoint);
+	stepsize.push_back(_stepsize);
+	lowrange.push_back(_lowrange);
+	highrange.push_back(_highrange);
 	nparam++;
 }
 double HISTFITTER::fit(double *bstvl, double *error, bool asimov){
@@ -186,21 +200,23 @@ double HISTFITTER::fit(double *bstvl, double *error, bool asimov){
 		deletepointer(fithists["asimovdata"]);
 		fithists.erase("asimovdata");
 	}
+	//fithists["metadata"] = new TH1D("metadata","metadata",100,0,100);
+	//savemetadata(h_metadata, "nparam",nparam);
 	gM->SetObjectFit((TObject*)&fithists);
    
     arglist[0] = nparam;	//number of scan dimentions
     arglist[1] = 60.; //number of scan points ,maximum 100
-    Double_t val[4],err[4];
+    Double_t val[10],err[10];
    
     gM->mnexcm("SCAN", arglist ,2,ierflg);
-    for (int i = 0; i < 4; ++i) gM->GetParameter(i,val[i],err[i]);
+    for (int i = 0; i < nparam; ++i) gM->GetParameter(i,val[i],err[i]);
 	for (int i = 0; i < nparam; ++i)
 		gM->mnparm(i, paramname[i], val[i], stepsize[i], lowrange[i], highrange[i],ierflg);
    
     arglist[0] = 1000; //max calls
     arglist[1] = 0.1;	//tolerance
 	gM->mnexcm("MIGRADE", arglist ,2,ierflg);
-	for (int i = 0; i < 4; ++i) gM->GetParameter(i,bstvl[i],error[i]);
+	for (int i = 0; i < nparam; ++i) gM->GetParameter(i,bstvl[i],error[i]);
 	bstvl = val;
 	error = err;
 	Double_t minf;
@@ -211,6 +227,35 @@ double HISTFITTER::fit(double *bstvl, double *error, bool asimov){
 	Int_t	istat;
 	gM->mnstat(minf,fedm,errdef,npari,nparx,istat);
 	return minf;
+}
+
+void HISTFITTER::savemetadata(TH1D *metadatahist, TString what, double value){
+	TAxis *xaxis = metadatahist->GetXaxis();
+	int i = 1;
+	while (i <= metadatahist->GetNbinsX() && TString(xaxis->GetBinLabel(i))!="" )
+	{
+		if(what == xaxis->GetBinLabel(i)) {
+			metadatahist->SetBinContent(i,value);
+			return;
+		}
+		i++;
+	}
+	metadatahist->SetBinContent(i,value);
+	metadatahist->GetXaxis()->SetBinLabel(i,what);
+}
+
+double HISTFITTER::readmetadata(TH1D *metadatahist, TString what){
+	TAxis *xaxis = metadatahist->GetXaxis();
+	int i = 1;
+	while (i <= metadatahist->GetNbinsX() && TString(xaxis->GetBinLabel(i))!="" )
+	{
+		if(what == xaxis->GetBinLabel(i)) {
+			return metadatahist->GetBinContent(i);
+		}
+		i++;
+	}
+	printf("HISTFITTER::readmetadata() : ERROR : metadata %s not found\n", what.Data());
+	exit(0);
 }
 
 void HISTFITTER::debugfile(){

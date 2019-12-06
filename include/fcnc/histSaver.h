@@ -40,8 +40,8 @@ public:
   TString name[50];
   Double_t xbins[50][101];
   bool ifRebin[50];
-  bool dataref;
   TString unit[50];
+  bool dataref;
   TString trexdir;
   TString current_sample;
   std::map<TString, TString> variations; //variations[sample] = variation_name
@@ -89,6 +89,9 @@ public:
   double gethisterror(TH1* hist);
   double templatesample(TString fromregion, TString variation,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
   std::vector<observable> scale_to_data(TString scaleregion, TString variation, std::string formula, TString scaleVariable, double* slices, int nslice);
+  int findvar(TString varname);
+  std::vector<int> resolveslices(TH1D* target, std::vector<double> slices);
+  std::vector<std::vector<observable>> fit_scale_factor(std::vector<TString> fit_regions, TString variable, std::vector<TString> scalesamples, std::vector<double> slices, TString variation = "NOMINAL");
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
