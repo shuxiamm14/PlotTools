@@ -418,7 +418,9 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
   for (int i = 0; i < slices.size()-1; ++i)
   {
     for(auto sample : scalesamples) fitter->setparam("sf_" + sample, 1, 0.1, 0.,2.);
-    for(auto sample : stackorder){
+    auto fitsamples = stackorder;
+    fitsamples.push_back("data");
+    for(auto sample : fitsamples){
       for(auto reg : fit_regions){
         TH1D *target = grabhist(sample,reg,variation,variable);
         if(ihists == 0) {
