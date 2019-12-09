@@ -638,7 +638,6 @@ void histSaver::write(){
       for(auto& region: sample.second) {
         for(auto& variation : region.second){
           if(variation.first != iter.first) {
-            printf("variation name %s and outputfile name %s don't match, continue", iter.first.Data(), variation.first.Data());
             continue;
           }
           double tmp = variation.second[0]->Integral();
