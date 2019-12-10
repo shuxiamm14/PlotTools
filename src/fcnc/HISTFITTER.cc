@@ -117,14 +117,16 @@ void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int
 			htot->Add(iter->second,histscale);
 	}
 
-	for (int i = 1; i <= data->GetNbinsX(); ++i){
-		if(!htot) {
-			printf("HISTFITTER::fcn() : ERROR: htot is empty, please check if histforfit has histograms:\n");
-			for (auto hist: *histforfit)
-			{
-				printf(" %s ", hist.first.Data());
-			}
+	if(!htot) {
+		printf("HISTFITTER::fcn() : ERROR: htot is empty, please check if histforfit has histograms:\n");
+		for (auto hist: *histforfit)
+		{
+			printf(" %s ", hist.first.Data());
 		}
+		exit(0);
+	}
+
+	for (int i = 1; i <= data->GetNbinsX(); ++i){
 		if(htot->GetBinContent(i))
 			f += pow((data->GetBinContent(i) - htot->GetBinContent(i))/htot->GetBinError(i),2);
 	}
@@ -133,6 +135,7 @@ void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int
 
 int HISTFITTER::parsecomponentname(TString name){
 	if(name.Contains("fit")){
+		printf("HISTFITTER::parsecomponentname() : parsed %s parameter\n", split(name.Data()," ")[1].Data());
 		return int(stof(split(name.Data()," ")[1].Data()));
 	}
 	return -1;

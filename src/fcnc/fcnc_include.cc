@@ -27,13 +27,13 @@ vector<TString> split( const char* _str, const char* _pattern)
   string pattern = _pattern;
   vector<TString> ret;
   if(pattern.empty()) return ret;
-  size_t start=0,index=str.find_first_of(pattern,0);
+  size_t start=0,index=str.find(pattern,0);
   while(index!=str.npos)
   {
     if(start!=index)
       ret.push_back(str.substr(start,index-start));
-    start=index+1;
-    index=str.find_first_of(pattern,start);
+    start=index+pattern.length();
+    index=str.find(pattern,start);
   }
   if(!str.substr(start).empty())
     ret.push_back(str.substr(start).c_str());
@@ -94,7 +94,7 @@ Float_t AtoF(const char* str) {
   // split by '*'
   string Str = str;
   for(size_t i=0,n; i <= Str.length(); i=n+1) {
-    n = Str.find_first_of('*',i);
+    n = Str.find('*',i);
     if (n == string::npos) n = Str.length();
     string tmp = Str.substr(i,n-i);
     num *= atof(tmp.c_str());
