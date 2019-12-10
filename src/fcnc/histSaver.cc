@@ -209,7 +209,7 @@ Float_t histSaver::getVal(Int_t i) {
     else if(var3[i]) { if(debug) printf("fill var3\n"); tmp = MeVtoGeV[i] ? *var3[i]/1000 : *var3[i]; }
     else if(var2[i]) { if(debug) printf("fill var2\n"); tmp = *var2[i]; }
     else printf("error: fill variable failed. no var available\n");
-    if(debug == 1) printf("fill value: %f\n", tmp);
+    if(debug == 1) printf("fill value: %4.2f\n", tmp);
   }
   if (!ifRebin[i]){
     if(tmp >= xhi[i]) tmp = xhi[i]*0.999999;
@@ -231,8 +231,8 @@ void histSaver::show(){
   for (int i = 0; i < nvar; ++i)
   {
     if(var2[i]) printf("histSaver::show()\t%s = %d\n", name[i].Data(), *var2[i]);
-    else if(var1[i]) printf("histSaver::show()\t%s = %f\n", name[i].Data(), MeVtoGeV[i] ? *var1[i]/1000 : *var1[i]);
-    else if(var3[i]) printf("histSaver::show()\t%s = %f\n", name[i].Data(), MeVtoGeV[i] ? *var3[i]/1000 : *var3[i]);
+    else if(var1[i]) printf("histSaver::show()\t%s = %4.2f\n", name[i].Data(), MeVtoGeV[i] ? *var1[i]/1000 : *var1[i]);
+    else if(var3[i]) printf("histSaver::show()\t%s = %4.2f\n", name[i].Data(), MeVtoGeV[i] ? *var3[i]/1000 : *var3[i]);
   }
 }
 
@@ -354,7 +354,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
         }
         
         if(target->GetBinLowEdge(0) > slices[0]) {
-          printf("WARNING: slice 1 (%f, %f) is lower than the low edge of the histogram %f, please check variable %s\n", slices[0], slices[1], target->GetBinLowEdge(0), scaleVariable.Data());
+          printf("WARNING: slice 1 (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check variable %s\n", slices[0], slices[1], target->GetBinLowEdge(0), scaleVariable.Data());
         }
         for (int i = 1; i <= nbin[ivar]; ++i)
         {
@@ -385,7 +385,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   }
   printf("region %s, scale variable %s in %d slices:\n", scaleregion.Data(), scaleVariable.Data(), nslice);
   for (int i = 0; i < nslice; ++i)
-    printf("(%f, %f): %f +/- %f to %f +/- %f, ratio: %f +/- %f\n",slices[i], slices[i+1],scalefrom[i].nominal,scalefrom[i].error,scaleto[i].nominal,scaleto[i].error,scalefactor[i].nominal,scalefactor[i].error);
+    printf("(%4.2f, %4.2f): %4.2f +/- %4.2f to %4.2f +/- %4.2f, ratio: %4.2f +/- %4.2f\n",slices[i], slices[i+1],scalefrom[i].nominal,scalefrom[i].error,scaleto[i].nominal,scaleto[i].error,scalefactor[i].nominal,scalefactor[i].error);
   for (int i = 0; i < tokens.size(); ++i){
     if(i%2) continue;
       int islice = -1;
@@ -444,7 +444,20 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
     }
     fitter->clear();
   }
-
+  for(int isamp = 0; isamp < scalesamples.size(); ++isamp){
+    for(auto reg : fit_regions){
+      TH1D *target = grabhist(scalesamples[isamp],reg,variation,variable);
+      if(!target) continue;
+        for (int islice = 0; islice < slices.size()-1; ++islice)
+        {
+          for (int i = binslices[islice]; i < binslices[islice+1]; ++i)
+          {
+            target->SetBinContent(i,target->GetBinContent(i) * scalefactors[islice][isamp].nominal);
+            target->SetBinError(i,target->GetBinError(i) * scalefactors[islice][isamp].nominal);
+          }
+        }
+    }
+  }
   printf("fit regions:");
   for(auto reg: fit_regions){
     printf(" %s ", reg.Data());
@@ -456,9 +469,9 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
   }
   printf("\n");
   for (int i = 0; i < slices.size()-1; ++i){
-    printf("(%f, %f)",slices[i], slices[i+1]);
+    printf("(%4.2f, %4.2f)",slices[i], slices[i+1]);
     for(int j =0; j < scalesamples.size(); j++){
-      printf("%f +/- %f, ", scalefactors[i][j].nominal, scalefactors[i][j].error);
+      printf("%4.2f +/- %4.2f, ", scalefactors[i][j].nominal, scalefactors[i][j].error);
     }
     printf("\n");
   }
@@ -469,10 +482,10 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
 vector<int> histSaver::resolveslices(TH1D* target, vector<double> slices){
   vector<int> ret;
   if(target->GetBinLowEdge(1) > slices[0]) {
-    printf("WARNING: slice 1 (%f, %f) is lower than the low edge of the histogram %f, please check histogram %s\n", slices[0], slices[1], target->GetBinLowEdge(0), target->GetName());
+    printf("WARNING: slice 1 (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check histogram %s\n", slices[0], slices[1], target->GetBinLowEdge(0), target->GetName());
   }
   if(target->GetXaxis()->GetXmax() < slices[slices.size()-1]) {
-          printf("WARNING: last slice (%f, %f) is lower than the low edge of the histogram %f, please check histogram %s\n", slices[slices.size()-2], slices[slices.size()-1], target->GetXaxis()->GetXmax(), target->GetName());
+          printf("WARNING: last slice (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check histogram %s\n", slices[slices.size()-2], slices[slices.size()-1], target->GetXaxis()->GetXmax(), target->GetName());
   }
   int islice = 0;
   for (int i = 1; i <= target->GetNbinsX(); ++i)
@@ -483,7 +496,7 @@ vector<int> histSaver::resolveslices(TH1D* target, vector<double> slices){
     }
     if(islice == slices.size()) break;
   }
-  if(target->GetXaxis()->GetXmax() == slices[slices.size()-1]) ret.push_back(target->GetNbinsX());
+  if(target->GetXaxis()->GetXmax() <= slices[slices.size()-1]) ret.push_back(target->GetNbinsX()+1);
   return ret;
 }
 
@@ -585,9 +598,9 @@ void histSaver::fill_hist(TString sample, TString region, TString variation){
     double fillval = getVal(i);
     if(fillval!=fillval) {
       printf("Warning: fill val is nan: \n");
-      printf("plot_lib[%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), i, fillval, weight_type == 1? *fweight : *dweight);
+      printf("plot_lib[%s][%s][%d]->Fill(%4.2f,%4.2f)\n", sample.Data(), region.Data(), i, fillval, weight_type == 1? *fweight : *dweight);
     }
-    if(debug == 1) printf("plot_lib[%s][%s][%s][%d]->Fill(%f,%f)\n", sample.Data(), region.Data(), variation.Data(), i, fillval, weight_type == 1? *fweight : *dweight);
+    if(debug == 1) printf("plot_lib[%s][%s][%s][%d]->Fill(%4.2f,%4.2f)\n", sample.Data(), region.Data(), variation.Data(), i, fillval, weight_type == 1? *fweight : *dweight);
     TH1D *target = grabhist(sample,region,variation,i);
     if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
     else {
@@ -760,7 +773,7 @@ double histSaver::templatesample(TString fromregion, TString variation,string fo
   if(scaletogap) {
     observable scalefrom(newvec[0]->Integral(),gethisterror(newvec[0]));
     scalefactor = scaleto/scalefrom;
-    printf("scale from %s: %f +/- %f\nto %s: %f +/- %f\nratio: %f +/- %f\n\n",
+    printf("scale from %s: %4.2f +/- %4.2f\nto %s: %4.2f +/- %4.2f\nratio: %4.2f +/- %4.2f\n\n",
       fromregion.Data(), scalefrom.nominal, scalefrom.error,
       toregion.Data(), scaleto.nominal, scaleto.error,
       scalefactor.nominal, scalefactor.error);
