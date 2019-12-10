@@ -415,9 +415,9 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
   int ihists = 0;
   vector<int> binslices;
   HISTFITTER* fitter = new HISTFITTER();
+  for(auto sample : scalesamples) fitter->setparam("sf_" + sample, 1, 0.1, 0.,2.);
   for (int i = 0; i < slices.size()-1; ++i)
   {
-    for(auto sample : scalesamples) fitter->setparam("sf_" + sample, 1, 0.1, 0.,2.);
     auto fitsamples = stackorder;
     fitsamples.push_back("data");
     for(auto sample : fitsamples){
