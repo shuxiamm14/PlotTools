@@ -404,7 +404,8 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   return scalefactor;
 }
 
-vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regions, TString variable, vector<TString> scalesamples, vector<double> slices, TString variation){
+vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regions, TString variable, vector<TString> scalesamples, vector<double> slices, TString variation, vector<TString> postfit_regions){
+  if(!postfit_regions.size()) postfit_regions = fit_regions;
   vector<vector<observable>> scalefactors;
   vector<observable> iter;
   for (int i = 0; i < slices.size()-1; ++i)
@@ -445,7 +446,7 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
     fitter->clear();
   }
   for(int isamp = 0; isamp < scalesamples.size(); ++isamp){
-    for(auto reg : fit_regions){
+    for(auto reg : postfit_regions){
       TH1D *target = grabhist(scalesamples[isamp],reg,variation,variable);
       if(!target) continue;
         for (int islice = 0; islice < slices.size()-1; ++islice)

@@ -91,7 +91,7 @@ public:
   std::vector<observable> scale_to_data(TString scaleregion, TString variation, std::string formula, TString scaleVariable, double* slices, int nslice);
   int findvar(TString varname);
   std::vector<int> resolveslices(TH1D* target, std::vector<double> slices);
-  std::vector<std::vector<observable>> fit_scale_factor(std::vector<TString> fit_regions, TString variable, std::vector<TString> scalesamples, std::vector<double> slices, TString variation = "NOMINAL");
+  std::vector<std::vector<observable>> fit_scale_factor(std::vector<TString> fit_regions, TString variable, std::vector<TString> scalesamples, std::vector<double> slices, TString variation = "NOMINAL", std::vector<TString> postfit_regions = {});
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
