@@ -423,6 +423,7 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
     for(auto sample : fitsamples){
       for(auto reg : fit_regions){
         TH1D *target = grabhist(sample,reg,variation,variable);
+        if(!target) continue;
         if(ihists == 0) {
           binslices = resolveslices(target,slices);
         }
