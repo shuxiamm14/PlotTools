@@ -135,8 +135,7 @@ void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int
 
 int HISTFITTER::parsecomponentname(TString name){
 	if(name.Contains("fit")){
-		printf("HISTFITTER::parsecomponentname() : parsed %s parameter\n", split(name.Data()," ")[1].Data());
-		return int(stof(split(name.Data()," ")[1].Data()));
+		return int(stof(split(name.Data(),"fit")[1].Data()));
 	}
 	return -1;
 }

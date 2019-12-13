@@ -95,6 +95,7 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString variation, TSt
 }
 
 TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int ivar, bool vital){
+  if(sample == "data") variation = "NOMINAL";
   if(!find_sample(sample)){
     if(debug) {
       //show();
