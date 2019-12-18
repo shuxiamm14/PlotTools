@@ -471,7 +471,7 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
   }
   printf("\n");
   for (int i = 0; i < slices.size()-1; ++i){
-    printf("(%4.2f, %4.2f)",slices[i], slices[i+1]);
+    printf("(%4.2f, %4.2f): ",slices[i], slices[i+1]);
     for(int j =0; j < scalesamples.size(); j++){
       printf("%4.2f +/- %4.2f, ", scalefactors[i][j].nominal, scalefactors[i][j].error);
     }
@@ -568,7 +568,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
         }
 
         plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname)->Clone()));
-        plot_lib[samplename][region][variation][i]->SetName(histname + "_buffer");
+        plot_lib[samplename][region][variation][i]->SetName(samplename + "_" + variation + "_" + region + "_" + name[i] + "_buffer");
         plot_lib[samplename][region][variation][i]->Scale(norm);
         plot_lib[samplename][region][variation][i]->SetTitle(sampleTitle);
         plot_lib[samplename][region][variation][i]->SetFillColorAlpha(color,1);
