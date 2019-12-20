@@ -459,7 +459,8 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
                 for(auto sfreg: sfForReg.second)
                   if (sfreg == reg)
                   {
-                    SFname = "sf_" + sample + "_" + sfForReg.first;
+                    sample = sample + "_" + sfForReg.first;
+                    SFname = "sf_" + sample;
                   }
               }
             }else{
