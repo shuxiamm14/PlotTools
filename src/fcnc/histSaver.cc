@@ -405,7 +405,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   return scalefactor;
 }
 
-vector<vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, vector<TString> *scalesamples, vector<double> *slices, TString *variation, vector<TString> *postfit_regions){
+map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, vector<TString> *scalesamples, vector<double> *slices, TString *variation, vector<TString> *postfit_regions){
   auto *_scalesamples = new map<TString,map<TString,vector<TString>>>();
   for(auto sample: *scalesamples){
     (*_scalesamples)[sample];
@@ -414,15 +414,11 @@ vector<vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_reg
   delete _scalesamples;
   return ret;
 }
-vector<vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, map<TString,map<TString,vector<TString>>> *scalesamples, vector<double> *slices, TString *_variation, vector<TString> *postfit_regions){
+map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, map<TString,map<TString,vector<TString>>> *scalesamples, vector<double> *slices, TString *_variation, vector<TString> *postfit_regions){
   if(!postfit_regions) postfit_regions = fit_regions;
-  vector<vector<observable>>* scalefactors = new vector<vector<observable>>();
+  auto *scalefactors = new map<TString,vector<observable>>();
   TString variation = _variation? *_variation:"NOMINAL";
   vector<observable> iter;
-  for (int i = 0; i < slices->size()-1; ++i)
-  {
-    scalefactors->push_back(iter);
-  }
   int nbins = nbin[findvar(*variable)];
   int ihists = 0;
   vector<int> binslices;
@@ -475,9 +471,11 @@ vector<vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_reg
 //============================ do fit here============================
     //fitter->asimovfit(100,nprong[iprong]+"ptbin"+char(ptbin+'0')+".root");
     double chi2 = fitter->fit(val,err,0);
-    for (int j = 0; j < params.size(); ++j)
+    int ipar = 0;
+    for (auto par: params)
     {
-      (*scalefactors)[i].push_back(observable(val[j],err[j]));
+      (*scalefactors)[par].push_back(observable(val[ipar],err[ipar]));
+      ipar++;
     }
     fitter->clear();
   }
@@ -501,10 +499,9 @@ vector<vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_reg
             }else{
               SFname = "sf_" + samp.first;
             }
-            int iparam = findi(params,SFname);
-            if(iparam >= 0){
-              target->SetBinContent(i,target->GetBinContent(i) * (*scalefactors)[islice][iparam].nominal);
-              target->SetBinError(i,target->GetBinError(i) * (*scalefactors)[islice][iparam].nominal);
+            if(SFname != ""){
+              target->SetBinContent(i,target->GetBinContent(i) * (*scalefactors)[SFname][islice].nominal);
+              target->SetBinError(i,target->GetBinError(i) * (*scalefactors)[SFname][islice].nominal);
             }
           }
         }
@@ -522,8 +519,8 @@ vector<vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_reg
   printf("\n");
   for (int i = 0; i < slices->size()-1; ++i){
     printf("(%4.2f, %4.2f): ",(*slices)[i], (*slices)[i+1]);
-    for(int j =0; j < params.size(); j++){
-      printf("%4.2f +/- %4.2f, ", (*scalefactors)[i][j].nominal, (*scalefactors)[i][j].error);
+    for(auto par: params){
+      printf("%4.2f +/- %4.2f, ", (*scalefactors)[par][i].nominal, (*scalefactors)[par][i].error);
     }
     printf("\n");
   }
