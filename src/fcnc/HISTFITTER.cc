@@ -306,5 +306,6 @@ void HISTFITTER::clear(){
 		deletepointer(iter->second);
 	}
 	deletepointer(htot);
+	iregion.clear();
 	fithists.clear();
 }
