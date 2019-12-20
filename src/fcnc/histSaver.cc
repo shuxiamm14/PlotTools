@@ -428,10 +428,14 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
     if(sample.second.size()){
       for(auto sfForReg : sample.second){
         fitter->setparam("sf_" + sample.first + "_" + sfForReg.first, 1, 0.1, 0.,2.);
+        printf("fit region: ");
+        for(auto regions : sfForReg.second) printf(" %s ", regions.Data());
+        printf("\n");
         params.push_back("sf_" + sample.first + "_" + sfForReg.first);
       }
     }else{
       fitter->setparam("sf_" + sample.first, 1, 0.1, 0.,2.);
+      printf("fit region: All\n");
       params.push_back("sf_" + sample.first);
     }
   }
@@ -455,7 +459,7 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
                 for(auto sfreg: sfForReg.second)
                   if (sfreg == reg)
                   {
-                    SFname = "sf_" + sample + sfForReg.first;
+                    SFname = "sf_" + sample + "_" + sfForReg.first;
                   }
               }
             }else{
