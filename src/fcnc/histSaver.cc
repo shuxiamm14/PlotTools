@@ -452,23 +452,23 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
         }
         bool scale = 0;
         TString SFname = "";
+        TString addsample = sample;
         for(auto ssample : *scalesamples) {
           if(ssample.first == sample) {
             if(ssample.second.size()){
               for(auto sfForReg: ssample.second){
-                for(auto sfreg: sfForReg.second)
+                for(auto sfreg: sfForReg.second){
                   if (sfreg == reg)
                   {
-                    sample = sample + "_" + sfForReg.first;
-                    SFname = "sf_" + sample;
+                    addsample = sample + "_" + sfForReg.first;
                   }
+                }
               }
-            }else{
-              SFname = "sf_" + sample;
             }
+            SFname = "sf_" + sample;
           }
         }
-        fitter->addfithist(sample,target,binslices[i],binslices[i+1]-1,SFname);
+        fitter->addfithist(addsample,target,binslices[i],binslices[i+1]-1,SFname);
         ihists++;
       }
     }
