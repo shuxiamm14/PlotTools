@@ -102,6 +102,17 @@ double rms(T aa, D bb){
   return sqrt(pow(aa,2) + pow(bb,2));
 }
 
+template <typename T>
+int findi(std::vector<T> vect, T target){
+  int i = 0;
+  for(auto ele : vect){
+    if(ele == target){
+      return i;
+    }
+    i++;
+  }
+  return -1;
+}
 
 template<typename T, typename D>
 int FindBin(T* ary, int nbins, D nb){

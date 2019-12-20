@@ -405,33 +405,70 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   return scalefactor;
 }
 
-vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regions, TString variable, vector<TString> scalesamples, vector<double> slices, TString variation, vector<TString> postfit_regions){
-  if(!postfit_regions.size()) postfit_regions = fit_regions;
-  vector<vector<observable>> scalefactors;
-  vector<observable> iter;
-  for (int i = 0; i < slices.size()-1; ++i)
-  {
-    scalefactors.push_back(iter);
+map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, vector<TString> *scalesamples, vector<double> *slices, TString *variation, vector<TString> *postfit_regions){
+  auto *_scalesamples = new map<TString,map<TString,vector<TString>>>();
+  for(auto sample: *scalesamples){
+    (*_scalesamples)[sample];
   }
-  int nbins = nbin[findvar(variable)];
+  auto ret = fit_scale_factor(fit_regions, variable, _scalesamples, slices, variation, postfit_regions);
+  delete _scalesamples;
+  return ret;
+}
+map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, map<TString,map<TString,vector<TString>>> *scalesamples, vector<double> *slices, TString *_variation, vector<TString> *postfit_regions){
+  if(!postfit_regions) postfit_regions = fit_regions;
+  auto *scalefactors = new map<TString,vector<observable>>();
+  TString variation = _variation? *_variation:"NOMINAL";
+  vector<observable> iter;
+  int nbins = nbin[findvar(*variable)];
   int ihists = 0;
   vector<int> binslices;
   HISTFITTER* fitter = new HISTFITTER();
-  for(auto sample : scalesamples) fitter->setparam("sf_" + sample, 1, 0.1, 0.,2.);
-  for (int i = 0; i < slices.size()-1; ++i)
+  vector<TString> params;
+  for(auto sample : *scalesamples) {
+    if(sample.second.size()){
+      for(auto sfForReg : sample.second){
+        fitter->setparam("sf_" + sample.first + "_" + sfForReg.first, 1, 0.1, 0.,2.);
+        printf("fit region: ");
+        for(auto regions : sfForReg.second) printf(" %s ", regions.Data());
+        printf("\n");
+        params.push_back("sf_" + sample.first + "_" + sfForReg.first);
+      }
+    }else{
+      fitter->setparam("sf_" + sample.first, 1, 0.1, 0.,2.);
+      printf("fit region: All\n");
+      params.push_back("sf_" + sample.first);
+    }
+  }
+  for (int i = 0; i < slices->size()-1; ++i)
   {
     auto fitsamples = stackorder;
     fitsamples.push_back("data");
     for(auto sample : fitsamples){
-      for(auto reg : fit_regions){
-        TH1D *target = grabhist(sample,reg,variation,variable);
+      for(auto reg : *fit_regions){
+        TH1D *target = grabhist(sample,reg,variation,*variable);
         if(!target) continue;
         if(ihists == 0) {
           binslices = resolveslices(target,slices);
         }
         bool scale = 0;
-        for(auto ssample : scalesamples) if(ssample == sample) scale = 1;
-        fitter->addfithist(sample,target,binslices[i],binslices[i+1]-1,scale == 1? "sf_" + sample : "");
+        TString SFname = "";
+        TString addsample = sample;
+        for(auto ssample : *scalesamples) {
+          if(ssample.first == sample) {
+            if(ssample.second.size()){
+              for(auto sfForReg: ssample.second){
+                for(auto sfreg: sfForReg.second){
+                  if (sfreg == reg)
+                  {
+                    addsample = sample + "_" + sfForReg.first;
+                  }
+                }
+              }
+            }
+            SFname = "sf_" + addsample;
+          }
+        }
+        fitter->addfithist(sample,target,binslices[i],binslices[i+1]-1,SFname);
         ihists++;
       }
     }
@@ -440,40 +477,56 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
 //============================ do fit here============================
     //fitter->asimovfit(100,nprong[iprong]+"ptbin"+char(ptbin+'0')+".root");
     double chi2 = fitter->fit(val,err,0);
-    for (int j = 0; j < scalesamples.size(); ++j)
+    int ipar = 0;
+    for (auto par: params)
     {
-      scalefactors[i].push_back(observable(val[j],err[j]));
+      (*scalefactors)[par].push_back(observable(val[ipar],err[ipar]));
+      ipar++;
     }
     fitter->clear();
   }
-  for(int isamp = 0; isamp < scalesamples.size(); ++isamp){
-    for(auto reg : postfit_regions){
-      TH1D *target = grabhist(scalesamples[isamp],reg,variation,variable);
+  for(auto samp : *scalesamples){
+    for(auto reg : *postfit_regions){
+      TH1D *target = grabhist(samp.first,reg,variation,*variable);
       if(!target) continue;
-        for (int islice = 0; islice < slices.size()-1; ++islice)
+        for (int islice = 0; islice < slices->size()-1; ++islice)
         {
           for (int i = binslices[islice]; i < binslices[islice+1]; ++i)
           {
-            target->SetBinContent(i,target->GetBinContent(i) * scalefactors[islice][isamp].nominal);
-            target->SetBinError(i,target->GetBinError(i) * scalefactors[islice][isamp].nominal);
+            TString SFname = "";
+            if(samp.second.size()){
+              for(auto sfForReg: samp.second){
+                for(auto sfreg: sfForReg.second)
+                  if (sfreg == reg)
+                  {
+                    SFname = "sf_" + samp.first + "_" + sfForReg.first;
+                  }
+              }
+            }else{
+              SFname = "sf_" + samp.first;
+            }
+            if(SFname != ""){
+              target->SetBinContent(i,target->GetBinContent(i) * (*scalefactors)[SFname][islice].nominal);
+              target->SetBinError(i,target->GetBinError(i) * (*scalefactors)[SFname][islice].nominal);
+            }
           }
         }
     }
   }
   printf("fit regions:");
-  for(auto reg: fit_regions){
+  for(auto reg: *fit_regions){
     printf(" %s ", reg.Data());
   }
   printf("\n");
   printf("fit samples:");
-  for(auto samp: scalesamples){
-    printf(" %s ", samp.Data());
+  for(auto param: params){
+    printf(" %s ", param.Data());
   }
   printf("\n");
-  for (int i = 0; i < slices.size()-1; ++i){
-    printf("(%4.2f, %4.2f)",slices[i], slices[i+1]);
-    for(int j =0; j < scalesamples.size(); j++){
-      printf("%4.2f +/- %4.2f, ", scalefactors[i][j].nominal, scalefactors[i][j].error);
+  for (int i = 0; i < slices->size()-1; ++i){
+    printf("(%4.2f, %4.2f): ",(*slices)[i], (*slices)[i+1]);
+    for(auto par: params){
+      printf("%4.2f +/- %4.2f, ", (*scalefactors)[par][i].nominal, (*scalefactors)[par][i].error);
     }
     printf("\n");
   }
@@ -481,24 +534,24 @@ vector<vector<observable>> histSaver::fit_scale_factor(vector<TString> fit_regio
   return scalefactors;
 }
 
-vector<int> histSaver::resolveslices(TH1D* target, vector<double> slices){
+vector<int> histSaver::resolveslices(TH1D* target, vector<double> *slices){
   vector<int> ret;
-  if(target->GetBinLowEdge(1) > slices[0]) {
-    printf("WARNING: slice 1 (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check histogram %s\n", slices[0], slices[1], target->GetBinLowEdge(0), target->GetName());
+  if(target->GetBinLowEdge(1) > slices->at(0) ){
+    printf("WARNING: slice 1 (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check histogram %s\n", slices->at(0), slices->at(1), target->GetBinLowEdge(0), target->GetName());
   }
-  if(target->GetXaxis()->GetXmax() < slices[slices.size()-1]) {
-          printf("WARNING: last slice (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check histogram %s\n", slices[slices.size()-2], slices[slices.size()-1], target->GetXaxis()->GetXmax(), target->GetName());
+  if(target->GetXaxis()->GetXmax() < slices->at(slices->size()-1)) {
+          printf("WARNING: last slice (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check histogram %s\n", slices->at(slices->size()-2), slices->at(slices->size()-1), target->GetXaxis()->GetXmax(), target->GetName());
   }
   int islice = 0;
   for (int i = 1; i <= target->GetNbinsX(); ++i)
   {
-    if(target->GetBinLowEdge(i) >= slices[islice]) {
+    if(target->GetBinLowEdge(i) >= slices->at(islice)) {
       ret.push_back(i);
       islice+=1;
     }
-    if(islice == slices.size()) break;
+    if(islice == slices->size()) break;
   }
-  if(target->GetXaxis()->GetXmax() <= slices[slices.size()-1]) ret.push_back(target->GetNbinsX()+1);
+  if(target->GetXaxis()->GetXmax() <= slices->at(slices->size()-1)) ret.push_back(target->GetNbinsX()+1);
   return ret;
 }
 
@@ -568,7 +621,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
         }
 
         plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname)->Clone()));
-        plot_lib[samplename][region][variation][i]->SetName(histname + "_buffer");
+        plot_lib[samplename][region][variation][i]->SetName(samplename + "_" + variation + "_" + region + "_" + name[i] + "_buffer");
         plot_lib[samplename][region][variation][i]->Scale(norm);
         plot_lib[samplename][region][variation][i]->SetTitle(sampleTitle);
         plot_lib[samplename][region][variation][i]->SetFillColorAlpha(color,1);

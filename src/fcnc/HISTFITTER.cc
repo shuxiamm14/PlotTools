@@ -10,10 +10,15 @@ HISTFITTER::HISTFITTER(){
 }
 HISTFITTER::~HISTFITTER(){}
 void HISTFITTER::addfithist(TString component,  TH1D* inputhist, int begin, int end, TString fitparam){
+	TString componentwofit = component;
+	bool fit = 0;
 	if(fitparam != ""){
 		for (int i = 0; i < nparam; ++i)
 		{
-			if(paramname[i] == fitparam) component += ("_fit" + to_string(i)).c_str();
+			if(paramname[i] == fitparam) {
+				component += ("_fit" + to_string(i)).c_str();
+				fit = 1;
+			}
 		}
 	}
 	if(fit){
@@ -31,6 +36,17 @@ void HISTFITTER::addfithist(TString component,  TH1D* inputhist, int begin, int 
 	{
 		fithists[component] = new TH1D(component, component, nregion, 0, nregion);
 	}
+	if(fit){
+		int nfit = 0;
+		for(auto comp : fithists){
+			if(comp.first.Contains("_fit") && split(comp.first.Data(),"_fit")[0] == componentwofit){
+				iregion[comp.first]++;
+				nfit = iregion[comp.first];
+			}
+		}
+		if(iregion[component]==0) iregion[component] = nfit;
+	}else
+		iregion[component]++;
 	fithists[component]->SetBinContent(iregion[component], inputhist->Integral(begin,end));
 
 	double error = 0;
