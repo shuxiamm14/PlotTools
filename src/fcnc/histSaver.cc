@@ -406,11 +406,13 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
 }
 
 vector<vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, vector<TString> *scalesamples, vector<double> *slices, TString *variation, vector<TString> *postfit_regions){
-  map<TString,map<TString,vector<TString>>> *_scalesamples;
+  auto *_scalesamples = new map<TString,map<TString,vector<TString>>>();
   for(auto sample: *scalesamples){
     (*_scalesamples)[sample];
   }
-  return fit_scale_factor(fit_regions, variable, _scalesamples, slices, variation, postfit_regions);
+  auto ret = fit_scale_factor(fit_regions, variable, _scalesamples, slices, variation, postfit_regions);
+  delete _scalesamples;
+  return ret;
 }
 vector<vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, map<TString,map<TString,vector<TString>>> *scalesamples, vector<double> *slices, TString *_variation, vector<TString> *postfit_regions){
   if(!postfit_regions) postfit_regions = fit_regions;
