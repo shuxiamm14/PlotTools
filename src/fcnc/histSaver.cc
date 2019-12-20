@@ -465,7 +465,7 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
                 }
               }
             }
-            SFname = "sf_" + sample;
+            SFname = "sf_" + addsample;
           }
         }
         fitter->addfithist(addsample,target,binslices[i],binslices[i+1]-1,SFname);
