@@ -92,7 +92,7 @@ public:
   int findvar(TString varname);
   std::vector<int> resolveslices(TH1D* target, std::vector<double>* slices);
   std::map<TString,std::vector<observable>>* fit_scale_factor(std::vector<TString> *fit_regions, TString *variable, std::vector<TString> *scalesamples, std::vector<double> *slices, TString *variation, std::vector<TString> *postfit_regions);
-  std::map<TString,std::vector<observable>>* fit_scale_factor(std::vector<TString> *fit_regions, TString *variable, std::map<TString,std::map<TString,std::vector<TString>>> *scalesamples, std::vector<double> *slices, TString *variation = 0, std::vector<TString> *postfit_regions = 0);
+  std::map<TString,std::vector<observable>>* fit_scale_factor(std::vector<TString> *fit_regions, TString *variable, std::map<TString,std::map<TString,std::vector<TString>>> *scalesamples, std::vector<double> *slices, TString *variation = 0, std::map<TString,std::map<TString,std::vector<TString>>> *postfit_regions = 0);
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);

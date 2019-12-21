@@ -407,15 +407,20 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
 
 map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, vector<TString> *scalesamples, vector<double> *slices, TString *variation, vector<TString> *postfit_regions){
   auto *_scalesamples = new map<TString,map<TString,vector<TString>>>();
+  auto *_postfit_regions = new map<TString,map<TString,vector<TString>>>();
   for(auto sample: *scalesamples){
     (*_scalesamples)[sample];
   }
-  auto ret = fit_scale_factor(fit_regions, variable, _scalesamples, slices, variation, postfit_regions);
+  for(auto reg: *postfit_regions){
+    (*_postfit_regions)[reg];
+  }
+  auto ret = fit_scale_factor(fit_regions, variable, _scalesamples, slices, variation, _postfit_regions);
   delete _scalesamples;
+  delete _postfit_regions;
   return ret;
 }
-map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, map<TString,map<TString,vector<TString>>> *scalesamples, vector<double> *slices, TString *_variation, vector<TString> *postfit_regions){
-  if(!postfit_regions) postfit_regions = fit_regions;
+map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, map<TString,map<TString,vector<TString>>> *scalesamples, vector<double> *slices, TString *_variation, map<TString,map<TString,vector<TString>>> *postfit_regions){
+  if(!postfit_regions) postfit_regions = scalesamples;
   auto *scalefactors = new map<TString,vector<observable>>();
   TString variation = _variation? *_variation:"NOMINAL";
   vector<observable> iter;
@@ -485,32 +490,29 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
     }
     fitter->clear();
   }
-  for(auto samp : *scalesamples){
-    for(auto reg : *postfit_regions){
-      TH1D *target = grabhist(samp.first,reg,variation,*variable);
-      if(!target) continue;
+  for(auto samp : *postfit_regions){
+    TH1D *target;
+    map<TString,vector<TString>> plotregions;
+    if(samp.second.size()== 0){
+      plotregions["sf_" + samp.first] = *fit_regions;
+    }else{
+      for(auto sfForReg : samp.second)
+        plotregions["sf_" + samp.first + "_" + sfForReg.first] = sfForReg.second;
+    }
+
+    for(auto sf : plotregions){
+      for(auto reg : sf.second){
+        target = grabhist(samp.first,reg,variation,*variable);
+        if(!target) continue;
         for (int islice = 0; islice < slices->size()-1; ++islice)
         {
           for (int i = binslices[islice]; i < binslices[islice+1]; ++i)
           {
-            TString SFname = "";
-            if(samp.second.size()){
-              for(auto sfForReg: samp.second){
-                for(auto sfreg: sfForReg.second)
-                  if (sfreg == reg)
-                  {
-                    SFname = "sf_" + samp.first + "_" + sfForReg.first;
-                  }
-              }
-            }else{
-              SFname = "sf_" + samp.first;
-            }
-            if(SFname != ""){
-              target->SetBinContent(i,target->GetBinContent(i) * (*scalefactors)[SFname][islice].nominal);
-              target->SetBinError(i,target->GetBinError(i) * (*scalefactors)[SFname][islice].nominal);
-            }
+            target->SetBinContent(i,target->GetBinContent(i) * (*scalefactors)[sf.first][islice].nominal);
+            target->SetBinError(i,target->GetBinError(i) * (*scalefactors)[sf.first][islice].nominal);
           }
         }
+      }
     }
   }
   printf("fit regions:");
