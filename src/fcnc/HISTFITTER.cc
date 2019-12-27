@@ -8,7 +8,12 @@ HISTFITTER::HISTFITTER(){
 	debug = 1;
 	nregion = 100;
 }
-HISTFITTER::~HISTFITTER(){}
+HISTFITTER::~HISTFITTER(){
+	for (iter = fithists.begin(); iter != fithists.end(); iter ++){
+		deletepointer(iter->second);
+	}
+	deletepointer(htot);
+}
 void HISTFITTER::addfithist(TString component,  TH1D* inputhist, int begin, int end, TString fitparam){
 	TString componentwofit = component;
 	bool fit = 0;
@@ -100,6 +105,12 @@ void HISTFITTER::calculateEigen(){
 			printf("\n");
 		}
 	}
+	for (int i = 0; i < nparam; ++i) {
+		delete[] covariance_matrix2[i];
+		delete[] eigenvector;
+	}
+	delete[] eigenval;
+	
 }
 void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag) {
 	f = 0;
@@ -197,7 +208,7 @@ void HISTFITTER::setparam(TString _paramname, double _startpoint, double _stepsi
 double HISTFITTER::fit(double *bstvl, double *error, bool asimov){
 
 	gRandom->SetSeed(0);
-	gM = new TMinuit(5);
+	if(!gM) gM = new TMinuit(5);
 	gM->SetFCN(fcn);
 	gM->SetPrintLevel(-1);
 	

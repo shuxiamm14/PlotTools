@@ -410,9 +410,7 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
   auto *_postfit_regions = new map<TString,map<TString,vector<TString>>>();
   for(auto sample: *scalesamples){
     (*_scalesamples)[sample];
-  }
-  for(auto reg: *postfit_regions){
-    (*_postfit_regions)[reg];
+    (*_postfit_regions)[sample][sample] = *postfit_regions;
   }
   auto ret = fit_scale_factor(fit_regions, variable, _scalesamples, slices, variation, _postfit_regions);
   delete _scalesamples;
@@ -493,7 +491,7 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
   for(auto samp : *postfit_regions){
     TH1D *target;
     map<TString,vector<TString>> plotregions;
-    if(samp.second.size()== 0){
+    if(samp.second.size()<= 1){
       plotregions["sf_" + samp.first] = *fit_regions;
     }else{
       for(auto sfForReg : samp.second)
