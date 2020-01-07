@@ -405,7 +405,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   return scalefactor;
 }
 
-map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, vector<TString> *scalesamples, vector<double> *slices, TString *variation, vector<TString> *postfit_regions){
+map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, vector<TString> *scalesamples, const vector<double> *slices, TString *variation, vector<TString> *postfit_regions){
   auto *_scalesamples = new map<TString,map<TString,vector<TString>>>();
   auto *_postfit_regions = new map<TString,map<TString,vector<TString>>>();
   for(auto sample: *scalesamples){
@@ -417,7 +417,8 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
   delete _postfit_regions;
   return ret;
 }
-map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, map<TString,map<TString,vector<TString>>> *scalesamples, vector<double> *slices, TString *_variation, map<TString,map<TString,vector<TString>>> *postfit_regions){
+
+map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, map<TString,map<TString,vector<TString>>> *scalesamples, const vector<double> *slices, TString *_variation, map<TString,map<TString,vector<TString>>> *postfit_regions){
   if(!postfit_regions) postfit_regions = scalesamples;
   auto *scalefactors = new map<TString,vector<observable>>();
   TString variation = _variation? *_variation:"NOMINAL";
@@ -537,7 +538,16 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
   return scalefactors;
 }
 
-vector<int> histSaver::resolveslices(TH1D* target, vector<double> *slices){
+vector<int> histSaver::resolveslices(TH1D* target, const vector<double> *slices){
+  printf("histSaver::resolveslices(): total %d bins, from %f, to %f.\n",target->GetNbinsX(),target->GetBinLowEdge(1), target->GetBinLowEdge(target->GetNbinsX())+target->GetBinWidth(target->GetNbinsX()));
+  if(debug){
+    printf("slices ( ");
+    for (int i = 0; i < slices->size(); ++i)
+    {
+      printf("%f ", slices->at(i));
+    }
+    printf(")\n");
+  }
   vector<int> ret;
   if(target->GetBinLowEdge(1) > slices->at(0) ){
     printf("WARNING: slice 1 (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check histogram %s\n", slices->at(0), slices->at(1), target->GetBinLowEdge(0), target->GetName());
@@ -555,6 +565,14 @@ vector<int> histSaver::resolveslices(TH1D* target, vector<double> *slices){
     if(islice == slices->size()) break;
   }
   if(target->GetXaxis()->GetXmax() <= slices->at(slices->size()-1)) ret.push_back(target->GetNbinsX()+1);
+  if(debug){
+    printf("resolved slices ( ");
+    for (int i = 0; i < ret.size(); ++i)
+    {
+      printf("%d ", ret.at(i));
+    }
+    printf(")\n");
+  }
   return ret;
 }
 
