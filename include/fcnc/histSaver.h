@@ -96,7 +96,7 @@ public:
   void muteregion(TString region);
   void unmuteregion(TString region);
   void SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _workflow);
-  void write_trexinput(TString NPname = "NOMINAL", TString writeoption = "recreate");
+  void write_trexinput(TString NPname = "NOMINAL", TString writename = "", TString writeoption = "update");
   void overlay(TString _overlaysample);
   TH1D* grabhist_int(TString sample, TString region, int ivar, bool vital = 0);
   TH1D* grabhist(TString sample, TString region, TString variation, int ivar, bool vital = 0);

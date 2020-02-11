@@ -754,7 +754,11 @@ void histSaver::write(){
   }
 }
 
-void histSaver::write_trexinput(TString NPname, TString writeoption){
+void histSaver::write_trexinput(TString NPname, TString writename, TString writeoption){
+  if (writename == "")
+  {
+    writename = NPname;
+  }
   gSystem->mkdir(trexdir);
   for (int i = 0; i < nvar; ++i){
     gSystem->mkdir(trexdir + "/" + name[i]);
@@ -775,7 +779,7 @@ void histSaver::write_trexinput(TString NPname, TString writeoption){
         if(debug) printf("Writing to file: %s, histoname: %s\n", filename.Data(), NPname.Data());
         TH1D *target = grabhist(iter.first,region,NPname,i);
         if(target) {
-          target->Write(NPname,TObject::kWriteDelete);
+          target->Write(writename,TObject::kWriteDelete);
           if(!target->Integral()) printf("Warinig: plot_lib[%s][%s][%d] is empty\n", iter.first.Data(),region.Data(),i);
         }
         else if(debug) printf("Warning: histogram plot_lib[%s][%s][%d] not found\n", iter.first.Data(),region.Data(),i);
