@@ -608,7 +608,9 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
           show();
           exit(1);
         }
-        double tmp = ((TH1D*)readfromfile->Get(histname))->Integral();
+
+        TH1D *readhist = (TH1D*)readfromfile->Get(histname);
+        double tmp = readhist->Integral();
         if(tmp!=tmp){
           printf("Warning: %s->Integral() is nan, skip\n", (histname).Data());
           continue;
@@ -617,8 +619,13 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
           printf("Warning: %s->Integral() is 0, skip\n", (histname).Data());
           continue;
         }
-
-        plot_lib[samplename][region][variation][i]->Add((TH1D*)readfromfile->Get(histname),norm);
+        
+        plot_lib[samplename][region][variation][i]->Add(readhist,norm);
+        if(checkread){
+          if(samplename == checkread_sample && region == checkread_region && variation == checkread_variation && i == checkread_variable){
+            printf("read histogram %s, + %f\n", histname.Data(), readhist->GetBinContent(checkread_ibin)*norm);
+          }
+        }
       }
     }else{
       ++histcount;
@@ -631,7 +638,8 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
           show();
           exit(1);
         }
-        double tmp = ((TH1D*)readfromfile->Get(histname))->Integral();
+        TH1D *readhist = (TH1D*)readfromfile->Get(histname);
+        double tmp = readhist->Integral();
         if(tmp!=tmp){
           printf("Warning: %s->Integral() is nan, skip\n", (histname).Data());
           continue;
@@ -640,7 +648,11 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
           printf("Warning: %s->Integral() is 0, skip\n", (histname).Data());
           continue;
         }
-
+        if(checkread){
+          if(samplename == checkread_sample && region == checkread_region && variation == checkread_variation && i == checkread_variable){
+            printf("read histogram %s, + %f\n", histname.Data(), readhist->GetBinContent(checkread_ibin)*norm);
+          }
+        }
         plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname)->Clone()));
         plot_lib[samplename][region][variation][i]->SetName(samplename + "_" + variation + "_" + region + "_" + name[i] + "_buffer");
         plot_lib[samplename][region][variation][i]->Scale(norm);

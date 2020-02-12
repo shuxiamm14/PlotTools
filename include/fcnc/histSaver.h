@@ -8,6 +8,14 @@
 class histSaver{
 public:
   TString inputfilename;
+  
+  bool checkread;
+  TString checkread_sample;
+  TString checkread_region;
+  TString checkread_variation;
+  bool checkread_variable;
+  int checkread_ibin;
+
   int nregion;
   float blinding;
   Float_t* fweight;
