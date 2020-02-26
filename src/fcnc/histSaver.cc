@@ -322,13 +322,23 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
   if(debug) printf("finished initializing %s\n", samplename.Data() );
 }
 
-vector<observable> histSaver::scale_to_data(TString scaleregion, TString variation, string formula, TString scaleVariable, double* slices, int nslice){
-
+vector<observable> histSaver::scale_to_data(TString scaleregion, string formula, TString scaleVariable, vector<double> slices, TString variation){
+  int nslice = slices.size();
   int ivar = 0;
   for (; ivar < nvar; ++ivar)
   {
     if(name[ivar] == scaleVariable) break;
   }
+
+  if(!nslice) {
+    nslice = nbin[ivar]+1;
+    slices.push_back(xlo[ivar]);
+    for (int i = 0; i < nbin[ivar]; ++i)
+    {
+      slices.push_back(slices[i]+binwidth(ivar));
+    }
+  }
+
   if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
   else outputfile[variation]->cd();
   vector<TString> tokens = split(formula.c_str()," ");
@@ -378,7 +388,6 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
       }
     }
   }
-    
   vector<observable> scalefactor;
   for (int i = 0; i < nslice; ++i)
   {
@@ -387,6 +396,27 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
   printf("region %s, scale variable %s in %d slices:\n", scaleregion.Data(), scaleVariable.Data(), nslice);
   for (int i = 0; i < nslice; ++i)
     printf("(%4.2f, %4.2f): %4.2f +/- %4.2f to %4.2f +/- %4.2f, ratio: %4.2f +/- %4.2f\n",slices[i], slices[i+1],scalefrom[i].nominal,scalefrom[i].error,scaleto[i].nominal,scaleto[i].error,scalefactor[i].nominal,scalefactor[i].error);
+
+  return scalefactor;
+}
+
+void histSaver::scale_sample(TString scaleregion, string formula, TString scaleVariable, vector<observable> scalefactor, vector<double> slices, TString variation){
+  int nslice = slices.size();
+  int ivar = 0;
+  for (; ivar < nvar; ++ivar)
+  {
+    if(name[ivar] == scaleVariable) break;
+  }
+  if(!nslice) {
+    nslice = nbin[ivar]+1;
+    slices.push_back(xlo[ivar]);
+    for (int i = 0; i < nbin[ivar]; ++i)
+    {
+      slices.push_back(slices[i]+binwidth(ivar));
+    }
+  }
+  vector<TString> tokens = split(formula.c_str()," ");
+  if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
   for (int i = 0; i < tokens.size(); ++i){
     if(i%2) continue;
       int islice = -1;
@@ -401,8 +431,6 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, TString variati
         }
       }
   }
-
-  return scalefactor;
 }
 
 map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fit_regions, TString *variable, vector<TString> *scalesamples, const vector<double> *slices, TString *variation, vector<TString> *postfit_regions){

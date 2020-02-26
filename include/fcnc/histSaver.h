@@ -96,7 +96,8 @@ public:
   void printyield(TString region);
   double gethisterror(TH1* hist);
   double templatesample(TString fromregion, TString variation,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
-  std::vector<observable> scale_to_data(TString scaleregion, TString variation, std::string formula, TString scaleVariable, double* slices, int nslice);
+  std::vector<observable> scale_to_data(TString scaleregion, std::string formula, TString scaleVariable, std::vector<double> slices = {}, TString variation = "NOMINAL");
+  void scale_sample(TString scaleregion, std::string formula, TString scaleVariable, std::vector<observable> scalefactor, std::vector<double> slices = {}, TString variation = "NOMINAL");
   int findvar(TString varname);
   std::vector<int> resolveslices(TH1D* target, const std::vector<double>* slices);
   std::map<TString,std::vector<observable>>* fit_scale_factor(std::vector<TString> *fit_regions, TString *variable, std::vector<TString> *scalesamples, const std::vector<double> *slices, TString *variation, std::vector<TString> *postfit_regions);
