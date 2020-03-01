@@ -350,7 +350,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
   scaleto = scalefrom;
   for(auto &sample: plot_lib){
     TH1D *target = grabhist(sample.first,scaleregion,variation,scaleVariable);
-    int islice = -1;
+    int islice = 0;
     if(target){
       auto iter = find(tokens.begin(),tokens.end(), sample.first.Data());
       if(iter != tokens.end())
@@ -371,19 +371,18 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
         {
           if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
           if(islice == nslice) break;
-          if(islice>=0)
-            scalefrom[islice] += observable(target->GetBinContent(i),target->GetBinError(i))*numb;
+          if(islice == 0) continue;
+          scalefrom[islice-1] += observable(target->GetBinContent(i),target->GetBinError(i))*numb;
         }
       }else{
         for (int i = 1; i <= nbin[ivar]; ++i)
         {
           if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
           if(islice == nslice) break;
-          if(islice>=0){
-            if(sample.first == "data") 
-              scaleto[islice] += observable(target->GetBinContent(i),target->GetBinError(i));
-            else scaleto[islice] -= observable(target->GetBinContent(i),target->GetBinError(i));
-          }
+          if(islice == 0) continue;
+          if(sample.first == "data") 
+            scaleto[islice-1] += observable(target->GetBinContent(i),target->GetBinError(i));
+          else scaleto[islice-1] -= observable(target->GetBinContent(i),target->GetBinError(i));
         }
       }
     }
@@ -419,16 +418,15 @@ void histSaver::scale_sample(TString scaleregion, string formula, TString scaleV
   if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
   for (int i = 0; i < tokens.size(); ++i){
     if(i%2) continue;
-      int islice = -1;
+      int islice = 0;
       TH1D *target = grabhist(tokens[i],scaleregion,variation,scaleVariable);
       if(!target) continue;
       for (int i = 1; i <= nbin[ivar]; ++i)
       {
         if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
         if(islice == nslice) break;
-        if(islice>=0){
-          target->Scale(scalefactor[islice].nominal);
-        }
+        if(islice == 0) continue;
+        target->Scale(scalefactor[islice-1].nominal);
       }
   }
 }
