@@ -369,20 +369,20 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
         }
         for (int i = 1; i <= nbin[ivar]; ++i)
         {
-          if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
-          if(islice == nslice) break;
-          if(islice == 0) continue;
-          scalefrom[islice-1] += observable(target->GetBinContent(i),target->GetBinError(i))*numb;
+          if(target->GetBinLowEdge(i) < slices[0]) continue;
+          if(islice == nslice-1) break;
+          scalefrom[islice] += observable(target->GetBinContent(i),target->GetBinError(i))*numb;
+          if(target->GetBinLowEdge(i) >= slices[islice+1]) islice+=1;
         }
       }else{
         for (int i = 1; i <= nbin[ivar]; ++i)
         {
-          if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
-          if(islice == nslice) break;
-          if(islice == 0) continue;
+          if(target->GetBinLowEdge(i) < slices[0]) continue;
+          if(islice == nslice-1) break;
           if(sample.first == "data") 
-            scaleto[islice-1] += observable(target->GetBinContent(i),target->GetBinError(i));
-          else scaleto[islice-1] -= observable(target->GetBinContent(i),target->GetBinError(i));
+            scaleto[islice] += observable(target->GetBinContent(i),target->GetBinError(i));
+          else scaleto[islice] -= observable(target->GetBinContent(i),target->GetBinError(i));
+          if(target->GetBinLowEdge(i) >= slices[islice+1]) islice+=1;
         }
       }
     }
@@ -423,10 +423,10 @@ void histSaver::scale_sample(TString scaleregion, string formula, TString scaleV
       if(!target) continue;
       for (int i = 1; i <= nbin[ivar]; ++i)
       {
-        if(target->GetBinLowEdge(i) >= slices[islice]) islice+=1;
-        if(islice == nslice) break;
-        if(islice == 0) continue;
-        target->Scale(scalefactor[islice-1].nominal);
+        if(target->GetBinLowEdge(i) < slices[0]) continue;
+        if(islice == nslice-1) break;
+        target->Scale(scalefactor[islice].nominal);
+        if(target->GetBinLowEdge(i) >= slices[islice+1]) islice+=1;
       }
   }
 }
