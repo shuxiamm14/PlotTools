@@ -425,7 +425,9 @@ void histSaver::scale_sample(TString scaleregion, string formula, TString scaleV
       {
         if(target->GetBinLowEdge(i) < slices[0]) continue;
         if(islice == nslice-1) break;
-        target->Scale(scalefactor[islice].nominal);
+        double scaletmp = scalefactor[islice].nominal;
+        if(scaletmp<0) scaletmp = 0;
+        target->Scale(scaletmp);
         if(target->GetBinLowEdge(i) >= slices[islice+1]) islice+=1;
       }
   }
