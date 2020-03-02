@@ -393,7 +393,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
     scalefactor.push_back(scaleto[i]/scalefrom[i]);
   }
   printf("region %s, scale variable %s in %d slices:\n", scaleregion.Data(), scaleVariable.Data(), nslice);
-  for (int i = 0; i < nslice; ++i)
+  for (int i = 0; i < nslice-1; ++i)
     printf("(%4.2f, %4.2f): %4.2f +/- %4.2f to %4.2f +/- %4.2f, ratio: %4.2f +/- %4.2f\n",slices[i], slices[i+1],scalefrom[i].nominal,scalefrom[i].error,scaleto[i].nominal,scaleto[i].error,scalefactor[i].nominal,scalefactor[i].error);
 
   return scalefactor;
@@ -612,14 +612,22 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     if(!inputfile) inputfile = new TFile(nominalfilename + ".root", "read");
     readfromfile = inputfile;
   }
-  if (debug == 1) printf("read from file: %s\n", readfromfile->GetName());
+  TString filename(readfromfile->GetName());
+  if (debug == 1) printf("read from file: %s\n", filename.Data());
   if (samplename == "data") dataref = 1;
+  TString histnameorig(savehistname + "_");
   for(auto const& region: regions) {
+    TString histname;
+    if(filename.Contains("NOMINAL") && variation.Contains("Xsec")){
+      histname = histnameorig + "NOMINAL_" + region + "_";
+    }else{
+      histname = histnameorig + variation + "_" + region + "_";
+    }
     if (debug == 1)
     {
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
-    if(!(TH1D*)(readfromfile->Get(savehistname + "_" + variation + "_" + region + "_" + name[0]))) {
+    if(!(TH1D*)(readfromfile->Get(histname + name[0]))) {
       if(debug) printf("histogram name not found: %s\n", (savehistname + "_" + variation + "_" + region + "_" + name[0]).Data());
       continue;
     }
@@ -627,29 +635,28 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     {
       for (int i = 0; i < nvar; ++i)
       {
-        TString histname = savehistname + "_" + variation + "_" + region + "_" + name[i];
-        if(!(TH1D*)(readfromfile->Get(histname))) {
-          if(debug) printf("histogram name not found: %s\n", (histname).Data());
+        if(!(TH1D*)(readfromfile->Get(histname + name[i]))) {
+          if(debug) printf("histogram name not found: %s\n", (histname+name[i]).Data());
           printf("plot_lib[%s][%s][%s][%d]\n", samplename.Data(), region.Data(),variation.Data(), i);
           show();
           exit(1);
         }
 
-        TH1D *readhist = (TH1D*)readfromfile->Get(histname);
+        TH1D *readhist = (TH1D*)readfromfile->Get(histname + name[i]);
         double tmp = readhist->Integral();
         if(tmp!=tmp){
-          printf("Warning: %s->Integral() is nan, skip\n", (histname).Data());
+          printf("Warning: %s->Integral() is nan, skip\n", (histname + name[i]).Data());
           continue;
         }
         if(tmp==0){
-          printf("Warning: %s->Integral() is 0, skip\n", (histname).Data());
+          printf("Warning: %s->Integral() is 0, skip\n", (histname + name[i]).Data());
           continue;
         }
         
         plot_lib[samplename][region][variation][i]->Add(readhist,norm);
         if(checkread){
           if(samplename == checkread_sample && region == checkread_region && variation == checkread_variation && i == checkread_variable){
-            printf("read histogram %s, + %f\n", histname.Data(), readhist->GetBinContent(checkread_ibin)*norm);
+            printf("read histogram %s, + %f\n", (histname + name[i]).Data(), readhist->GetBinContent(checkread_ibin)*norm);
           }
         }
       }
@@ -657,29 +664,28 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
       ++histcount;
       for (int i = 0; i < nvar; ++i)
       {
-        TString histname = savehistname + "_" + variation + "_" + region + "_" + name[i];
-        if(!(TH1D*)(readfromfile->Get(histname))) {
-          if(debug) printf("histogram name not found: %s\n", (histname).Data());
+        if(!(TH1D*)(readfromfile->Get(histname + name[i]))) {
+          if(debug) printf("histogram name not found: %s\n", (histname + name[i]).Data());
           printf("plot_lib[%s][%s][%s][%d]\n", samplename.Data(), region.Data(),variation.Data(), i);
           show();
           exit(1);
         }
-        TH1D *readhist = (TH1D*)readfromfile->Get(histname);
+        TH1D *readhist = (TH1D*)readfromfile->Get(histname + name[i]);
         double tmp = readhist->Integral();
         if(tmp!=tmp){
-          printf("Warning: %s->Integral() is nan, skip\n", (histname).Data());
+          printf("Warning: %s->Integral() is nan, skip\n", (histname + name[i]).Data());
           continue;
         }
         if(tmp==0){
-          printf("Warning: %s->Integral() is 0, skip\n", (histname).Data());
+          printf("Warning: %s->Integral() is 0, skip\n", (histname + name[i]).Data());
           continue;
         }
         if(checkread){
           if(samplename == checkread_sample && region == checkread_region && variation == checkread_variation && i == checkread_variable){
-            printf("read histogram %s, + %f\n", histname.Data(), readhist->GetBinContent(checkread_ibin)*norm);
+            printf("read histogram %s, + %f\n", (histname + name[i]).Data(), readhist->GetBinContent(checkread_ibin)*norm);
           }
         }
-        plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname)->Clone()));
+        plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname + name[i])->Clone()));
         plot_lib[samplename][region][variation][i]->SetName(samplename + "_" + variation + "_" + region + "_" + name[i] + "_buffer");
         plot_lib[samplename][region][variation][i]->Scale(norm);
         plot_lib[samplename][region][variation][i]->SetTitle(sampleTitle);
