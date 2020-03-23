@@ -1151,8 +1151,16 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       if(!overlaysamples.size()) {
         cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf");
       }
+      std::string regtitle = region.Data();
+      findAndReplaceAll(regtitle,"reg1l1tau1b3j_","TTH $\\tlhad$ ");
+      findAndReplaceAll(regtitle,"reg1l1tau1b2j_","STH $\\tlhad$ ");
+      findAndReplaceAll(regtitle,"reg1l1tau2b3j_","TTH $\\tlhad$ 2b ");
+      findAndReplaceAll(regtitle,"reg1l1tau2b2j_","STH $\\tlhad$ 2b ");
+      findAndReplaceAll(regtitle,"reg1l2tau1bnj_","l$\\thadhad$ ");
+      findAndReplaceAll(regtitle,"reg1l2tau2bnj_","l$\\thadhad$ 2b ");
+
       if(sensitivevariable == name[i]) {
-        yield_chart->set("background",region.Data(),integral(&hmc));
+        yield_chart->set("background",regtitle,integral(&hmc));
       }
       for(auto overlaysample: overlaysamples){
         
@@ -1203,13 +1211,6 @@ void histSaver::plot_stack(TString NPname, TString outdir){
           std::string samptitle = histoverlay->GetTitle();
           findAndReplaceAll(samptitle,"#","\\");
           findAndReplaceAll(samptitle,"%","\\%");
-          std::string regtitle = region.Data();
-          findAndReplaceAll(regtitle,"reg1l1tau1b3j_","TTH $\\tlhad$ ");
-          findAndReplaceAll(regtitle,"reg1l1tau1b2j_","STH $\\tlhad$ ");
-          findAndReplaceAll(regtitle,"reg1l1tau2b3j_","TTH $\\tlhad$ 2b ");
-          findAndReplaceAll(regtitle,"reg1l1tau2b2j_","STH $\\tlhad$ 2b ");
-          findAndReplaceAll(regtitle,"reg1l2tau1bnj_","l$\\thadhad$ ");
-          findAndReplaceAll(regtitle,"reg1l2tau2bnj_","l$\\thadhad$ 2b ");
           yield_chart->set("$"+samptitle+"$",regtitle,integral(histoverlay));
           sgnf_chart->set("$"+samptitle+"$",regtitle,sqrt(_significance));
           printf("signal %s yield: %4.2f, significance: %4.2f\n",overlaysample.Data(), histoverlay->Integral(), sqrt(_significance));

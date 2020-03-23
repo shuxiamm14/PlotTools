@@ -74,12 +74,12 @@ void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstrea
 	for(auto new_column: new_columns) (*file)<<"c|";
 	(*file)<<"} \\hline\n";
 	//==============================column title=====================================
-	for(auto new_column: new_columns) (*file)<<" & "<<new_column;
+	for(auto new_column: new_columns) (*file)<<" & $"<<new_column<<"$";
 	(*file)<<"\\\\\\hline\n";
 	//==============================table content=====================================
 	for(auto row: rows){
 		(*file)<<row;
-		for(auto new_column: new_columns) (*file)<<" & "<<content[row][new_column].nominal<<"+/-"<<content[row][new_column].error;
+		for(auto new_column: new_columns) (*file)<<" & $"<<content[row][new_column].nominal<<"\\pm"<<content[row][new_column].error<<"$";
 		(*file)<<"\\\\\\hline\n";
 	}
 	(*file)<<"\\end{tabular}\n";
