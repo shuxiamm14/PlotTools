@@ -44,12 +44,12 @@ void LatexChart::print(std::string filename){
 	for(auto column: columns) file<<"c|";
 	file<<"} \\hline\n";
 	//==============================column title=====================================
-	for(auto column: columns) file<<" & "<<column<<"\n";
+	for(auto column: columns) file<<" & "<<column;
 	file<<"\\\\\\hline\n";
 	//==============================table content=====================================
 	for(auto row: rows){
 		file<<row;
-		for(auto column: columns) file<<" & "<<content[row][column].nominal<<"+/-"<<content[row][column].error<<"\n";
+		for(auto column: columns) file<<" & "<<content[row][column].nominal<<"+/-"<<content[row][column].error;
 		file<<"\\\\\\hline\n";
 	}
 	//==============================end table=====================================

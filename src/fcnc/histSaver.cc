@@ -1222,15 +1222,17 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       deletepointer(datahist);
       for(auto &iter : buffer) deletepointer(iter);
       if(debug) printf("end region %s\n",region.Data());
-      yield_chart->print("yield_chart");
-      sgnf_chart->print("significance_chart");
-      deletepointer(yield_chart);
-      deletepointer(sgnf_chart);
       cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf]");
       cv.Clear();
     }
     if(debug) printf("end loop region\n");
   }
+  if(yield_chart->rows.size()){
+    yield_chart->print("yield_chart");
+    sgnf_chart->print("significance_chart");
+  }
+  deletepointer(yield_chart);
+  deletepointer(sgnf_chart);
   outputrocfile->Close();
   deletepointer(outputrocfile);
 }
