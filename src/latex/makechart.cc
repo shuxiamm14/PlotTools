@@ -1,6 +1,7 @@
 #include "makechart.h"
 #include <string>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 void LatexChart::set(std::string row, std::string column, float nominal, float error){
