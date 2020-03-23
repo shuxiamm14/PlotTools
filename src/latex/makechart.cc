@@ -35,14 +35,9 @@ void LatexChart::reset(){
 }
 
 void LatexChart::print(std::string filename){
-<<<<<<< HEAD
 	ofstream *file = new ofstream();
 	(*file).open(filename+".tex");
 	(*file)<<"\\begin{table}\n";
-=======
-	fstream *file;
-	(*file).open(filename.c_str());
->>>>>>> 719e62e18ccf8ee9792a80f6804ed3a1c543c883
 	(*file)<<"\\footnotesize\n";
 	(*file)<<"\\caption{"<<caption<<"}\n";
 	(*file)<<"\\centering\n";
