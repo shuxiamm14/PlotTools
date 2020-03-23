@@ -1200,9 +1200,11 @@ void histSaver::plot_stack(TString NPname, TString outdir){
             deletepointer(ROC_sig);
             deletepointer(ROC_bkg);
           }
-
-          yield_chart->set(overlaysample.Data(),region.Data(),integral(histoverlay));
-          sgnf_chart->set(overlaysample.Data(),region.Data(),sqrt(_significance));
+          std::string samptitle = histoverlay->GetTitle();
+          findAndReplaceAll(samptitle,"#","\\");
+          findAndReplaceAll(samptitle,"%","\%");
+          yield_chart->set(samptitle,region.Data(),integral(histoverlay));
+          sgnf_chart->set(samptitle,region.Data(),sqrt(_significance));
           printf("signal %s yield: %4.2f, significance: %4.2f\n",overlaysample.Data(), histoverlay->Integral(), sqrt(_significance));
         }
 

@@ -35,14 +35,44 @@ void LatexChart::reset(){
 }
 
 void LatexChart::print(std::string filename){
-	fstream file;
-	file.open(filename.c_str());
-	file<<"\\footnotesize\n";
-	file<<"\\caption{"<<caption<<"}\n";
-	file<<"\\centering\n";
-	file<<"\\begin{tabular}{|";
-	for(auto column: columns) file<<"c|";
-	file<<"} \\hline\n";
+	ofstream *file = new ofstream();
+	(*file).open(filename+".tex");
+	(*file)<<"\\begin{table}\n";
+	(*file)<<"\\footnotesize\n";
+	(*file)<<"\\caption{"<<caption<<"}\n";
+	(*file)<<"\\centering\n";
+	int ncolumn = columns.size();
+	if(ncolumn > maxcolumn){
+		int nvec = ncolumn/maxcolumn;
+		if(ncolumn%maxcolumn) nvec+=1;
+		int nlong = ncolumn%nvec;
+		int averagelow = ncolumn/nvec;
+		if(!ncolumn%maxcolumn) averagelow-=1;
+		vector<string> new_columns;
+		int count = 0;
+		for (int ivec = 0; ivec < nvec; ++ivec)
+		{
+			for (int i = 0; i < averagelow+1; ++i)
+			{
+				if(i == averagelow && ivec >= nlong) continue;
+				new_columns.push_back(columns[count]);
+				count ++;
+			}
+			writeContent(new_columns, file);
+			new_columns.clear();
+		}
+	}else{
+		writeContent(columns, file);
+	}
+	(*file)<<"\\label{tab:"<<label<<"}\n";
+	(*file)<<"\\end{table}\n";
+	file->close();
+}
+
+void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstream* file){
+	(*file)<<"\\begin{tabular}{|";
+	for(auto new_column: new_columns) (*file)<<"c|";
+	(*file)<<"} \\hline\n";
 	//==============================column title=====================================
 	for(auto column: columns) file<<" & "<<column;
 	file<<"\\\\\\hline\n";

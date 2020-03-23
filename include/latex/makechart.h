@@ -18,4 +18,5 @@ public:
 	void clear();
 	void reset();
 	void print(std::string filename);
+	void writeContent(std::vector<std::string> new_columns, std::ofstream* file);
 };
