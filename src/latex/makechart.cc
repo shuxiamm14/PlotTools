@@ -35,25 +35,46 @@ void LatexChart::reset(){
 }
 
 void LatexChart::print(std::string filename){
-	fstream file;
-	file.open(filename.c_str());
-	file<<"\\footnotesize\n";
-	file<<"\\caption{"<<caption<<"}\n";
-	file<<"\\centering\n";
-	file<<"\\begin{tabular}{|";
-	for(auto column: columns) file<<"c|";
-	file<<"} \\hline\n";
+	fstream *file;
+	(*file).open(filename.c_str());
+	(*file)<<"\\footnotesize\n";
+	(*file)<<"\\caption{"<<caption<<"}\n";
+	(*file)<<"\\centering\n";
+	int ncolumn = columns.size();
+	if(ncolumn > maxcolumn){
+		int nlong = ncolumn%(ncolumn/maxcolumn+1);	   //10%3 = 1
+		int count = 0;
+		int averagelow = ncolumn/(ncolumn/maxcolumn+1); // 10/3 = 3
+
+		vector<string> new_columns;
+		for (int ivec = 0; ivec < count; ++ivec)
+		{
+			for (int i = 0; i < averagelow+1; ++i)
+			{
+				if(ivec == averagelow && ivec >= nlong) continue;
+				new_columns.push_back(columns[count]);
+				count ++;
+			}
+			writeContent(new_columns, &(*file));
+			new_columns.clear();
+		}
+	}
+	(*file)<<"\\label{tab:"<<label<<"}\n";
+	(*file)<<"\\end{table}\n";
+}
+
+void LatexChart::writeContent(std::vector<std::string> new_columns, std::fstream* file){
+	(*file)<<"\\begin{tabular}{|";
+	for(auto new_column: new_columns) (*file)<<"c|";
+	(*file)<<"} \\hline\n";
 	//==============================column title=====================================
-	for(auto column: columns) file<<" & "<<column;
-	file<<"\\\\\\hline\n";
+	for(auto new_column: new_columns) (*file)<<" & "<<new_column;
+	(*file)<<"\\\\\\hline\n";
 	//==============================table content=====================================
 	for(auto row: rows){
-		file<<row;
-		for(auto column: columns) file<<" & "<<content[row][column].nominal<<"+/-"<<content[row][column].error;
-		file<<"\\\\\\hline\n";
+		(*file)<<row;
+		for(auto new_column: new_columns) (*file)<<" & "<<content[row][new_column].nominal<<"+/-"<<content[row][new_column].error;
+		(*file)<<"\\\\\\hline\n";
 	}
-	//==============================end table=====================================
-	file<<"\\end{tabular}\n";
-	file<<"\\label{tab:"<<label<<"}\n";
-	file<<"\\end{table}\n";
+	(*file)<<"\\end{tabular}\n";
 }

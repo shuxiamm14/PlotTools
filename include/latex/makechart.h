@@ -1,12 +1,14 @@
 #include "observable.h"
 #include "iostream"
+#include <fstream>
 #include <map>
 class LatexChart
 {
 public:
-	LatexChart(){};
+	LatexChart(){ maxcolumn = 4; }
 	~LatexChart(){};
-	LatexChart(std::string chartlabel) : label(chartlabel) {};
+	LatexChart(std::string chartlabel) : label(chartlabel) { maxcolumn = 4; }
+	int maxcolumn;
 	std::string label;
 	std::string caption;
 	std::vector<std::string> rows;
@@ -18,4 +20,5 @@ public:
 	void clear();
 	void reset();
 	void print(std::string filename);
+	void writeContent(std::vector<std::string> new_columns, std::fstream* file);
 };
