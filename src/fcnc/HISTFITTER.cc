@@ -123,7 +123,7 @@ void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int
 	map<TString, TH1D*>::iterator iter;
 	
 	TH1D *htot = NULL;
-	TH1D *data;
+	TH1D *data = NULL;
 	for (iter = histforfit->begin(); iter != histforfit->end(); iter ++)
 	{
 		if(iter->first == "metadata") continue;
@@ -161,7 +161,10 @@ void HISTFITTER::fcn(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int
 		}
 		exit(0);
 	}
-
+	if(!data) {
+          printf("ERROR: data histogram doesn't exist\n");
+          exit(0);
+        }
 	for (int i = 1; i <= data->GetNbinsX(); ++i){
 		if(htot->GetBinContent(i))
 			f += pow((data->GetBinContent(i) - htot->GetBinContent(i))/htot->GetBinError(i),2);

@@ -418,17 +418,20 @@ void histSaver::scale_sample(TString scaleregion, string formula, TString scaleV
   vector<TString> tokens = split(formula.c_str()," ");
   if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
   for (int i = 0; i < tokens.size(); ++i){
-    if(i%2) continue;
+    if(!(i%2)) continue;
       int islice = 0;
       TH1D *target = grabhist(tokens[i],scaleregion,variation,scaleVariable);
-      if(!target) continue;
+      if(!target) {
+        printf("histSaver::scale_sample : WARNING: hist not found grabhist(%s,%s,%s,%s)\n", tokens[i].Data(),scaleregion.Data(),variation.Data(),scaleVariable.Data());
+        continue;
+      }
       for (int i = 1; i <= nbin[ivar]; ++i)
       {
         if(target->GetBinLowEdge(i) < slices[0]) continue;
         if(islice == nslice-1) break;
         double scaletmp = scalefactor[islice].nominal;
         if(scaletmp<0) scaletmp = 0;
-        target->Scale(scaletmp);
+        target->SetBinContent(i,target->GetBinContent(i)*scaletmp);
         if(target->GetBinLowEdge(i) >= slices[islice+1]) islice+=1;
       }
   }
@@ -1012,11 +1015,17 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       }
       double histmax = hmc.GetMaximum() + hmc.GetBinError(hmc.GetMaximumBin());
 
-      TH1D * datahist;
+      TH1D * datahist = 0;
       if(debug) printf("set data\n");
       if (dataref) {
-        if(grabhist("data",region,"NOMINAL",i)) datahist = (TH1D*)grabhist("data",region,"NOMINAL",i)->Clone();
-        datahist->Rebin(rebin[i]);
+        TH1D* tmptarget = grabhist("data",region,"NOMINAL",i);
+        if(tmptarget) datahist = (TH1D*)tmptarget->Clone("dataClone");
+        if(!datahist) {
+          printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), name[i].Data());
+          exit(0);
+        } 
+        if(rebin[i] != 1)
+          datahist->Rebin(rebin[i]);
         if(datahist->Integral() == 0) printf("Warning: data hist is empty\n");
         lg1->AddEntry(datahist,"data","LP");
         datahist->SetMarkerStyle(20);
