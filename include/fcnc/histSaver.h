@@ -8,7 +8,6 @@
 class histSaver{
 public:
   TString inputfilename;
-  
   bool checkread;
   TString checkread_sample;
   TString checkread_region;

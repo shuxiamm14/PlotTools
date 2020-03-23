@@ -5,6 +5,7 @@
 #include "AtlasStyle.h"
 #include "AtlasLabels.h"
 #include "HISTFITTER.h"
+#include "makechart.h"
 using namespace std;
 histSaver::histSaver(TString _outputfilename) {
   outputfilename = _outputfilename;
@@ -944,6 +945,8 @@ void histSaver::SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _wo
 void histSaver::plot_stack(TString NPname, TString outdir){
   SetAtlasStyle();
   TGaxis::SetMaxDigits(3);
+  LatexChart* yield_chart = new LatexChart("yield");
+  LatexChart* sgnf_chart = new LatexChart("significance");
   gSystem->mkdir("plots_" + outdir);
   TCanvas cv("cv","cv",600,600);
   TGraph* ROC;
@@ -1139,8 +1142,9 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       if(!overlaysamples.size()) {
         cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf");
       }
-      if(sensitivevariable == name[i]) printf("region %s, background yield: %4.2f\n", region.Data(), hmc.Integral());
-
+      if(sensitivevariable == name[i]) {
+        yield_chart->set("background",region.Data(),integral(&hmc));
+      }
       for(auto overlaysample: overlaysamples){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
@@ -1187,6 +1191,9 @@ void histSaver::plot_stack(TString NPname, TString outdir){
             deletepointer(ROC_sig);
             deletepointer(ROC_bkg);
           }
+
+          yield_chart->set(overlaysample.Data(),region.Data(),integral(histoverlay));
+          sgnf_chart->set(overlaysample.Data(),region.Data(),sqrt(_significance));
           printf("signal %s yield: %4.2f, significance: %4.2f\n",overlaysample.Data(), histoverlay->Integral(), sqrt(_significance));
         }
 
@@ -1206,6 +1213,10 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       deletepointer(datahist);
       for(auto &iter : buffer) deletepointer(iter);
       if(debug) printf("end region %s\n",region.Data());
+      yield_chart->print("yield_chart");
+      sgnf_chart->print("significance_chart");
+      deletepointer(yield_chart);
+      deletepointer(sgnf_chart);
       cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf]");
       cv.Clear();
     }
