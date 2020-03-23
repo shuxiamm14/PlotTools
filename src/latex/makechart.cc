@@ -35,9 +35,14 @@ void LatexChart::reset(){
 }
 
 void LatexChart::print(std::string filename){
+<<<<<<< HEAD
 	ofstream *file = new ofstream();
 	(*file).open(filename+".tex");
 	(*file)<<"\\begin{table}\n";
+=======
+	fstream *file;
+	(*file).open(filename.c_str());
+>>>>>>> 719e62e18ccf8ee9792a80f6804ed3a1c543c883
 	(*file)<<"\\footnotesize\n";
 	(*file)<<"\\caption{"<<caption<<"}\n";
 	(*file)<<"\\centering\n";
@@ -74,16 +79,13 @@ void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstrea
 	for(auto new_column: new_columns) (*file)<<"c|";
 	(*file)<<"} \\hline\n";
 	//==============================column title=====================================
-	for(auto column: columns) file<<" & "<<column;
-	file<<"\\\\\\hline\n";
+	for(auto new_column: new_columns) (*file)<<" & "<<new_column;
+	(*file)<<"\\\\\\hline\n";
 	//==============================table content=====================================
 	for(auto row: rows){
-		file<<row;
-		for(auto column: columns) file<<" & "<<content[row][column].nominal<<"+/-"<<content[row][column].error;
-		file<<"\\\\\\hline\n";
+		(*file)<<row;
+		for(auto new_column: new_columns) (*file)<<" & "<<content[row][new_column].nominal<<"+/-"<<content[row][new_column].error;
+		(*file)<<"\\\\\\hline\n";
 	}
-	//==============================end table=====================================
-	file<<"\\end{tabular}\n";
-	file<<"\\label{tab:"<<label<<"}\n";
-	file<<"\\end{table}\n";
+	(*file)<<"\\end{tabular}\n";
 }
