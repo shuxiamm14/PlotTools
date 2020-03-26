@@ -1156,8 +1156,8 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       findAndReplaceAll(regtitle,"reg1l1tau1b2j_","STH $\\tlhad$ ");
       findAndReplaceAll(regtitle,"reg1l1tau2b3j_","TTH $\\tlhad$ 2b ");
       findAndReplaceAll(regtitle,"reg1l1tau2b2j_","STH $\\tlhad$ 2b ");
-      findAndReplaceAll(regtitle,"reg1l2tau1bnj_","l$\\thadhad$ ");
-      findAndReplaceAll(regtitle,"reg1l2tau2bnj_","l$\\thadhad$ 2b ");
+      findAndReplaceAll(regtitle,"reg1l2tau1bnj_","$l\\thadhad$ ");
+      findAndReplaceAll(regtitle,"reg1l2tau2bnj_","$l\\thadhad$ 2b ");
 
       if(sensitivevariable == name[i]) {
         yield_chart->set("background",regtitle,integral(&hmc));
@@ -1209,10 +1209,13 @@ void histSaver::plot_stack(TString NPname, TString outdir){
             deletepointer(ROC_bkg);
           }
           std::string samptitle = histoverlay->GetTitle();
+          findAndReplaceAll(samptitle," ","~");
           findAndReplaceAll(samptitle,"#","\\");
           findAndReplaceAll(samptitle,"%","\\%");
-          yield_chart->set("$"+samptitle+"$",regtitle,integral(histoverlay));
-          sgnf_chart->set("$"+samptitle+"$",regtitle,sqrt(_significance));
+          findAndReplaceAll(samptitle,"rightarrow","to ");
+          if(samptitle.find("#") != string::npos) samptitle = "$"+samptitle+"$";
+          yield_chart->set(samptitle,regtitle,integral(histoverlay));
+          sgnf_chart->set(samptitle,regtitle,sqrt(_significance));
           printf("signal %s yield: %4.2f, significance: %4.2f\n",overlaysample.Data(), histoverlay->Integral(), sqrt(_significance));
         }
 

@@ -2,15 +2,16 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <iomanip>
 using namespace std;
 
-void LatexChart::set(std::string row, std::string column, float nominal, float error){
-	observable obs(nominal,error);
+void LatexChart::set(std::string row, std::string column, float nominal, float errorup, float errordown){
+	observable obs(nominal,errorup,errordown);
 	set(row,column,obs);
 }
 
-void LatexChart::set(std::string row, std::string column, double nominal, double error){
-	observable obs(nominal,error);
+void LatexChart::set(std::string row, std::string column, double nominal, double errorup, double errordown){
+	observable obs(nominal,errorup,errordown);
 	set(row,column,obs);
 }
 
@@ -72,14 +73,29 @@ void LatexChart::print(std::string filename){
 void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstream* file){
 	(*file)<<"\\begin{tabular}{|";
 	for(auto new_column: new_columns) (*file)<<"c|";
-	(*file)<<"} \\hline\n";
+	(*file)<<"c|} \\hline\n";
 	//==============================column title=====================================
-	for(auto new_column: new_columns) (*file)<<" & $"<<new_column<<"$";
+	for(auto new_column: new_columns) (*file)<<" & "<<new_column;
 	(*file)<<"\\\\\\hline\n";
 	//==============================table content=====================================
+	(*file)<<fixed<<setprecision(2);
 	for(auto row: rows){
 		(*file)<<row;
-		for(auto new_column: new_columns) (*file)<<" & $"<<content[row][new_column].nominal<<"\\pm"<<content[row][new_column].error<<"$";
+		for(auto new_column: new_columns) {
+			(*file)<<" & ";
+			if(content[row].find(new_column) == content[row].end())
+				(*file)<<" /";
+			else{
+				(*file)<<"$"<<content[row][new_column].nominal;
+				if(content[row][new_column].error) {
+					if(content[row][new_column].error == content[row][new_column].errordown)
+						(*file)<<"\\pm"<<content[row][new_column].error;
+					else
+						(*file)<<"^{+"<<content[row][new_column].error<<"}_{-"<<content[row][new_column].errordown<<"}";
+				}
+				(*file)<<" $";
+			}
+		}
 		(*file)<<"\\\\\\hline\n";
 	}
 	(*file)<<"\\end{tabular}\n";

@@ -14,8 +14,8 @@ public:
 	std::vector<std::string> rows;
 	std::vector<std::string> columns;
 	std::map<std::string, std::map<std::string, observable>> content;
-	void set(std::string row, std::string column, float nominal = 0, float error = 0);
-	void set(std::string row, std::string column, double nominal = 0, double error = 0);
+	void set(std::string row, std::string column, float nominal = 0, float error = 0, float errordown = 0);
+	void set(std::string row, std::string column, double nominal = 0, double error = 0, double errordown = 0);
 	void set(std::string row, std::string column, observable obs);
 	void clear();
 	void reset();

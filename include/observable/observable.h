@@ -2,12 +2,11 @@
 #define OBSERVABLE 1
 #include <iostream> 
 #include "TH1.h"
-class observable { 
+class observable {
 public: 
-    double nominal, error; 
-    observable(double n = 0, double e =0)  {nominal = n;   error = e;} 
-      
-    void print() { std::cout << nominal << " +/- " << error << std::endl; } 
+    double nominal, error, errordown; 
+    observable(double n = 0, double e = 0, double ed = 0);
+    void print();
 
 	observable operator = (observable const &obj);
 	observable operator + (observable const &obj);
