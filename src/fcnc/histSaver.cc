@@ -1210,10 +1210,10 @@ void histSaver::plot_stack(TString NPname, TString outdir){
           }
           std::string samptitle = histoverlay->GetTitle();
           findAndReplaceAll(samptitle," ","~");
+          if(samptitle.find("#") != string::npos) samptitle = "$"+samptitle+"$";
           findAndReplaceAll(samptitle,"#","\\");
           findAndReplaceAll(samptitle,"%","\\%");
           findAndReplaceAll(samptitle,"rightarrow","to ");
-          if(samptitle.find("#") != string::npos) samptitle = "$"+samptitle+"$";
           yield_chart->set(samptitle,regtitle,integral(histoverlay));
           sgnf_chart->set(samptitle,regtitle,sqrt(_significance));
           printf("signal %s yield: %4.2f, significance: %4.2f\n",overlaysample.Data(), histoverlay->Integral(), sqrt(_significance));
