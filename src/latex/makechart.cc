@@ -100,3 +100,22 @@ void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstrea
 	}
 	(*file)<<"\\end{tabular}\n";
 }
+
+void LatexChart::add(LatexChart *target){
+	for(auto row: rows){
+		for(auto column: columns){
+			content[row][column] += target->content[row][column];
+		}
+	}
+}
+
+LatexChart* LatexChart::clone(){
+	LatexChart *chart = new LatexChart(label);
+	chart->maxcolumn = maxcolumn;
+	chart->label = label;
+	chart->caption = caption;
+	chart->rows = rows;
+	chart->columns = columns;
+	chart->content = content;
+	return chart;
+};
