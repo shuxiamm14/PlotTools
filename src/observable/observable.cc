@@ -5,6 +5,7 @@ observable observable::operator + (observable const &obj) {
 	observable res;
 	res.nominal = nominal + obj.nominal;
 	res.error = rms(error, obj.error);
+	res.errordown = res.error;
 	return res;
 } 
 
@@ -12,6 +13,7 @@ observable observable::operator - (observable const &obj) {
 	observable res;
 	res.nominal = nominal - obj.nominal;
 	res.error = rms(error, obj.error);
+	res.errordown = res.error;
 	return res;
 } 
 observable observable::operator * (observable const &obj) { 
@@ -19,13 +21,14 @@ observable observable::operator * (observable const &obj) {
 	res.nominal = nominal * obj.nominal;
 	res.error = rms(error * obj.nominal, obj.error * nominal);
 	res.error = rms(res.error, error*obj.error);
-
+	res.errordown = res.error;
 	return res;
 } 
 observable observable::operator / (observable const &obj) { 
 	observable res;
 	res.nominal = nominal / obj.nominal;
 	res.error = rms(error / obj.nominal, obj.error * nominal / obj.nominal / obj.nominal);
+	res.errordown = res.error;
 	return res;
 } 
 
@@ -39,12 +42,14 @@ observable observable::operator = (observable const &obj) {
 observable observable::operator += (observable const &obj) { 
 	nominal = nominal + obj.nominal;
 	error = rms(error, obj.error);
+	errordown = error;
 	return *this;
 } 
 
 observable observable::operator -= (observable const &obj) { 
 	nominal = nominal - obj.nominal;
 	error = rms(error, obj.error);
+	errordown = error;
 	return *this;
 } 
 
