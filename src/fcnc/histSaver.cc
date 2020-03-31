@@ -1164,7 +1164,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
 
       if(sensitivevariable == name[i]) {
         if(dataref){
-          yield_chart->set("data",regtitle,integral(&datahistorig));
+          yield_chart->set("data",regtitle,integral(datahistorig));
         }
         yield_chart->set("background",regtitle,integral(&hmc));
       }
