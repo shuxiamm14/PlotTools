@@ -955,6 +955,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
   TGraph* ROC;
   TH1D *ROC_sig = 0;
   TH1D *ROC_bkg = 0;
+  TH1D* datahistorig = 0;
   vector<TH1D*> buffer;
   if(doROC){
     ROC = new TGraph();
@@ -1018,7 +1019,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       TH1D * datahist = 0;
       if(debug) printf("set data\n");
       if (dataref) {
-        TH1D* tmptarget = grabhist("data",region,"NOMINAL",i);
+        datahistorig = grabhist("data",region,"NOMINAL",i);
         if(tmptarget) datahist = (TH1D*)tmptarget->Clone("dataClone");
         if(!datahist) {
           printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), name[i].Data());
@@ -1099,7 +1100,9 @@ void histSaver::plot_stack(TString NPname, TString outdir){
           }
         }
       }
-      if(dataref) datahist->Draw("E same");
+      if(dataref) {
+        datahist->Draw("E same");
+      }
 
 //===============================lower pad===============================
       padlow->SetFillStyle(4000);
@@ -1160,8 +1163,12 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       findAndReplaceAll(regtitle,"reg1l2tau2bnj_","$l\\thadhad$ 2b ");
 
       if(sensitivevariable == name[i]) {
+        if(dataref){
+          yield_chart->set("data",regtitle,integral(&datahistorig));
+        }
         yield_chart->set("background",regtitle,integral(&hmc));
       }
+
       for(auto overlaysample: overlaysamples){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
