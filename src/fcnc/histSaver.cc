@@ -1020,7 +1020,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       if(debug) printf("set data\n");
       if (dataref) {
         datahistorig = grabhist("data",region,"NOMINAL",i);
-        if(tmptarget) datahist = (TH1D*)tmptarget->Clone("dataClone");
+        if(datahistorig) datahist = (TH1D*)datahistorig->Clone("dataClone");
         if(!datahist) {
           printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), name[i].Data());
           exit(0);
