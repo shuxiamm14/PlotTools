@@ -40,16 +40,22 @@ observable observable::operator = (observable const &obj) {
 } 
 
 observable observable::operator += (observable const &obj) { 
-	nominal = nominal + obj.nominal;
-	error = rms(error, obj.error);
-	errordown = error;
+	*this = *this + obj;
 	return *this;
 } 
 
 observable observable::operator -= (observable const &obj) { 
-	nominal = nominal - obj.nominal;
-	error = rms(error, obj.error);
-	errordown = error;
+	*this = *this - obj;
+	return *this;
+} 
+
+observable observable::operator *= (observable const &obj) { 
+	*this = *this * obj;
+	return *this;
+} 
+
+observable observable::operator /= (observable const &obj) { 
+	*this = *this / obj;
 	return *this;
 } 
 

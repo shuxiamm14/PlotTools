@@ -13,6 +13,8 @@ public:
 	observable operator - (observable const &obj);
 	observable operator += (observable const &obj);
 	observable operator -= (observable const &obj);
+	observable operator *= (observable const &obj);
+	observable operator /= (observable const &obj);
 	observable operator * (observable const &obj);
 	observable operator / (observable const &obj);
 	observable operator + (double aa);
