@@ -1248,7 +1248,9 @@ void histSaver::plot_stack(TString NPname, TString outdir){
     if(debug) printf("end loop region\n");
   }
   if(yield_chart->rows.size()){
+    yield_chart->caption = "The sample and data yield before the fit."
     yield_chart->print("yield_chart");
+    sgnf_chart->caption = "The stat. only significance of the signal in each regions with the benchmark $\\mu$ value."
     sgnf_chart->print("significance_chart");
   }
   deletepointer(yield_chart);
