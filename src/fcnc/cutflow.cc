@@ -76,7 +76,7 @@ void CutFlow::save(int total_cuts){
 	TH1D *save_hist = (TH1D*)save_file->Get(region);
 	if(!save_hist) save_hist = new TH1D(region,region,nbins,0,nbins);
 	TAxis *xaxis = save_hist->GetXaxis();
-	for (int i = 0; i < nbins; ++i)
+	for (int i = 1; i <= nbins; ++i)
 	{
 		if(xaxis->GetBinLabel(i) == cut_names[0] || xaxis->GetBinLabel(i) == TString("")){
 			for (int j = 0; j < n_cuts; ++j)
@@ -103,7 +103,7 @@ void CutFlow::print(){
 
 	for (int i = 0; i < n_cuts; ++i)
 	{
-		printf("%s", cut_names[n_cuts].Data());
+		printf(" %s", cut_names[i].Data());
 	}
 	printf("\n");
 	for (int i = 0; i < n_cuts; ++i)
