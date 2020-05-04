@@ -24,9 +24,12 @@ void BelongRegion::clear(){
 }
 
 bool BelongRegion::isCategory(TString category){
+	if(m_region_map.find(category) == m_region_map.end()){
+		printf("BelongRegion::isCategory() : ERROR : category %s not found in the region map.\n", category.Data());
+	}
 	for(auto reg: m_all_region)
 		for(auto mapreg: m_region_map.at(category))
-			if(reg == *mapreg)
+			if(reg == mapreg)
 				return true;
 	return false;
 }
