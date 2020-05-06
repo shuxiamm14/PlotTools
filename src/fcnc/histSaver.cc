@@ -1170,8 +1170,8 @@ void histSaver::plot_stack(TString NPname, TString outdir){
           yield_chart->set("data",regtitle,integral(datahistorig));
         }
         yield_chart->set("background",regtitle,integral(&hmc));
+        printf("Region %s, Background yield: %f\n", region.Data(), hmc.Integral());
       }
-      printf("Region %s, Background yield: %f\n", region.Data(), hmc.Integral());
       for(auto overlaysample: overlaysamples){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
