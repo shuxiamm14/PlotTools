@@ -1155,12 +1155,15 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf");
       }
       std::string regtitle = region.Data();
-      findAndReplaceAll(regtitle,"reg1l1tau1b3j_","TTH $\\tlhad$ ");
-      findAndReplaceAll(regtitle,"reg1l1tau1b2j_","STH $\\tlhad$ ");
-      findAndReplaceAll(regtitle,"reg1l1tau2b3j_","TTH $\\tlhad$ 2b ");
-      findAndReplaceAll(regtitle,"reg1l1tau2b2j_","STH $\\tlhad$ 2b ");
-      findAndReplaceAll(regtitle,"reg1l2tau1bnj_","$l\\thadhad$ ");
-      findAndReplaceAll(regtitle,"reg1l2tau2bnj_","$l\\thadhad$ 2b ");
+      findAndReplaceAll(regtitle,"reg","");
+      findAndReplaceAll(regtitle,"1l1tau1b3j_","TTH $\\tlhad$ ");
+      findAndReplaceAll(regtitle,"1l1tau1b2j_","STH $\\tlhad$ ");
+      findAndReplaceAll(regtitle,"1l1tau2b3j_","TTH $\\tlhad$ 2b ");
+      findAndReplaceAll(regtitle,"1l1tau2b2j_","STH $\\tlhad$ 2b ");
+      findAndReplaceAll(regtitle,"1l2tau1bnj_","$l\\thadhad$ ");
+      findAndReplaceAll(regtitle,"1l2tau2bnj_","$l\\thadhad$ 2b ");
+      findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
+      findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
 
       if(sensitivevariable == name[i]) {
         if(dataref){
@@ -1168,7 +1171,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         }
         yield_chart->set("background",regtitle,integral(&hmc));
       }
-
+      printf("Region %s, Background yield: %f\n", region.Data(), hmc.Integral());
       for(auto overlaysample: overlaysamples){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
@@ -1192,7 +1195,8 @@ void histSaver::plot_stack(TString NPname, TString outdir){
           double _significance = 0;
           for(Int_t j=1; j<nbin[i]+1; j++) {
             if(histoverlay->GetBinContent(j) && hmc.GetBinContent(j)) {
-              _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
+              if(hmc.GetBinContent(j) > 0 && histoverlay->GetBinContent(j) > 0)
+                _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
             }
           }
           if(doROC && sensitivevariable == name[i]){
