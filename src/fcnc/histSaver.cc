@@ -1075,6 +1075,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       if(debug) printf("atlas label\n");
       ATLASLabel(0.15,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), region.Data());
 //===============================blinded data===============================
+      std::vector<TString> activeoverlay;
       if(blinding && dataref){
         for(auto overlaysample: overlaysamples){
           TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
@@ -1082,6 +1083,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
             printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
             continue;
           }
+          activeoverlay.push_back(overlaysample);
           for(Int_t j=1; j<nbin[i]+1; j++) {
             if(histoverlaytmp->GetBinContent(j)/sqrt(datahist->GetBinContent(j)) > blinding) {
               datahist->SetBinContent(j,0);
@@ -1151,7 +1153,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
 //===============================upper pad signal===============================
 
       padhi->cd();
-      if(!overlaysamples.size()) {
+      if(!activeoverlay.size()) {
         cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf");
       }
       std::string regtitle = region.Data();
@@ -1172,7 +1174,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         yield_chart->set("background",regtitle,integral(&hmc));
         printf("Region %s, Background yield: %f\n", region.Data(), hmc.Integral());
       }
-      for(auto overlaysample: overlaysamples){
+      for(auto overlaysample: activeoverlay){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
         if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
