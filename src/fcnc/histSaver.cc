@@ -951,6 +951,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
   LatexChart* yield_chart = new LatexChart("yield");
   LatexChart* sgnf_chart = new LatexChart("significance");
   gSystem->mkdir("plots_" + outdir);
+  gSystem->mkdir("charts_" + outdir);
   TCanvas cv("cv","cv",600,600);
   TGraph* ROC;
   TH1D *ROC_sig = 0;
