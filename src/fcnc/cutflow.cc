@@ -103,7 +103,7 @@ void CutFlow::print(){
 
 	for (int i = 0; i < n_cuts; ++i)
 	{
-		printf(" %s", cut_names[i].Data());
+		printf(" %s, ", cut_names[i].Data());
 	}
 	printf("\n");
 	for (int i = 0; i < n_cuts; ++i)
