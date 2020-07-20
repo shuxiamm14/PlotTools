@@ -97,32 +97,27 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString variation, TSt
 
 TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int ivar, bool vital){
   if(sample == "data") variation = "NOMINAL";
-  if(!find_sample(sample)){
-    if(debug) {
-      //show();
-      printf("histSaver:grabhist  Warning: sample %s not found\n", sample.Data());
+  for(auto samp : plot_lib){
+    if(sample != samp.first) continue;
+    for(auto reg : samp.second){
+      if(region != reg.first) continue;
+      for(auto vari : reg.second){
+        if(variation != vari.first) continue;
+        if(!vari.second.at(ivar)){
+          if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", v[ivar]->name.Data());
+          if(vital) exit(0);
+        }
+        return vari.second.at(ivar);
+      }
+      if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s with variation %s not found\n", region.Data(), sample.Data(), variation.Data());
+      if(debug) show();
+      return 0;
     }
-    return 0;
-  }
-
-  if(plot_lib[sample].find(region) == plot_lib[sample].end()){
     if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s not found\n", region.Data(), sample.Data());
     if(debug) show();
     return 0;
   }
-  if(plot_lib[sample][region].find(variation) == plot_lib[sample][region].end()){
-    if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s with variation %s not found\n", region.Data(), sample.Data(), variation.Data());
-    if(debug) show();
-    return 0;
-  }    
-  if(!plot_lib[sample][region][variation][ivar]) {
-    if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", v[ivar]->name.Data());
-    if(vital) {
-      printf("histSaver:grabhist  ERROR: empty vital histogram%s\n", v[ivar]->name.Data());
-      exit(0);
-    }
-  }
-  return plot_lib[sample][region][variation][ivar];
+  return 0;
 }
 
 TH1D* histSaver::grabhist(TString sample, TString region, TString varname, bool vital){
