@@ -5,6 +5,24 @@
 #include "TH1D.h"
 #include "TFile.h"
 #include "observable.h"
+
+struct variable{
+
+  TString name;
+  TString title;
+  int nbins;
+  float xlow;
+  float xhigh;
+  TString unit;
+  float scale;
+  int rebin;
+  std::vector<double>* xbins;
+
+  variable(TString _name, TString _title, int _nbins, float _xlow, float _xhigh, TString _unit = "", float _scale = 1, int _rebin = 0,   std::vector<double>* _xbins = 0)
+  :name(_name), title(_title), nbins(_nbins), xlow(_xlow), xhigh(_xhigh), unit(_unit), scale(_scale), rebin(_rebin){}
+
+};
+
 class histSaver{
 public:
   TString inputfilename;
@@ -34,20 +52,11 @@ public:
   TString read_path;
   TString createdNP;
   int debug;
-  Int_t nbin[50];
-  Float_t xlo[50];
-  Float_t xhi[50];
-  TString titleX[50];
-  int rebin[50];
-  Float_t* var1[50];
-  Double_t* var3[50];
-  Int_t* var2[50];
-  Bool_t MeVtoGeV[50];
+  std::vector<variable*> v;
   Int_t nvar;
-  TString name[50];
-  Double_t xbins[50][101];
-  bool ifRebin[50];
-  TString unit[50];
+  std::vector<Float_t*> address1;
+  std::vector<Double_t*> address3;
+  std::vector<Int_t*> address2;
   bool dataref;
   TString trexdir;
   TString current_sample;
@@ -62,30 +71,26 @@ public:
   histSaver(TString outputfilename);
   virtual ~histSaver();
   void clearhist();
-  template<typename I, typename T,typename D>
-  void add(I nbin_, T xlo_, T xhi_, const char* titleX_, const char* name_, D* var_, bool MeVtoGeV_ = false, const char* unit_ = ""){
-    if(nvar>=0 && nvar<50) {
-      nbin[nvar] = nbin_; 
-      xlo[nvar] = xlo_; 
-      xhi[nvar] = xhi_;
-      titleX[nvar] = titleX_; 
-      name[nvar] = name_;
-      TString Dname = typeid(*var_).name();
-      if(debug) printf("fill type: %s\n", Dname.Data());
+  template<typename D>
+  void add(variable* v_, D* var_ = 0){
+    v.push_back(v_);
+    TString Dname = typeid(*var_).name();
+    if(debug) printf("fill type: %s\n", Dname.Data());
+    address1.push_back(0);
+    address2.push_back(0);
+    address3.push_back(0);
+    if(var_){
       if (Dname.Contains("i")) 
-        var2[nvar] = (int*)var_;
+        address2[nvar] = (int*)var_;
       else if(Dname.Contains("f")) 
-        var1[nvar] = (float*)var_;
+        address1[nvar] = (float*)var_;
       else if(Dname.Contains("d"))
-        var3[nvar] = (double*)var_;
+        address3[nvar] = (double*)var_;
       else
-        printf("unknown var type: %s\n", name[nvar].Data());
-      unit[nvar] = unit_;
-      MeVtoGeV[nvar] = MeVtoGeV_;
-      ifRebin[nvar] = 0;
-      nvar++;
+        printf("unknown var type: %s\n", v_->name.Data());
     }
   }
+  void add(variable* v_){v.push_back(v_);}
   void show();
   bool find_sample(TString sample);
   TH1D* grabbkghist(TString region, int ivar);
@@ -111,13 +116,8 @@ public:
   TH1D* grabhist(TString sample, TString region, TString variation, TString varname, bool vital = 0);
   TH1D* grabhist(TString sample, TString region, TString varname, bool vital = 0);
   void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);
-  //void add(int nbin_, double xlo_, double xhi_, const char* titleX_, const char* name_, float* var_, bool MeVtoGeV_, char* unit_ = "");
   Float_t getVal(Int_t i);
-  void add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Int_t* var_, const char* unit_ = "");
-  void add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
-  void add(const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_ = "");
   float binwidth(int i);
-  void add(const char* titleX_, const char* name_, const char* unit_ = "", int _rebin = 1);
   void read_sample(TString samplename, TString savehistname, TString NPname, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile=0);
   void plot_stack(TString NPname,TString outputdir);
   void fill_hist(TString sample, TString region, TString variation);

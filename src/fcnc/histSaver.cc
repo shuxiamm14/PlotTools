@@ -6,11 +6,11 @@
 #include "AtlasLabels.h"
 #include "HISTFITTER.h"
 #include "makechart.h"
+
 using namespace std;
 histSaver::histSaver(TString _outputfilename) {
   outputfilename = _outputfilename;
   trexdir = "trexinputs";
-  nvar = 0;
   inputfilename = "hists";
   nominalfilename = "";
   nregion = 0;
@@ -30,7 +30,7 @@ histSaver::histSaver(TString _outputfilename) {
   debug = 1;
   sensitivevariable = "";
   for(Int_t i=0; i<50; i++) {
-    nbin[i] = 1; xlo[i] = 0; xhi[i] = 1; var1[i] = 0; var2[i] = 0; MeVtoGeV[i] = 0; var3[i] = 0;
+    v[i]->nbins = 1; v[i]->xlow = 0; v[i]->xhigh = 1; address1[i] = 0; address2[i] = 0; address3[i] = 0;
   }
 }
 
@@ -39,7 +39,7 @@ histSaver::~histSaver() {
   for(auto& samp : plot_lib){
     for(auto &reg: samp.second) {
       for(auto &variation: reg.second) {
-        for (int i = 0; i < nvar; ++i){
+        for (int i = 0; i < v.size(); ++i){
           TH1D *target = variation.second[i];
           if(debug) cout<<"\rdeleting histogram:"<<target->GetName()<<std::endl<<std::flush;
             deletepointer(target);
@@ -65,15 +65,15 @@ void histSaver::printyield(TString region){
     if(target){
       printf("%s: %4.3f \\pm %4.3f\n", iter.first.Data(), target->IntegralAndError(1,target->GetNbinsX(), er), er);
     }else{
-      printf("Warning: histogram not found: %s, %s, %s\n", iter.first.Data(), region.Data(), name[0].Data());
+      printf("Warning: histogram not found: %s, %s, %s\n", iter.first.Data(), region.Data(), v[0]->name.Data());
     }
   }
 }
 
 int histSaver::findvar(TString varname){
-  for (int i = 0; i < nvar; ++i)
+  for (int i = 0; i < v.size(); ++i)
   {
-    if(name[i] == varname) return i;
+    if(v[i]->name == varname) return i;
   }
   printf("varname not found: %s\n", varname.Data());
   exit(0);
@@ -85,9 +85,9 @@ TH1D* histSaver::grabhist_int(TString sample, TString region, int ivar, bool vit
 
 TH1D* histSaver::grabhist(TString sample, TString region, TString variation, TString varname, bool vital){
   int ivar = -1;
-  for (int i = 0; i < nvar; ++i)
+  for (int i = 0; i < v.size(); ++i)
   {
-    if(varname == name[i]){
+    if(varname == v[i]->name){
       ivar = i;
       break;
     }
@@ -116,9 +116,9 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int
     return 0;
   }    
   if(!plot_lib[sample][region][variation][ivar]) {
-    if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", name[ivar].Data());
+    if(debug) printf("histSaver:grabhist  WARNING: empty histogram%s\n", v[ivar]->name.Data());
     if(vital) {
-      printf("histSaver:grabhist  ERROR: empty vital histogram%s\n", name[ivar].Data());
+      printf("histSaver:grabhist  ERROR: empty vital histogram%s\n", v[ivar]->name.Data());
       exit(0);
     }
   }
@@ -127,9 +127,9 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int
 
 TH1D* histSaver::grabhist(TString sample, TString region, TString varname, bool vital){
   int ivar = -1;
-  for (int i = 0; i < nvar; ++i)
+  for (int i = 0; i < v.size(); ++i)
   {
-    if(varname == name[i]){
+    if(varname == v[i]->name){
       ivar = i;
       break;
     }
@@ -164,61 +164,21 @@ TH1D* histSaver::grabdatahist(TString region, int ivar){
   return grabhist("data",region,ivar);
 }
 
-void histSaver::add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Int_t* var_, const char* unit_) {
-  if(nvar>=0 && nvar<20) {
-    nbin[nvar] = nbin_;
-    for(int i=0; i<=nbin_; i++) {
-      xbins[nvar][i] = xbins_[i];
-    }
-    titleX[nvar] = titleX_; var2[nvar] = var_;
-    name[nvar] = name_;
-    unit[nvar] = unit_;
-    ifRebin[nvar] = 1;
-    nvar++;
-  }
-}
-
-
-void histSaver::add(const char* titleX_, const char* name_, const char* unit_, int _rebin) {
-  fromntuple = 0;
-  if(nvar>=0 && nvar<50) {
-    titleX[nvar] = titleX_;
-    name[nvar] = name_ ;
-    unit[nvar] = unit_;
-    rebin[nvar] = _rebin;
-    nvar++;
-  }
-}
-
-void histSaver::add(Int_t nbin_, const Double_t* xbins_, const char* titleX_, const char* name_, Float_t* var_, Bool_t MeVtoGeV_, const char* unit_) {
-  if(nvar>=0 && nvar<20) {
-    nbin[nvar] = nbin_;
-    for(int i=0; i<=nbin_; i++) {
-      xbins[nvar][i] = xbins_[i];
-    }
-    titleX[nvar] = titleX_; var1[nvar] = var_; MeVtoGeV[nvar] = MeVtoGeV_;
-    name[nvar] = name_;
-    unit[nvar] = unit_;
-    ifRebin[nvar] = 1;
-    nvar++;
-  }
-}
-
 Float_t histSaver::getVal(Int_t i) {
   Float_t tmp = -999999;
-  if(i>=0  && i<nvar) {
-    if(var1[i])      { if(debug) printf("fill var1\n"); tmp = MeVtoGeV[i] ? *var1[i]/1000 : *var1[i]; }
-    else if(var3[i]) { if(debug) printf("fill var3\n"); tmp = MeVtoGeV[i] ? *var3[i]/1000 : *var3[i]; }
-    else if(var2[i]) { if(debug) printf("fill var2\n"); tmp = *var2[i]; }
-    else printf("error: fill variable failed. no var available\n");
-    if(debug == 1) printf("fill value: %4.2f\n", tmp);
-  }
-  if (!ifRebin[i]){
-    if(tmp >= xhi[i]) tmp = xhi[i]*0.999999;
-    if(tmp < xlo[i]) tmp = xlo[i];
+  if(address1[i])      { if(debug) printf("fill address1\n"); tmp = *address1[i]*v[i]->scale; }
+  else if(address3[i]) { if(debug) printf("fill address3\n"); tmp = *address3[i]*v[i]->scale; }
+  else if(address2[i]) { if(debug) printf("fill address2\n"); tmp = *address2[i]; }
+  else printf("error: fill variable failed. no var available\n");
+  if(debug == 1) printf("fill value: %4.2f\n", tmp);
+  if (!v[i]->xbins){
+    if(tmp >= v[i]->xhigh) tmp = v[i]->xhigh*0.999999;
+    if(tmp < v[i]->xlow) tmp = v[i]->xlow;
   }else{
-    if(tmp >= xbins[i][nbin[i]]) tmp = xbins[i][nbin[i]]*0.999999;
-    if(tmp < xbins[i][nbin[i]]) tmp = xbins[i][nbin[i]];
+    double xhi = v[i]->xbins->at(v[i]->xbins->size()-1);
+    double xlow = v[i]->xbins->at(0);
+    if(tmp >= xhi) tmp = xhi*0.999999;
+    if(tmp < xlow) tmp = xlow;
   }
   return tmp;
 }
@@ -230,16 +190,16 @@ void histSaver::show(){
   for(auto const& region: regions) {
     printf("histSaver::show()\tregion: %s\n", region.Data());
   }
-  for (int i = 0; i < nvar; ++i)
+  for (int i = 0; i < v.size(); ++i)
   {
-    if(var2[i]) printf("histSaver::show()\t%s = %d\n", name[i].Data(), *var2[i]);
-    else if(var1[i]) printf("histSaver::show()\t%s = %4.2f\n", name[i].Data(), MeVtoGeV[i] ? *var1[i]/1000 : *var1[i]);
-    else if(var3[i]) printf("histSaver::show()\t%s = %4.2f\n", name[i].Data(), MeVtoGeV[i] ? *var3[i]/1000 : *var3[i]);
+    if(address2[i]) printf("histSaver::show()\t%s = %d\n", v[i]->name.Data(), *address2[i]);
+    else if(address1[i]) printf("histSaver::show()\t%s = %4.2f\n", v[i]->name.Data(), *address1[i]*v[i]->scale);
+    else if(address3[i]) printf("histSaver::show()\t%s = %4.2f\n", v[i]->name.Data(), *address3[i]*v[i]->scale);
   }
 }
 
 float histSaver::binwidth(int i){
-  return (xhi[i]-xlo[i])/nbin[i];
+  return (v[i]->xhigh-v[i]->xlow)/v[i]->nbins;
 }
 
 void histSaver::merge_regions(TString inputregion1, TString inputregion2, TString outputregion){
@@ -266,15 +226,15 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
       if(debug) printf("histSaver::merge_regions\t outputregion %s exist, overwrite it\n",outputregion.Data());
       exist = 1;
       for(auto &variation: iter.second[outputregion]){
-        for(int i = 0; i < nvar; ++i) deletepointer(variation.second[i]);
+        for(int i = 0; i < v.size(); ++i) deletepointer(variation.second[i]);
         variation.second.clear();
       }
     }
     for(auto &variation : iter.second[inputregion1])
-    for (int i = 0; i < nvar; ++i)
+    for (int i = 0; i < v.size(); ++i)
     {
-      if(input1exist == 1) iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion1][variation.first][i]->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+name[i] + "_buffer"));
-      else iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion2][variation.first][i]->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+name[i] + +"_buffer"));
+      if(input1exist == 1) iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion1][variation.first][i]->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v[i]->name + "_buffer"));
+      else iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion2][variation.first][i]->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v[i]->name + +"_buffer"));
       if(input1exist == 1 && input2exist == 1) {
         iter.second[outputregion][variation.first][i]->Add(iter.second[inputregion2][variation.first][i]);
         if(!iter.second[outputregion][variation.first][i]->Integral()) printf("merged histogram %s is empty\n", iter.second[outputregion][variation.first][i]->GetName());
@@ -303,8 +263,8 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
   
   if(debug) printf("add new sample: %s\n", samplename.Data());
   for(auto const& region: regions) {
-    for (int i = 0; i < nvar; ++i){
-      TH1D *created = new TH1D(samplename + "_" + variation  + "_" +  region + "_" + name[i] + "_buffer",sampleTitle,nbin[i],xlo[i],xhi[i]);
+    for (int i = 0; i < v.size(); ++i){
+      TH1D *created = new TH1D(samplename + "_" + variation  + "_" +  region + "_" + v[i]->name + "_buffer",sampleTitle,v[i]->nbins,v[i]->xlow,v[i]->xhigh);
       created->SetDirectory(0);
       plot_lib[samplename][region][variation].push_back(created);
       if (samplename != "data")
@@ -326,15 +286,15 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
 vector<observable> histSaver::scale_to_data(TString scaleregion, string formula, TString scaleVariable, vector<double> slices, TString variation){
   int nslice = slices.size();
   int ivar = 0;
-  for (; ivar < nvar; ++ivar)
+  for (; ivar < v.size(); ++ivar)
   {
-    if(name[ivar] == scaleVariable) break;
+    if(v[ivar]->name == scaleVariable) break;
   }
 
   if(!nslice) {
-    nslice = nbin[ivar]+1;
-    slices.push_back(xlo[ivar]);
-    for (int i = 0; i < nbin[ivar]; ++i)
+    nslice = v[ivar]->nbins+1;
+    slices.push_back(v[ivar]->xlow);
+    for (int i = 0; i < v[ivar]->nbins; ++i)
     {
       slices.push_back(slices[i]+binwidth(ivar));
     }
@@ -368,7 +328,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
         if(target->GetBinLowEdge(0) > slices[0]) {
           printf("WARNING: slice 1 (%4.2f, %4.2f) is lower than the low edge of the histogram %4.2f, please check variable %s\n", slices[0], slices[1], target->GetBinLowEdge(0), scaleVariable.Data());
         }
-        for (int i = 1; i <= nbin[ivar]; ++i)
+        for (int i = 1; i <= v[ivar]->nbins; ++i)
         {
           if(target->GetBinLowEdge(i) < slices[0]) continue;
           if(islice == nslice-1) break;
@@ -376,7 +336,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
           if(target->GetBinLowEdge(i) >= slices[islice+1]) islice+=1;
         }
       }else{
-        for (int i = 1; i <= nbin[ivar]; ++i)
+        for (int i = 1; i <= v[ivar]->nbins; ++i)
         {
           if(target->GetBinLowEdge(i) < slices[0]) continue;
           if(islice == nslice-1) break;
@@ -403,14 +363,14 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
 void histSaver::scale_sample(TString scaleregion, string formula, TString scaleVariable, vector<observable> scalefactor, vector<double> slices, TString variation){
   int nslice = slices.size();
   int ivar = 0;
-  for (; ivar < nvar; ++ivar)
+  for (; ivar < v.size(); ++ivar)
   {
-    if(name[ivar] == scaleVariable) break;
+    if(v[ivar]->name == scaleVariable) break;
   }
   if(!nslice) {
-    nslice = nbin[ivar]+1;
-    slices.push_back(xlo[ivar]);
-    for (int i = 0; i < nbin[ivar]; ++i)
+    nslice = v[ivar]->nbins+1;
+    slices.push_back(v[ivar]->xlow);
+    for (int i = 0; i < v[ivar]->nbins; ++i)
     {
       slices.push_back(slices[i]+binwidth(ivar));
     }
@@ -425,7 +385,7 @@ void histSaver::scale_sample(TString scaleregion, string formula, TString scaleV
         printf("histSaver::scale_sample : WARNING: hist not found grabhist(%s,%s,%s,%s)\n", tokens[i].Data(),scaleregion.Data(),variation.Data(),scaleVariable.Data());
         continue;
       }
-      for (int i = 1; i <= nbin[ivar]; ++i)
+      for (int i = 1; i <= v[ivar]->nbins; ++i)
       {
         if(target->GetBinLowEdge(i) < slices[0]) continue;
         if(islice == nslice-1) break;
@@ -455,7 +415,7 @@ map<TString,vector<observable>>* histSaver::fit_scale_factor(vector<TString> *fi
   auto *scalefactors = new map<TString,vector<observable>>();
   TString variation = _variation? *_variation:"NOMINAL";
   vector<observable> iter;
-  int nbins = nbin[findvar(*variable)];
+  int nbins = v[findvar(*variable)]->nbins;
   int ihists = 0;
   vector<int> binslices;
   HISTFITTER* fitter = new HISTFITTER();
@@ -633,78 +593,43 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     {
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
-    if(!(TH1D*)(readfromfile->Get(histname + name[0]))) {
-      if(debug) printf("histogram name not found: %s\n", (savehistname + "_" + variation + "_" + region + "_" + name[0]).Data());
-      continue;
-    }
-    if (plot_lib[samplename].find(region) != plot_lib[samplename].end())
+    bool newRegion = plot_lib[samplename].find(region) == plot_lib[samplename].end();
+    for (int i = 0; i < v.size(); ++i)
     {
-      for (int i = 0; i < nvar; ++i)
-      {
-        if(!(TH1D*)(readfromfile->Get(histname + name[i]))) {
-          if(debug) printf("histogram name not found: %s\n", (histname+name[i]).Data());
-          printf("plot_lib[%s][%s][%s][%d]\n", samplename.Data(), region.Data(),variation.Data(), i);
-          show();
-          exit(1);
-        }
-
-        TH1D *readhist = (TH1D*)readfromfile->Get(histname + name[i]);
-        double tmp = readhist->Integral();
-        if(tmp!=tmp){
-          printf("Warning: %s->Integral() is nan, skip\n", (histname + name[i]).Data());
-          continue;
-        }
-        if(tmp==0){
-          printf("Warning: %s->Integral() is 0, skip\n", (histname + name[i]).Data());
-          continue;
-        }
-        
-        plot_lib[samplename][region][variation][i]->Add(readhist,norm);
-        if(checkread){
-          if(samplename == checkread_sample && region == checkread_region && variation == checkread_variation && i == checkread_variable){
-            printf("read histogram %s, + %f\n", (histname + name[i]).Data(), readhist->GetBinContent(checkread_ibin)*norm);
-          }
+      TH1D *readhist = (TH1D*)readfromfile->Get(histname + v[i]->name);
+      if(!readhist) {
+        if(debug) printf("histogram name not found: %s\n", (histname + v[i]->name).Data());
+        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
+        continue;
+      }
+      double tmp = readhist->Integral();
+      if(tmp!=tmp){
+        printf("Warning: %s->Integral() is nan, skip\n", (histname + v[i]->name).Data());
+        continue;
+      }
+      if(tmp==0){
+        printf("Warning: %s->Integral() is 0, skip\n", (histname + v[i]->name).Data());
+        continue;
+      }
+      if(checkread){
+        if(samplename == checkread_sample && region == checkread_region && variation == checkread_variation && i == checkread_variable){
+          printf("read histogram %s, + %f\n", (histname + v[i]->name).Data(), readhist->GetBinContent(checkread_ibin)*norm);
         }
       }
-    }else{
-      ++histcount;
-      for (int i = 0; i < nvar; ++i)
-      {
-        if(!(TH1D*)(readfromfile->Get(histname + name[i]))) {
-          if(debug) printf("histogram name not found: %s\n", (histname + name[i]).Data());
-          printf("plot_lib[%s][%s][%s][%d]\n", samplename.Data(), region.Data(),variation.Data(), i);
-          show();
-          exit(1);
-        }
-        TH1D *readhist = (TH1D*)readfromfile->Get(histname + name[i]);
-        double tmp = readhist->Integral();
-        if(tmp!=tmp){
-          printf("Warning: %s->Integral() is nan, skip\n", (histname + name[i]).Data());
-          continue;
-        }
-        if(tmp==0){
-          printf("Warning: %s->Integral() is 0, skip\n", (histname + name[i]).Data());
-          continue;
-        }
-        if(checkread){
-          if(samplename == checkread_sample && region == checkread_region && variation == checkread_variation && i == checkread_variable){
-            printf("read histogram %s, + %f\n", (histname + name[i]).Data(), readhist->GetBinContent(checkread_ibin)*norm);
-          }
-        }
-        plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname + name[i])->Clone()));
-        plot_lib[samplename][region][variation][i]->SetName(samplename + "_" + variation + "_" + region + "_" + name[i] + "_buffer");
-        plot_lib[samplename][region][variation][i]->Scale(norm);
-        plot_lib[samplename][region][variation][i]->SetTitle(sampleTitle);
-        plot_lib[samplename][region][variation][i]->SetFillColorAlpha(color,1);
-        plot_lib[samplename][region][variation][i]->SetLineWidth(1);
-        plot_lib[samplename][region][variation][i]->SetLineColor(kBlack);
-        plot_lib[samplename][region][variation][i]->SetMarkerSize(0);
-        plot_lib[samplename][region][variation][i]->SetDirectory(0);
-        if(histcount == 1){
-          nbin[i] = plot_lib[samplename][region][variation][i]->GetNbinsX();
-          xlo[i] =  plot_lib[samplename][region][variation][i]->GetXaxis()->GetXmin();
-          xhi[i] =  plot_lib[samplename][region][variation][i]->GetXaxis()->GetXmax();
-        }
+      if(plot_lib[samplename][region][variation][i] == 0 || plot_lib[samplename].find(region) != plot_lib[samplename].end()){
+        if(newRegion) plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname + v[i]->name)->Clone()));
+        else if(plot_lib[samplename][region][variation][i] == 0) plot_lib[samplename][region][variation][i] = (TH1D*)(readfromfile->Get(histname + v[i]->name)->Clone());
+        TH1D* target = plot_lib[samplename][region][variation][i];
+        target->SetName(samplename + "_" + variation + "_" + region + "_" + v[i]->name + "_buffer");
+        target->Scale(norm);
+        target->SetTitle(sampleTitle);
+        target->SetFillColorAlpha(color,1);
+        target->SetLineWidth(1);
+        target->SetLineColor(kBlack);
+        target->SetMarkerSize(0);
+        target->SetDirectory(0);
+      }else{
+        plot_lib[samplename][region][variation][i]->Add(readhist,norm);
       }
     }
   }
@@ -720,7 +645,7 @@ void histSaver::fill_hist(TString sample, TString region, TString variation){
   {
     printf("ERROR: weight not set\n");
   }
-  for (int i = 0; i < nvar; ++i){
+  for (int i = 0; i < v.size(); ++i){
     double fillval = getVal(i);
     if(fillval!=fillval) {
       printf("Warning: fill val is nan: \n");
@@ -752,7 +677,7 @@ bool histSaver::add_variation(TString sample,TString variation){
   if(!find_sample(sample)) return 0;
   if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
   else outputfile[variation]->cd();
-  for (int i = 0; i < nvar; ++i){
+  for (int i = 0; i < v.size(); ++i){
     for(auto reg : regions){
       if(plot_lib[sample][reg].begin() == plot_lib[sample][reg].end()) {
         printf("histSaver::add_variation() ERROR: No variation defined yet, cant add new variation\n");
@@ -763,7 +688,7 @@ bool histSaver::add_variation(TString sample,TString variation){
         printf("histSaver::add_variation() ERROR: hist doesn't exist: plot_lib[%s][%s][%s][%d]\n",sample.Data(), reg.Data(), plot_lib[sample][reg].begin()->first.Data(),i);
         exit(0);
       }
-      created = (TH1D*) created->Clone(sample + "_" + variation + "_" + reg + "_" + name[i] + "_buffer");
+      created = (TH1D*) created->Clone(sample + "_" + variation + "_" + reg + "_" + v[i]->name + "_buffer");
       created->Reset();
       created->SetDirectory(0);
       plot_lib[sample][reg][variation].push_back(created);
@@ -780,14 +705,17 @@ void histSaver::write(){
           if(variation.first != iter.first) {
             continue;
           }
-          double tmp = variation.second[0]->Integral();
-          if(tmp == 0) continue;
-          if(tmp != tmp) {
+          double sum = variation.second[0]->Integral();
+          if(sum == 0) continue;
+          if(sum != sum) {
             printf("Warning: hist integral is nan, skip writing for %s\n", variation.second[0]->GetName());
             continue;
           }
           outputfile[variation.first]->cd();
-          for (int i = 0; i < nvar; ++i){
+          for (int i = 0; i < v.size(); ++i){
+            if(variation.second[i]->GetMaximum() == sum) {
+              continue;
+            }
             //if(grabhist(iter.first,region,i)->Integral() == 0) {
             //  printf("Warning: histogram is empty: %s, %s, %d\n", iter.first.Data(),region.Data(),i);
             //}
@@ -810,8 +738,8 @@ void histSaver::write_trexinput(TString NPname, TString writename, TString write
     writename = NPname;
   }
   gSystem->mkdir(trexdir);
-  for (int i = 0; i < nvar; ++i){
-    gSystem->mkdir(trexdir + "/" + name[i]);
+  for (int i = 0; i < v.size(); ++i){
+    gSystem->mkdir(trexdir + "/" + v[i]->name);
     for(auto const& region: regions) {
       bool muted = 0;
       for (auto const& mutedregion: mutedregions)
@@ -821,10 +749,10 @@ void histSaver::write_trexinput(TString NPname, TString writename, TString write
       }
       if(muted) continue;
 
-      gSystem->mkdir(trexdir + "/" + name[i] + "/" + region);
+      gSystem->mkdir(trexdir + "/" + v[i]->name + "/" + region);
       for(auto& iter : plot_lib){
         if(NPname != "NOMINAL" && iter.first.Contains("data")) continue;
-        TString filename = trexdir + "/" + name[i] + "/" + region + "/" + iter.first + ".root";
+        TString filename = trexdir + "/" + v[i]->name + "/" + region + "/" + iter.first + ".root";
         TFile outputfile(filename, writeoption);
         if(debug) printf("Writing to file: %s, histoname: %s\n", filename.Data(), NPname.Data());
         TH1D *target = grabhist(iter.first,region,NPname,i);
@@ -843,11 +771,11 @@ void histSaver::clearhist(){
   for(auto& sample : plot_lib){
     for(auto& region: sample.second) {
       for(auto& variation : region.second){
-        for (int i = 0; i < nvar; ++i){
+        for (int i = 0; i < v.size(); ++i){
           if(variation.second[i]){
             variation.second[i]->Reset();
           }else{
-            printf("histSaver::Reset() Error: histogram not found: sample: %s, variable: %s, region: %s\n",sample.first.Data(), name[i].Data(),region.first.Data());
+            printf("histSaver::Reset() Error: histogram not found: sample: %s, variable: %s, region: %s\n",sample.first.Data(), v[i]->name.Data(),region.first.Data());
           }
         }
       }
@@ -869,9 +797,9 @@ double histSaver::templatesample(TString fromregion, TString variation,string fo
   if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 real -1 zll ...", formula.c_str());
   vector<TH1D*> newvec;
   observable scaleto(0,0);
-  for (int ivar = 0; ivar < nvar; ++ivar)
+  for (int ivar = 0; ivar < v.size(); ++ivar)
   {
-    newvec.push_back((TH1D*)grabhist(tokens[1],fromregion, tokens[1] == "data" ? "NOMINAL" : variation,ivar)->Clone(newsamplename+"_"+toregion+name[ivar]));
+    newvec.push_back((TH1D*)grabhist(tokens[1],fromregion, tokens[1] == "data" ? "NOMINAL" : variation,ivar)->Clone(newsamplename+"_"+toregion+v[ivar]->name));
     newvec[ivar]->Reset();
     newvec[ivar]->SetNameTitle(newsamplename,newsampletitle);
     newvec[ivar]->SetFillColor(color);
@@ -893,7 +821,7 @@ double histSaver::templatesample(TString fromregion, TString variation,string fo
         observable tmp(grabhist(tokens[icompon+1],toregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,0)->Integral(),gethisterror(grabhist(tokens[icompon+1],toregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,0)));
         scaleto += tmp*numb;
       }
-      for (int ivar = 0; ivar < nvar; ++ivar)
+      for (int ivar = 0; ivar < v.size(); ++ivar)
       {
         newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,ivar),numb);
       }
@@ -915,7 +843,7 @@ double histSaver::templatesample(TString fromregion, TString variation,string fo
       hists->Scale(SF);
     }
   }
-  for(int ivar = 0; ivar < nvar; ivar++){
+  for(int ivar = 0; ivar < v.size(); ivar++){
     plot_lib[newsamplename][toregion][variation] = newvec;
   }
   return scalefactor.nominal;
@@ -973,13 +901,13 @@ void histSaver::plot_stack(TString NPname, TString outdir){
     }
     if(muted) continue;
     gSystem->mkdir("plots_" + outdir + "/" + region);
-    for (int i = 0; i < nvar; ++i){
-      cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf[");
+    for (int i = 0; i < v.size(); ++i){
+      cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf[");
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
-      TH1D hmc("hmc","hmc",nbin[i]/rebin[i],xlo[i],xhi[i]);
-      TH1D hmcR("hmcR","hmcR",nbin[i]/rebin[i],xlo[i],xhi[i]);
-      TH1D hdataR("hdataR","hdataR",nbin[i]/rebin[i],xlo[i],xhi[i]);
+      TH1D hmc("hmc","hmc",v[i]->nbins/v[i]->rebin,v[i]->xlow,v[i]->xhigh);
+      TH1D hmcR("hmcR","hmcR",v[i]->nbins/v[i]->rebin,v[i]->xlow,v[i]->xhigh);
+      TH1D hdataR("hdataR","hdataR",v[i]->nbins/v[i]->rebin,v[i]->xlow,v[i]->xhigh);
       cv.cd();
       padhi->Draw();
 //===============================upper pad bkg and unblinded data===============================
@@ -988,7 +916,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       padhi->SetLeftMargin(0.12);
       padhi->cd();
       hmc.Sumw2();
-      THStack *hsk = new THStack(name[i].Data(),name[i].Data());
+      THStack *hsk = new THStack(v[i]->name.Data(),v[i]->name.Data());
       TLegend* lg1 = 0;
       lg1 = new TLegend(0.45,0.7,0.90,0.9,"");
       lg1->SetNColumns(2);
@@ -1001,18 +929,18 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         }
         if(grabhist(iter,region,NPname,i)) buffer.push_back((TH1D*)grabhist(iter,region,NPname,i)->Clone());
         else continue;
-        if(doROC && sensitivevariable == name[i])
+        if(doROC && sensitivevariable == v[i]->name)
         {
           if(!ROC_bkg) ROC_bkg = (TH1D*) buffer.back()->Clone();
           else ROC_bkg->Add(buffer.back());
         }
-        if(rebin[i] != 1) buffer.back()->Rebin(rebin[i]);
+        if(v[i]->rebin != 1) buffer.back()->Rebin(v[i]->rebin);
         hsk->Add(buffer.back());
         hmc.Add(buffer.back());
         lg1->AddEntry(buffer.back(),buffer.back()->GetTitle(),"F");
       }
       if(!hsk->GetMaximum()){
-        printf("histSaver::plot_stack(): ERROR: stack has no entry for region %s, var %s, continue\n", region.Data(), name[i].Data());
+        printf("histSaver::plot_stack(): ERROR: stack has no entry for region %s, var %s, continue\n", region.Data(), v[i]->name.Data());
         continue;
       }
       double histmax = hmc.GetMaximum() + hmc.GetBinError(hmc.GetMaximumBin());
@@ -1023,11 +951,11 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         datahistorig = grabhist("data",region,"NOMINAL",i);
         if(datahistorig) datahist = (TH1D*)datahistorig->Clone("dataClone");
         if(!datahist) {
-          printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), name[i].Data());
+          printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), v[i]->name.Data());
           exit(0);
         } 
-        if(rebin[i] != 1)
-          datahist->Rebin(rebin[i]);
+        if(v[i]->rebin != 1)
+          datahist->Rebin(v[i]->rebin);
         if(datahist->Integral() == 0) printf("Warning: data hist is empty\n");
         lg1->AddEntry(datahist,"data","LP");
         datahist->SetMarkerStyle(20);
@@ -1045,10 +973,10 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       hsk->SetMaximum(1.35*histmax);
 
       hsk->Draw("hist");
-      hsk->GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+      hsk->GetXaxis()->SetTitle(v[i]->unit == "" ? v[i]->title.Data() : (v[i]->title + " [" + v[i]->unit + "]").Data());
       hsk->GetXaxis()->SetLabelColor(kWhite);
       char str[30];
-      sprintf(str,"Events / %4.2f %s",binwidth(i)*rebin[i], unit[i].Data());
+      sprintf(str,"Events / %4.2f %s",binwidth(i)*v[i]->rebin, v[i]->unit.Data());
       hsk->GetYaxis()->SetTitle(str);
       hsk->GetYaxis()->SetTitleOffset(1.6);
       hsk->GetYaxis()->SetLabelSize(hsk->GetYaxis()->GetLabelSize()*0.7);
@@ -1056,7 +984,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       hsk->GetYaxis()->SetTitleSize(hsk->GetYaxis()->GetTitleSize()*0.7);
       if(debug) printf("set blinding\n");
 
-      for(Int_t j=1; j<nbin[i]+1; j++) {
+      for(Int_t j=1; j<v[i]->nbins+1; j++) {
         hmcR.SetBinContent(j,1);
         hmcR.SetBinError(j,hmc.GetBinContent(j)>0 ? hmc.GetBinError(j)/hmc.GetBinContent(j) : 0);
         if(dataref) hdataR.SetBinContent(j, hmc.GetBinContent(j)>0 ? datahist->GetBinContent(j)/hmc.GetBinContent(j) : 1);
@@ -1085,7 +1013,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
             continue;
           }
           activeoverlay.push_back(overlaysample);
-          for(Int_t j=1; j<nbin[i]+1; j++) {
+          for(Int_t j=1; j<v[i]->nbins+1; j++) {
             if(histoverlaytmp->GetBinContent(j)/sqrt(datahist->GetBinContent(j)) > blinding) {
               datahist->SetBinContent(j,0);
               datahist->SetBinError(j,0);
@@ -1094,8 +1022,8 @@ void histSaver::plot_stack(TString NPname, TString outdir){
             }
           }
         }
-        if(sensitivevariable == name[i]){
-          for(int j = nbin[i]*3/4/rebin[i] ; j <= nbin[i] ; j++){
+        if(sensitivevariable == v[i]->name){
+          for(int j = v[i]->nbins*3/4/v[i]->rebin ; j <= v[i]->nbins ; j++){
             datahist->SetBinContent(j,0);
             datahist->SetBinError(j,0);
             hdataR.SetBinContent(j,0);
@@ -1126,7 +1054,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         hdataR.GetYaxis()->SetTitle("Data/Bkg");
         hdataR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.08);
         hdataR.GetYaxis()->CenterTitle();
-        hdataR.GetXaxis()->SetTitle(unit[i] == "" ? titleX[i].Data() : (titleX[i] + " [" + unit[i] + "]").Data());
+        hdataR.GetXaxis()->SetTitle(v[i]->unit == "" ? v[i]->title.Data() : (v[i]->title + " [" + v[i]->unit + "]").Data());
         hdataR.GetXaxis()->SetTitleSize(hdataR.GetXaxis()->GetTitleSize()*0.7);
         hdataR.GetYaxis()->SetTitleSize(hdataR.GetYaxis()->GetTitleSize()*0.7);
       }
@@ -1155,7 +1083,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
 
       padhi->cd();
       if(!activeoverlay.size()) {
-        cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf");
+        cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf");
       }
       std::string regtitle = region.Data();
       findAndReplaceAll(regtitle,"reg","");
@@ -1168,7 +1096,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
       findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
 
-      if(sensitivevariable == name[i]) {
+      if(sensitivevariable == v[i]->name) {
         if(dataref){
           yield_chart->set("data",regtitle,integral(datahistorig));
         }
@@ -1180,9 +1108,9 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         TLegend *lgsig = (TLegend*) lg1->Clone();
         if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
         if(grabhist(overlaysample,region,NPname,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,NPname,i)->Clone();
-        if(doROC && sensitivevariable == name[i]) ROC_sig = (TH1D*) histoverlay->Clone();
+        if(doROC && sensitivevariable == v[i]->name) ROC_sig = (TH1D*) histoverlay->Clone();
         if(!histoverlay) continue;
-        if(rebin[i] != 1) histoverlay->Rebin(rebin[i]);
+        if(v[i]->rebin != 1) histoverlay->Rebin(v[i]->rebin);
         histoverlay->SetLineStyle(9);
         histoverlay->SetLineWidth(3);
         histoverlay->SetLineColor(kRed);
@@ -1194,15 +1122,15 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         if(ratio>1000) ratio -= ratio%1000;
         lgsig->AddEntry(histoverlay,(histoverlay->GetTitle() + (ratio > 0? "#times" + to_string(ratio) : "")).c_str(),"LP");
 
-        if(sensitivevariable == name[i]){
+        if(sensitivevariable == v[i]->name){
           double _significance = 0;
-          for(Int_t j=1; j<nbin[i]+1; j++) {
+          for(Int_t j=1; j<v[i]->nbins+1; j++) {
             if(histoverlay->GetBinContent(j) && hmc.GetBinContent(j)) {
               if(hmc.GetBinContent(j) > 0 && histoverlay->GetBinContent(j) > 0)
                 _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
             }
           }
-          if(doROC && sensitivevariable == name[i]){
+          if(doROC && sensitivevariable == v[i]->name){
             double bkgintegral = ROC_bkg->Integral();
             double sigintegral = ROC_sig->Integral();
             double sigeff = 1;
@@ -1238,7 +1166,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         lgsig->SetBorderSize(0);
         lgsig->Draw();
         padhi->Update();
-        cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf");
+        cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf");
         deletepointer(histoverlay);
         deletepointer(lgsig);
       }
@@ -1249,7 +1177,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       deletepointer(datahist);
       for(auto &iter : buffer) deletepointer(iter);
       if(debug) printf("end region %s\n",region.Data());
-      cv.SaveAs("plots_" + outdir + "/" + region + "/" + name[i] + ".pdf]");
+      cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf]");
       cv.Clear();
     }
     if(debug) printf("end loop region\n");
