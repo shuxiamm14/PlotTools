@@ -29,9 +29,6 @@ histSaver::histSaver(TString _outputfilename) {
   read_path = "./" ;
   debug = 1;
   sensitivevariable = "";
-  for(Int_t i=0; i<50; i++) {
-    v[i]->nbins = 1; v[i]->xlow = 0; v[i]->xhigh = 1; address1[i] = 0; address2[i] = 0; address3[i] = 0;
-  }
 }
 
 histSaver::~histSaver() {
@@ -169,7 +166,10 @@ Float_t histSaver::getVal(Int_t i) {
   if(address1[i])      { if(debug) printf("fill address1\n"); tmp = *address1[i]*v[i]->scale; }
   else if(address3[i]) { if(debug) printf("fill address3\n"); tmp = *address3[i]*v[i]->scale; }
   else if(address2[i]) { if(debug) printf("fill address2\n"); tmp = *address2[i]; }
-  else printf("error: fill variable failed. no var available\n");
+  else {
+    printf("error: fill variable failed. no type available for var %s\n",v[i]->name.Data());
+    exit(0);
+  }
   if(debug == 1) printf("fill value: %4.2f\n", tmp);
   if (!v[i]->xbins){
     if(tmp >= v[i]->xhigh) tmp = v[i]->xhigh*0.999999;
@@ -606,10 +606,12 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
       double tmp = readhist->Integral();
       if(tmp!=tmp){
         printf("Warning: %s->Integral() is nan, skip\n", (histname + v[i]->name).Data());
+        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
         continue;
       }
       if(tmp==0){
         printf("Warning: %s->Integral() is 0, skip\n", (histname + v[i]->name).Data());
+        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
         continue;
       }
       if(checkread){
@@ -617,9 +619,11 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
           printf("read histogram %s, + %f\n", (histname + v[i]->name).Data(), readhist->GetBinContent(checkread_ibin)*norm);
         }
       }
-      if(plot_lib[samplename][region][variation][i] == 0 || plot_lib[samplename].find(region) != plot_lib[samplename].end()){
+      bool newhist = 0;
+      if(!newRegion) newhist = plot_lib[samplename][region][variation][i] == 0;
+      if(newRegion || newhist ){
         if(newRegion) plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname + v[i]->name)->Clone()));
-        else if(plot_lib[samplename][region][variation][i] == 0) plot_lib[samplename][region][variation][i] = (TH1D*)(readfromfile->Get(histname + v[i]->name)->Clone());
+        else if(newhist) plot_lib[samplename][region][variation][i] = (TH1D*)(readfromfile->Get(histname + v[i]->name)->Clone());
         TH1D* target = plot_lib[samplename][region][variation][i];
         target->SetName(samplename + "_" + variation + "_" + region + "_" + v[i]->name + "_buffer");
         target->Scale(norm);
