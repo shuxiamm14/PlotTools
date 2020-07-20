@@ -233,11 +233,12 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
     for(auto &variation : iter.second[inputregion1])
     for (int i = 0; i < v.size(); ++i)
     {
-      if(input1exist == 1) iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion1][variation.first][i]->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v[i]->name + "_buffer"));
-      else iter.second[outputregion][variation.first].push_back((TH1D*)iter.second[inputregion2][variation.first][i]->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v[i]->name + +"_buffer"));
-      if(input1exist == 1 && input2exist == 1) {
-        iter.second[outputregion][variation.first][i]->Add(iter.second[inputregion2][variation.first][i]);
-        if(!iter.second[outputregion][variation.first][i]->Integral()) printf("merged histogram %s is empty\n", iter.second[outputregion][variation.first][i]->GetName());
+      TH1D* addtarget1 = grabhist(iter.first,inputregion1,variation.first,i);
+      TH1D* addtarget2 = grabhist(iter.first,inputregion2,variation.first,i);
+      if(input1exist == 1 && addtarget1) iter.second[outputregion][variation.first].push_back((TH1D*)addtarget1->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v[i]->name + "_buffer"));
+      else if(addtarget2) iter.second[outputregion][variation.first].push_back((TH1D*)addtarget2->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v[i]->name + +"_buffer"));
+      if(input1exist == 1 && input2exist == 1 && addtarget1 && addtarget2) {
+        iter.second[outputregion][variation.first][i]->Add(addtarget2);
         if(debug)
           printf("add %s to %s as %s\n", iter.second[inputregion2][variation.first][i]->GetName(),iter.second[inputregion1][variation.first][i]->GetName(),iter.second[outputregion][variation.first][i]->GetName());
       }
