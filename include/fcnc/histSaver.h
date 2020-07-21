@@ -18,7 +18,7 @@ struct variable{
   int rebin;
   std::vector<double>* xbins;
 
-  variable(TString _name, TString _title, int _nbins, float _xlow, float _xhigh, TString _unit = "", float _scale = 1, int _rebin = 0,   std::vector<double>* _xbins = 0)
+  variable(TString _name, TString _title, int _nbins, float _xlow, float _xhigh, TString _unit = "", float _scale = 1, int _rebin = 1,   std::vector<double>* _xbins = 0)
   :name(_name), title(_title), nbins(_nbins), xlow(_xlow), xhigh(_xhigh), unit(_unit), scale(_scale), rebin(_rebin), xbins(_xbins){}
 
 };
