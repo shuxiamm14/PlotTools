@@ -898,14 +898,11 @@ void histSaver::plot_stack(TString NPname, TString outdir){
     if(muted) continue;
     gSystem->mkdir("plots_" + outdir + "/" + region);
     for (int i = 0; i < v.size(); ++i){
-      cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf[");
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
       TH1D hmc("hmc","hmc",v[i]->nbins/v[i]->rebin,v[i]->xlow,v[i]->xhigh);
       TH1D hmcR("hmcR","hmcR",v[i]->nbins/v[i]->rebin,v[i]->xlow,v[i]->xhigh);
       TH1D hdataR("hdataR","hdataR",v[i]->nbins/v[i]->rebin,v[i]->xlow,v[i]->xhigh);
-      cv.cd();
-      padhi->Draw();
 //===============================upper pad bkg and unblinded data===============================
       padhi->SetBottomMargin(0.017);
       padhi->SetRightMargin(0.08);
@@ -939,6 +936,9 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         printf("histSaver::plot_stack(): ERROR: stack has no entry for region %s, var %s, continue\n", region.Data(), v[i]->name.Data());
         continue;
       }
+      cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf[");
+      cv.cd();
+      padhi->Draw();
       double histmax = hmc.GetMaximum() + hmc.GetBinError(hmc.GetMaximumBin());
 
       TH1D * datahist = 0;
