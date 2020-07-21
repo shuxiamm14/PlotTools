@@ -904,10 +904,6 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       TH1D hmcR("hmcR","hmcR",v[i]->nbins/v[i]->rebin,v[i]->xlow,v[i]->xhigh);
       TH1D hdataR("hdataR","hdataR",v[i]->nbins/v[i]->rebin,v[i]->xlow,v[i]->xhigh);
 //===============================upper pad bkg and unblinded data===============================
-      padhi->SetBottomMargin(0.017);
-      padhi->SetRightMargin(0.08);
-      padhi->SetLeftMargin(0.12);
-      padhi->cd();
       hmc.Sumw2();
       THStack *hsk = new THStack(v[i]->name.Data(),v[i]->name.Data());
       TLegend* lg1 = 0;
@@ -936,9 +932,6 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         printf("histSaver::plot_stack(): ERROR: stack has no entry for region %s, var %s, continue\n", region.Data(), v[i]->name.Data());
         continue;
       }
-      cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf[");
-      cv.cd();
-      padhi->Draw();
       double histmax = hmc.GetMaximum() + hmc.GetBinError(hmc.GetMaximumBin());
 
       TH1D * datahist = 0;
@@ -968,6 +961,14 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       if(debug) printf("set hsk\n");
       hsk->SetMaximum(1.35*histmax);
 
+      cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf[");
+      cv.cd();
+      padhi->Draw();
+      padhi->SetBottomMargin(0.017);
+      padhi->SetRightMargin(0.08);
+      padhi->SetLeftMargin(0.12);
+      padhi->cd();
+      
       hsk->Draw("hist");
       hsk->GetXaxis()->SetTitle(v[i]->unit == "" ? v[i]->title.Data() : (v[i]->title + " [" + v[i]->unit + "]").Data());
       hsk->GetXaxis()->SetLabelColor(kWhite);
