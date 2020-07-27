@@ -5,7 +5,7 @@
 #include "AtlasStyle.h"
 #include "AtlasLabels.h"
 #include "HISTFITTER.h"
-#include "makechart.h"
+#include "LatexChart.h"
 
 using namespace std;
 histSaver::histSaver(TString _outputfilename) {

@@ -1,4 +1,4 @@
-#include "makechart.h"
+#include "LatexChart.h"
 #include <string>
 #include <fstream>
 #include <algorithm>
@@ -20,7 +20,7 @@ void LatexChart::set(std::string row, std::string column, observable obs){
 	if (iter == rows.end()) rows.push_back(row);
 	iter = find(columns.begin(),columns.end(),column);
 	if (iter == columns.end()) columns.push_back(column);
-	content[row][column] = obs;
+	content[row][column].push_back(obs);
 }
 
 void LatexChart::clear(){
@@ -32,7 +32,7 @@ void LatexChart::clear(){
 void LatexChart::reset(){
 	for(auto row : content)
 		for(auto column : row.second)
-			column.second = 0;
+			column.second.clear();
 }
 
 void LatexChart::print(std::string filename){
@@ -86,14 +86,18 @@ void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstrea
 			if(content[row].find(new_column) == content[row].end())
 				(*file)<<" /";
 			else{
-				(*file)<<"$"<<content[row][new_column].nominal;
-				if(content[row][new_column].error) {
-					if(content[row][new_column].error == content[row][new_column].errordown)
-						(*file)<<"\\pm"<<content[row][new_column].error;
-					else
-						(*file)<<"^{+"<<content[row][new_column].error<<"}_{-"<<content[row][new_column].errordown<<"}";
+				for (int icontent = 0; icontent < content[row][new_column].size(); ++icontent)
+				{
+					(*file)<<"$"<<content[row][new_column][icontent].nominal;
+					if(content[row][new_column][icontent].error) {
+						if(content[row][new_column][icontent].error == content[row][new_column][icontent].errordown)
+							(*file)<<"\\pm"<<content[row][new_column][icontent].error;
+						else
+							(*file)<<"^{+"<<content[row][new_column][icontent].error<<"}_{-"<<content[row][new_column][icontent].errordown<<"}";
+					}
+					(*file)<<"$";
+					if(icontent != content[row][new_column].size()-1) (*file)<<" / ";
 				}
-				(*file)<<" $";
 			}
 		}
 		(*file)<<"\\\\\\hline\n";
@@ -104,7 +108,21 @@ void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstrea
 void LatexChart::add(LatexChart *target){
 	for(auto row: rows){
 		for(auto column: columns){
-			content[row][column] += target->content[row][column];
+			for (int icontent = 0; icontent < content[row][column].size(); icontent++)
+			{
+				content[row][column][icontent] += target->content[row][column][icontent];
+			}
+		}
+	}
+}
+
+void LatexChart::concate(LatexChart *target){
+	for(auto row: rows){
+		for(auto column: columns){
+			for (int icontent = 0; icontent < target->content[row][column].size(); icontent++)
+			{
+				content[row][column].push_back(target->content[row][column][icontent]);
+			}
 		}
 	}
 }
