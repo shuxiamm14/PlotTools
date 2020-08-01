@@ -38,7 +38,6 @@ histSaver::~histSaver() {
       for(auto &variation: reg.second) {
         for (int i = 0; i < v.size(); ++i){
           TH1D *target = variation.second[i];
-          if(debug) cout<<"\rdeleting histogram:"<<target->GetName()<<std::endl<<std::flush;
             deletepointer(target);
           if(debug) cout<<"\rdone deleting histogram"<<std::endl<<std::flush;
         }
@@ -186,11 +185,13 @@ void histSaver::show(){
   for(auto const& region: regions) {
     printf("histSaver::show()\tregion: %s\n", region.Data());
   }
-  for (int i = 0; i < v.size(); ++i)
-  {
-    if(address2[i]) printf("histSaver::show()\t%s = %d\n", v.at(i)->name.Data(), *address2[i]);
-    else if(address1[i]) printf("histSaver::show()\t%s = %4.2f\n", v.at(i)->name.Data(), *address1[i]*v.at(i)->scale);
-    else if(address3[i]) printf("histSaver::show()\t%s = %4.2f\n", v.at(i)->name.Data(), *address3[i]*v.at(i)->scale);
+  if(address1.size() == v.size()) {
+    for (int i = 0; i < v.size(); ++i)
+    {
+      if(address2[i]) printf("histSaver::show()\t%s = %d\n", v.at(i)->name.Data(), *address2[i]);
+      else if(address1[i]) printf("histSaver::show()\t%s = %4.2f\n", v.at(i)->name.Data(), *address1[i]*v.at(i)->scale);
+      else if(address3[i]) printf("histSaver::show()\t%s = %4.2f\n", v.at(i)->name.Data(), *address3[i]*v.at(i)->scale);
+    }
   }
 }
 
