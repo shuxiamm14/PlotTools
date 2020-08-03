@@ -18,8 +18,8 @@ struct variable{
   int rebin;
   std::vector<double>* xbins;
 
-  variable(TString _name, TString _title, int _nbins, float _xlow, float _xhigh, TString _unit = "", float _scale = 1, int _rebin = 0,   std::vector<double>* _xbins = 0)
-  :name(_name), title(_title), nbins(_nbins), xlow(_xlow), xhigh(_xhigh), unit(_unit), scale(_scale), rebin(_rebin){}
+  variable(TString _name, TString _title, int _nbins, float _xlow, float _xhigh, TString _unit = "", float _scale = 1, int _rebin = 1,   std::vector<double>* _xbins = 0)
+  :name(_name), title(_title), nbins(_nbins), xlow(_xlow), xhigh(_xhigh), unit(_unit), scale(_scale), rebin(_rebin), xbins(_xbins){}
 
 };
 
@@ -81,11 +81,11 @@ public:
     address3.push_back(0);
     if(var_){
       if (Dname.Contains("i")) 
-        address2[nvar] = (int*)var_;
+        address2[v.size()-1] = (int*)var_;
       else if(Dname.Contains("f")) 
-        address1[nvar] = (float*)var_;
+        address1[v.size()-1] = (float*)var_;
       else if(Dname.Contains("d"))
-        address3[nvar] = (double*)var_;
+        address3[v.size()-1] = (double*)var_;
       else
         printf("unknown var type: %s\n", v_->name.Data());
     }
