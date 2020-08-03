@@ -5,9 +5,10 @@
 class LatexChart
 {
 public:
-	LatexChart(){ maxcolumn = 4; }
+	LatexChart(){ maxcolumn = 4; debug = 0;}
 	~LatexChart(){};
 	LatexChart(std::string chartlabel) : label(chartlabel) { maxcolumn = 4; }
+	int debug;
 	int maxcolumn;
 	std::string label;
 	std::string caption;
@@ -23,5 +24,6 @@ public:
 	void writeContent(std::vector<std::string> new_columns, std::ofstream* file);
 	void add(LatexChart *target);
 	void concate(LatexChart *target);
+	observable* grabContent(std::string row, std::string column, int icontent);
 	LatexChart* clone();
 };

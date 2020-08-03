@@ -88,12 +88,16 @@ void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstrea
 			else{
 				for (int icontent = 0; icontent < content[row][new_column].size(); ++icontent)
 				{
-					(*file)<<"$"<<content[row][new_column][icontent].nominal;
-					if(content[row][new_column][icontent].error) {
-						if(content[row][new_column][icontent].error == content[row][new_column][icontent].errordown)
-							(*file)<<"\\pm"<<content[row][new_column][icontent].error;
+					observable* target = grabContent(row,new_column,icontent);
+					if(!target) {
+						break;
+					}
+					(*file)<<"$"<<target->nominal;
+					if(target->error) {
+						if(target->error == target->errordown)
+							(*file)<<"\\pm"<<target->error;
 						else
-							(*file)<<"^{+"<<content[row][new_column][icontent].error<<"}_{-"<<content[row][new_column][icontent].errordown<<"}";
+							(*file)<<"^{+"<<target->error<<"}_{-"<<target->errordown<<"}";
 					}
 					(*file)<<"$";
 					if(icontent != content[row][new_column].size()-1) (*file)<<" / ";
@@ -105,12 +109,32 @@ void LatexChart::writeContent(std::vector<std::string> new_columns, std::ofstrea
 	(*file)<<"\\end{tabular}\n";
 }
 
+observable* LatexChart::grabContent(string _row, string _colume, int _icontent){
+  for(auto &row : content){
+    if(row.first != _row) continue;
+    for(auto &column : row.second){
+      if(column.first != _colume) continue;
+      if(_icontent >= column.second.size()) {
+        if(debug) printf("LatexChart::grabContent()  WARNING: table content doesn't exist: row = %s. column = %s, icontent = %d\n", _row.c_str(), _colume.c_str(), _icontent);
+      }
+      else return &(column.second.at(_icontent));
+      if(debug) printf("LatexChart::grabContent()  WARNING: table column doesn't exist: row = %s. column = %s\n", _row.c_str(), _colume.c_str());
+      return 0;
+    }
+    if(debug) printf("LatexChart::grabContent()  WARNING: table row doesn't exist: row = %s.\n", _row.c_str());
+    return 0;
+  }
+  return 0;
+}
+
 void LatexChart::add(LatexChart *target){
 	for(auto row: rows){
 		for(auto column: columns){
 			for (int icontent = 0; icontent < content[row][column].size(); icontent++)
 			{
-				content[row][column][icontent] += target->content[row][column][icontent];
+				observable* thiscontent = grabContent(row,column,icontent);
+				observable* targetcontent = target->grabContent(row,column,icontent);
+				if(thiscontent && targetcontent) *thiscontent += *targetcontent;
 			}
 		}
 	}
@@ -121,7 +145,8 @@ void LatexChart::concate(LatexChart *target){
 		for(auto column: columns){
 			for (int icontent = 0; icontent < target->content[row][column].size(); icontent++)
 			{
-				content[row][column].push_back(target->content[row][column][icontent]);
+				observable* targetcontent = target->grabContent(row,column,icontent);
+				if(targetcontent) content[row][column].push_back(*targetcontent);
 			}
 		}
 	}
