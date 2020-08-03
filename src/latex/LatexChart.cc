@@ -36,6 +36,7 @@ void LatexChart::reset(){
 }
 
 void LatexChart::print(std::string filename){
+	printf("LatexChart::print() : Print to file: %s\n",filename.c_str());
 	ofstream *file = new ofstream();
 	(*file).open(filename+".tex");
 	(*file)<<"\\begin{table}\n";

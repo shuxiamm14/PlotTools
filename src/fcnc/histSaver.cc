@@ -877,13 +877,13 @@ void histSaver::SetLumiAnaWorkflow(TString _lumi, TString _analysis, TString _wo
   analysis = _analysis;
   workflow = _workflow;
 }
-void histSaver::plot_stack(TString NPname, TString outdir){
+void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdir){
   SetAtlasStyle();
   TGaxis::SetMaxDigits(3);
   LatexChart* yield_chart = new LatexChart("yield");
   LatexChart* sgnf_chart = new LatexChart("significance");
-  gSystem->mkdir("plots_" + outdir);
-  gSystem->mkdir("charts_" + outdir);
+  gSystem->mkdir(outdir);
+  gSystem->mkdir(outputchartdir);
   TCanvas cv("cv","cv",600,600);
   TGraph* ROC;
   TH1D *ROC_sig = 0;
@@ -904,7 +904,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         muted = 1;
     }
     if(muted) continue;
-    gSystem->mkdir("plots_" + outdir + "/" + region);
+    gSystem->mkdir(outdir + "/" + region);
     for (int i = 0; i < v.size(); ++i){
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
       TPad *padhi  = new TPad("hipad","hipad",0,0.3,1,1);
@@ -969,7 +969,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       if(debug) printf("set hsk\n");
       hsk->SetMaximum(1.35*histmax);
 
-      cv.SaveAs("plots_" + outdir + "/" + region + "/" + v[i]->name + ".pdf[");
+      cv.SaveAs(outdir + "/" + region + "/" + v[i]->name + ".pdf[");
       cv.cd();
       padhi->Draw();
       padhi->SetBottomMargin(0.017);
@@ -1088,7 +1088,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
 
       padhi->cd();
       if(!activeoverlay.size()) {
-        cv.SaveAs("plots_" + outdir + "/" + region + "/" + v.at(i)->name + ".pdf");
+        cv.SaveAs(outdir + "/" + region + "/" + v.at(i)->name + ".pdf");
       }
       std::string regtitle = region.Data();
       findAndReplaceAll(regtitle,"reg","");
@@ -1100,6 +1100,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       findAndReplaceAll(regtitle,"1l2tau2bnj_","$l\\thadhad$ 2b ");
       findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
       findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
+      findAndReplaceAll(regtitle,"_","~");
 
       if(sensitivevariable == v.at(i)->name) {
         if(dataref){
@@ -1171,7 +1172,7 @@ void histSaver::plot_stack(TString NPname, TString outdir){
         lgsig->SetBorderSize(0);
         lgsig->Draw();
         padhi->Update();
-        cv.SaveAs("plots_" + outdir + "/" + region + "/" + v.at(i)->name + ".pdf");
+        cv.SaveAs(outdir + "/" + region + "/" + v.at(i)->name + ".pdf");
         deletepointer(histoverlay);
         deletepointer(lgsig);
       }
@@ -1182,16 +1183,16 @@ void histSaver::plot_stack(TString NPname, TString outdir){
       deletepointer(datahist);
       for(auto &iter : buffer) deletepointer(iter);
       if(debug) printf("end region %s\n",region.Data());
-      cv.SaveAs("plots_" + outdir + "/" + region + "/" + v.at(i)->name + ".pdf]");
+      cv.SaveAs(outdir + "/" + region + "/" + v.at(i)->name + ".pdf]");
       cv.Clear();
     }
     if(debug) printf("end loop region\n");
   }
   if(yield_chart->rows.size()){
     yield_chart->caption = "The sample and data yield before the fit.";
-    yield_chart->print(("charts_" + outdir + "/" + "yield_chart").Data());
+    yield_chart->print((outputchartdir + "/" + "yield_chart").Data());
     sgnf_chart->caption = "The stat. only significance of the signal in each regions with the benchmark $\\mu$ value.";
-    sgnf_chart->print(("charts_" + outdir + "/" + "significance_chart").Data());
+    sgnf_chart->print((outputchartdir + "/" + "significance_chart").Data());
   }
   deletepointer(yield_chart);
   deletepointer(sgnf_chart);

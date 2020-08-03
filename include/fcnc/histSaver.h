@@ -119,7 +119,7 @@ public:
   Float_t getVal(Int_t i);
   float binwidth(int i);
   void read_sample(TString samplename, TString savehistname, TString NPname, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile=0);
-  void plot_stack(TString NPname,TString outputdir);
+  void plot_stack(TString NPname,TString outputdir = ".",TString outputchartdir = ".");
   void fill_hist(TString sample, TString region, TString variation);
   void fill_hist(TString sample, TString region);
   void add_region(TString region);

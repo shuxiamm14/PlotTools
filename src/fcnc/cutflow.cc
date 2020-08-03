@@ -15,15 +15,17 @@ CutFlow::~CutFlow(){
 }
 
 void CutFlow::clear(){
-	for(auto &iter : cutflow_raw) iter = 0;
-	for(auto &iter : cutflow_weighted) iter = 0;
-	for(auto &iter : cutflow2) iter = 0;
+	cutflow_raw.clear();
+	cutflow_weighted.clear();
+	cutflow2.clear();
 	if(n_tracked_event) {
 		std::vector<ULong64_t> tmp = event_track[0];
 		event_track.clear();
 		event_track[0] = tmp;
 	}
 	i_cut = 0;
+	cut_names.clear();
+	n_cuts = 0;
 }
 
 void CutFlow::newEvent(){
