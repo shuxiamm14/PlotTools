@@ -10,7 +10,7 @@ do
 			elif [[ "$word" =~ "1y" ]] ; then
 				CXX_STANDARD=14;
 			elif [[ "$word" =~ "1z" ]]; then
-				CXX_STANDARD=14;
+				CXX_STANDARD=17;
 			else
 				echo "ERROR: CXX_STANDARD not found"
 				return
