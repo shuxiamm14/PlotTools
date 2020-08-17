@@ -39,9 +39,6 @@ void LatexChart::print(std::string filename){
 	printf("LatexChart::print() : Print to file: %s\n",filename.c_str());
 	ofstream *file = new ofstream();
 	(*file).open(filename+".tex");
-	(*file)<<"\\begin{table}\n";
-	(*file)<<"\\footnotesize\n";
-	(*file)<<"\\caption{"<<caption<<"}\n";
 	(*file)<<"\\centering\n";
 	int ncolumn = columns.size();
 	if(ncolumn > maxcolumn){
@@ -66,8 +63,6 @@ void LatexChart::print(std::string filename){
 	}else{
 		writeContent(columns, file);
 	}
-	(*file)<<"\\label{tab:"<<label<<"}\n";
-	(*file)<<"\\end{table}\n";
 	file->close();
 }
 
