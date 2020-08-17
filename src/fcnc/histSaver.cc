@@ -595,6 +595,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     bool newRegion = plot_lib[samplename].find(region) == plot_lib[samplename].end();
     for (int i = 0; i < v.size(); ++i)
     {
+      if(debug) printf("histSaver::read_sample() : Read file %s to get %s\n",readfromfile->GetName(), (histname + v.at(i)->name).Data());
       TH1D *readhist = (TH1D*)readfromfile->Get(histname + v.at(i)->name);
       if(!readhist) {
         if(debug) printf("histogram name not found: %s\n", (histname + v.at(i)->name).Data());
