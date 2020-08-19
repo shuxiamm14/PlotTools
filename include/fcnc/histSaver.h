@@ -98,8 +98,9 @@ public:
   TH1D* grabdatahist(TString region, int ivar);
   bool add_variation(TString sample,TString variation);
   void printyield(TString region);
+  observable calculateYield(TString region, std::string formula, TString variation);
   double gethisterror(TH1* hist);
-  double templatesample(TString fromregion, TString variation,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
+  observable templatesample(TString fromregion, TString variation,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
   std::vector<observable> scale_to_data(TString scaleregion, std::string formula, TString scaleVariable, std::vector<double> slices = {}, TString variation = "NOMINAL");
   void scale_sample(TString scaleregion, std::string formula, TString scaleVariable, std::vector<observable> scalefactor, std::vector<double> slices = {}, TString variation = "NOMINAL");
   int findvar(TString varname);
