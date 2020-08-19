@@ -256,14 +256,20 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
 
   if(find_sample(samplename)) return;
 
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root","recreate");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root","update");
   else outputfile[variation]->cd();
   current_sample = samplename;
   
-  if(debug) printf("add new sample: %s\n", samplename.Data());
+  if(debug) {
+    printf("histSaver::init_sample() : add new sample: %s, title %s\n", samplename.Data(),sampleTitle.Data());
+    printf("histSaver::init_sample() : variation: %s\n",variation.Data());
+  }
   for(auto const& region: regions) {
+    if(debug) printf("histSaver::init_sample(): Region: %s\n", region.Data());
     for (int i = 0; i < v.size(); ++i){
-      TH1D *created = new TH1D(samplename + "_" + variation  + "_" +  region + "_" + v.at(i)->name + "_buffer",sampleTitle,v.at(i)->nbins,v.at(i)->xlow,v.at(i)->xhigh);
+      if(debug) printf("histSaver::init_sample(): var %s\n",v.at(i)->name.Data());
+      TString histname = samplename + "_" + variation  + "_" +  region + "_" + v.at(i)->name + "_buffer";
+      TH1D *created = new TH1D(histname,sampleTitle,v.at(i)->nbins,v.at(i)->xlow,v.at(i)->xhigh);
       created->SetDirectory(0);
       plot_lib[samplename][region][variation].push_back(created);
       if (samplename != "data")
@@ -299,7 +305,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
     }
   }
 
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
   vector<TString> tokens = split(formula.c_str()," ");
   if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
@@ -680,7 +686,7 @@ bool histSaver::find_sample(TString sample){
 
 bool histSaver::add_variation(TString sample,TString variation){
   if(!find_sample(sample)) return 0;
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
   for (int i = 0; i < v.size(); ++i){
     for(auto reg : regions){
@@ -794,7 +800,7 @@ void histSaver::overlay(TString _overlaysample){
 
 double histSaver::templatesample(TString fromregion, TString variation,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
 
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
   istringstream iss(formula);
   vector<string> tokens{istream_iterator<string>{iss},
