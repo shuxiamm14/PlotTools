@@ -66,6 +66,37 @@ void histSaver::printyield(TString region){
   }
 }
 
+observable histSaver::calculateYield(TString region, string formula, TString variation){
+  observable yield;
+  istringstream iss(formula);
+  vector<string> tokens{istream_iterator<string>{iss},
+    istream_iterator<string>{}};
+  if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 real -1 zll ...", formula.c_str());
+  vector<TH1D*> newvec;
+  observable scaleto(0,0);
+
+  for (int i = 0; i < tokens.size()/2; ++i)
+  {
+    int icompon = 2*i;
+    float numb = 0;
+    try{
+      numb = stof(tokens[icompon]);
+    }
+    catch(const std::invalid_argument& e){
+      printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 real -1 zll ...", formula.c_str());
+      exit(1);
+    }
+    TString sample=tokens[icompon+1].c_str();
+    if(grabhist(sample,region, sample == "data" ? "NOMINAL" : variation,0)){
+      TH1D *target=grabhist_int(sample,region,0,0);
+      double err;
+      observable thisyield(target->IntegralAndError(1,target->GetNbinsX(),err),err);
+      yield+=thisyield*numb;
+    }
+  }
+  return yield;
+}
+
 int histSaver::findvar(TString varname){
   for (int i = 0; i < v.size(); ++i)
   {
@@ -798,7 +829,7 @@ void histSaver::overlay(TString _overlaysample){
   overlaysamples.push_back(_overlaysample);
 }
 
-double histSaver::templatesample(TString fromregion, TString variation,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
+observable histSaver::templatesample(TString fromregion, TString variation,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
 
   if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
@@ -857,7 +888,7 @@ double histSaver::templatesample(TString fromregion, TString variation,string fo
   for(int ivar = 0; ivar < v.size(); ivar++){
     plot_lib[newsamplename][toregion][variation] = newvec;
   }
-  return scalefactor.nominal;
+  return scalefactor;
 }
 
 double histSaver::gethisterror(TH1* hist){

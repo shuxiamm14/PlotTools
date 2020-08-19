@@ -7,7 +7,7 @@ if [ -z ${PLOT_LIB_DIR+x} ] ; then
 	  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 	done
 	export PLOT_LIB_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
-	export PATH+=:$PLOT_LIB_DIR/bin:$PLOT_LIB_DIR/scripts
+	export PATH+=:$PLOT_LIB_DIR/bin
 	if [ $(uname) = "Darwin" ]; then
 		export DYLD_LIBRARY_PATH+=:$PLOT_LIB_DIR/lib
 	else
