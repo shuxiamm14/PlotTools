@@ -16,7 +16,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 #EIGEN3 package needed if dont have one, go git checkout and put the package path here
-set(EIGEN3DIR $ENV{TOOL_DIR}/eigen)
+set(EIGEN3DIR /afs/cern.ch/work/m/mxia/xTFW/FCNC_analysis/tools/eigen)
 
 # The following folder will be included
 FILE(GLOB INCLUDES ${PROJECT_SOURCE_DIR}/include/ ${PROJECT_SOURCE_DIR}/include/*)
