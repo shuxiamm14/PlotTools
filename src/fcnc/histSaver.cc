@@ -94,6 +94,7 @@ observable histSaver::calculateYield(TString region, string formula, TString var
       yield+=thisyield*numb;
     }
   }
+  printf("histSaver::calculateYield() : Calcuated yield: %f+/-%f\n", yield.nominal,yield.error);
   return yield;
 }
 
