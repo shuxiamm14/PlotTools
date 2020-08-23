@@ -94,7 +94,7 @@ observable histSaver::calculateYield(TString region, string formula, TString var
       yield+=thisyield*numb;
     }
   }
-  printf("histSaver::calculateYield() : Calcuated yield: %f+/-%f\n", yield.nominal,yield.error);
+  printf("histSaver::calculateYield() : Calcuated yield: %f+/-%f in %s\n", yield.nominal,yield.error,region.Data());
   return yield;
 }
 
@@ -878,10 +878,15 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
   observable scaleto(0,0);
   for (int ivar = 0; ivar < v.size(); ++ivar)
   {
-    newvec.push_back((TH1D*)grabhist(tokens[1],fromregion, tokens[1] == "data" ? "NOMINAL" : variation,ivar)->Clone(newsamplename+"_"+toregion+v[ivar]->name));
-    newvec[ivar]->Reset();
-    newvec[ivar]->SetNameTitle(newsamplename,newsampletitle);
-    newvec[ivar]->SetFillColor(color);
+    TH1D *target = grabhist(tokens[1],fromregion, tokens[1] == "data" ? "NOMINAL" : variation,ivar);
+    if(target){
+      newvec.push_back((TH1D*)target->Clone(newsamplename+"_"+toregion+v[ivar]->name));
+      newvec[ivar]->Reset();
+      newvec[ivar]->SetNameTitle(newsamplename,newsampletitle);
+      newvec[ivar]->SetFillColor(color);
+    }else{
+      newvec.push_back(0);
+    }
   }
   for (int i = 0; i < tokens.size()/2; ++i)
   {
@@ -902,7 +907,7 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
       }
       for (int ivar = 0; ivar < v.size(); ++ivar)
       {
-        newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,ivar),numb);
+        if(newvec[ivar]) newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,ivar),numb);
       }
     }
   }
@@ -919,7 +924,7 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
     }
   }else{
     for(auto & hists : newvec){
-      hists->Scale(SF);
+      if(hists) hists->Scale(SF);
     }
   }
   for(int ivar = 0; ivar < v.size(); ivar++){
@@ -1024,7 +1029,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         if(datahistorig) datahist = (TH1D*)datahistorig->Clone("dataClone");
         if(!datahist) {
           printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), v.at(i)->name.Data());
-          exit(0);
+          continue;
         } 
         if(v.at(i)->rebin != 1)
           datahist->Rebin(v.at(i)->rebin);
