@@ -14,5 +14,5 @@ if [ -z ${PLOT_LIB_DIR+x} ] ; then
 		export LD_LIBRARY_PATH+=:$PLOT_LIB_DIR/bin
 	fi
 	alias plotcd='cd $PLOT_LIB_DIR'
-	alias plotmake='cd $PLOT_LIB_DIR/build; make; cd -'
+	alias plotmake='cd $PLOT_LIB_DIR/build; make -j4; cd -'
 fi

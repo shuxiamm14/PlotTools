@@ -23,4 +23,4 @@ done
 
 echo "-- Detected root CXX standard:" $CXX_STANDARD
 
-mkdir -p build ; cd build ; cmake .. -DCMAKE_CXX_STANDARD=$CXX_STANDARD ; cd ..
+mkdir -p build ; cd build ; cmake .. -DCMAKE_CXX_STANDARD=$CXX_STANDARD ; make -j4 ; cd ..

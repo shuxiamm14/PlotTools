@@ -94,6 +94,7 @@ observable histSaver::calculateYield(TString region, string formula, TString var
       yield+=thisyield*numb;
     }
   }
+  printf("histSaver::calculateYield() : Calcuated yield: %f+/-%f\n", yield.nominal,yield.error);
   return yield;
 }
 
@@ -230,6 +231,48 @@ float histSaver::binwidth(int i){
   return (v.at(i)->xhigh-v.at(i)->xlow)/v.at(i)->nbins;
 }
 
+
+void histSaver::merge_regions(vector<TString> inputregions, TString outputregion){
+  if(debug) printf("histSaver::merge_regions\t");
+  bool exist = 0;
+  for(auto region: inputregions){
+    printf("%s,", region.Data());
+  }
+  printf("into %s\n", outputregion.Data());
+  vector<TString> existregions;
+  for(auto& iter:plot_lib ){
+    if(debug) printf("=====================start merging sample %s=====================\n", iter.first.Data());
+    existregions.clear();
+    for(auto region:inputregions){
+      if(iter.second.find(region) != iter.second.end()){
+        existregions.push_back(region);
+      }else if(debug) printf("histSaver::merge_regions\t input region: %s not found for sample %s\n",region.Data(), iter.first.Data());
+    }
+    if(existregions.size() == 0) continue;
+    bool outputexist = 0;
+    if(iter.second.find(outputregion) != iter.second.end()){
+      if(debug) printf("histSaver::merge_regions\t outputregion %s exist, overwrite it\n",outputregion.Data());
+      exist = 1;
+      for(auto &variation: iter.second[outputregion]){
+        for(int i = 0; i < v.size(); ++i) deletepointer(variation.second[i]);
+        variation.second.clear();
+      }
+    }
+    for(auto &variation : iter.second[inputregions[0]]){
+      for (int i = 0; i < v.size(); ++i)
+      {
+        for(auto region:existregions){
+          TH1D* addtarget = grabhist(iter.first,region,variation.first,i);
+          if(addtarget){
+            if(iter.second[outputregion][variation.first].size() != i) iter.second[outputregion][variation.first].push_back((TH1D*)addtarget->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer"));
+            else iter.second[outputregion][variation.first][i]->Add(addtarget);
+          }
+        }
+      }
+    }
+  }
+  if(!exist) regions.push_back(outputregion);
+}
 void histSaver::merge_regions(TString inputregion1, TString inputregion2, TString outputregion){
   if(debug) printf("histSaver::merge_regions\t %s and %s into %s\n",inputregion1.Data(),inputregion2.Data(),outputregion.Data());
   bool exist = 0;
@@ -273,12 +316,6 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
       }
     }
   }
-  //for(auto& iter:plot_lib ){
-  //  if(iter.second.find(outputregion) == iter.second.end()){
-  //    printf("histSaver::merge_regions merge regions failed\n");
-  //    exit(1);
-  //  }
-  //}
   if(!exist) regions.push_back(outputregion);
 }
 

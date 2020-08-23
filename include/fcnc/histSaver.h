@@ -117,6 +117,7 @@ public:
   TH1D* grabhist(TString sample, TString region, TString variation, TString varname, bool vital = 0);
   TH1D* grabhist(TString sample, TString region, TString varname, bool vital = 0);
   void merge_regions(TString inputregion1, TString inputregion2, TString outputregion);
+  void merge_regions(std::vector<TString> inputregions, TString outputregion);
   Float_t getVal(Int_t i);
   float binwidth(int i);
   void read_sample(TString samplename, TString savehistname, TString NPname, TString sampleTitle, enum EColor color, double norm, TFile *_inputfile=0);
