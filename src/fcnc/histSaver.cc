@@ -920,7 +920,7 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
       toregion.Data(), scaleto.nominal, scaleto.error,
       scalefactor.nominal, scalefactor.error);
     for(auto & hists : newvec){
-      hists->Scale(scalefactor.nominal);
+      if(hists) hists->Scale(scalefactor.nominal);
     }
   }else{
     for(auto & hists : newvec){
