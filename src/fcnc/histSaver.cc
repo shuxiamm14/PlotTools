@@ -94,7 +94,7 @@ observable histSaver::calculateYield(TString region, string formula, TString var
       yield+=thisyield*numb;
     }
   }
-  printf("histSaver::calculateYield() : Calcuated yield: %f+/-%f\n", yield.nominal,yield.error);
+  printf("histSaver::calculateYield() : Calcuated yield: %f+/-%f in %s\n", yield.nominal,yield.error,region.Data());
   return yield;
 }
 
@@ -324,14 +324,20 @@ void histSaver::init_sample(TString samplename, TString variation, TString sampl
 
   if(find_sample(samplename)) return;
 
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root","recreate");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root","update");
   else outputfile[variation]->cd();
   current_sample = samplename;
   
-  if(debug) printf("add new sample: %s\n", samplename.Data());
+  if(debug) {
+    printf("histSaver::init_sample() : add new sample: %s, title %s\n", samplename.Data(),sampleTitle.Data());
+    printf("histSaver::init_sample() : variation: %s\n",variation.Data());
+  }
   for(auto const& region: regions) {
+    if(debug) printf("histSaver::init_sample(): Region: %s\n", region.Data());
     for (int i = 0; i < v.size(); ++i){
-      TH1D *created = new TH1D(samplename + "_" + variation  + "_" +  region + "_" + v.at(i)->name + "_buffer",sampleTitle,v.at(i)->nbins,v.at(i)->xlow,v.at(i)->xhigh);
+      if(debug) printf("histSaver::init_sample(): var %s\n",v.at(i)->name.Data());
+      TString histname = samplename + "_" + variation  + "_" +  region + "_" + v.at(i)->name + "_buffer";
+      TH1D *created = new TH1D(histname,sampleTitle,v.at(i)->nbins,v.at(i)->xlow,v.at(i)->xhigh);
       created->SetDirectory(0);
       plot_lib[samplename][region][variation].push_back(created);
       if (samplename != "data")
@@ -367,7 +373,7 @@ vector<observable> histSaver::scale_to_data(TString scaleregion, string formula,
     }
   }
 
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
   vector<TString> tokens = split(formula.c_str()," ");
   if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 real 1 zll ...", formula.c_str());
@@ -748,7 +754,7 @@ bool histSaver::find_sample(TString sample){
 
 bool histSaver::add_variation(TString sample,TString variation){
   if(!find_sample(sample)) return 0;
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
   for (int i = 0; i < v.size(); ++i){
     for(auto reg : regions){
@@ -862,7 +868,7 @@ void histSaver::overlay(TString _overlaysample){
 
 observable histSaver::templatesample(TString fromregion, TString variation,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
 
-  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
   istringstream iss(formula);
   vector<string> tokens{istream_iterator<string>{iss},
@@ -872,10 +878,15 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
   observable scaleto(0,0);
   for (int ivar = 0; ivar < v.size(); ++ivar)
   {
-    newvec.push_back((TH1D*)grabhist(tokens[1],fromregion, tokens[1] == "data" ? "NOMINAL" : variation,ivar)->Clone(newsamplename+"_"+toregion+v[ivar]->name));
-    newvec[ivar]->Reset();
-    newvec[ivar]->SetNameTitle(newsamplename,newsampletitle);
-    newvec[ivar]->SetFillColor(color);
+    TH1D *target = grabhist(tokens[1],fromregion, tokens[1] == "data" ? "NOMINAL" : variation,ivar);
+    if(target){
+      newvec.push_back((TH1D*)target->Clone(newsamplename+"_"+toregion+v[ivar]->name));
+      newvec[ivar]->Reset();
+      newvec[ivar]->SetNameTitle(newsamplename,newsampletitle);
+      newvec[ivar]->SetFillColor(color);
+    }else{
+      newvec.push_back(0);
+    }
   }
   for (int i = 0; i < tokens.size()/2; ++i)
   {
@@ -897,7 +908,7 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
       for (int ivar = 0; ivar < v.size(); ++ivar)
       {
       	TH1D *target = grabhist(tokens[icompon+1],fromregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,ivar);
-        if(target) newvec[ivar]->Add(target,numb);
+        if(target && newvec[ivar]) newvec[ivar]->Add(target,numb);
       }
     }
   }
@@ -910,11 +921,11 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
       toregion.Data(), scaleto.nominal, scaleto.error,
       scalefactor.nominal, scalefactor.error);
     for(auto & hists : newvec){
-      hists->Scale(scalefactor.nominal);
+      if(hists) hists->Scale(scalefactor.nominal);
     }
   }else{
     for(auto & hists : newvec){
-      hists->Scale(SF);
+      if(hists) hists->Scale(SF);
     }
   }
   for(int ivar = 0; ivar < v.size(); ivar++){
@@ -1019,7 +1030,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         if(datahistorig) datahist = (TH1D*)datahistorig->Clone("dataClone");
         if(!datahist) {
           printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), v.at(i)->name.Data());
-          exit(0);
+          continue;
         } 
         if(v.at(i)->rebin != 1)
           datahist->Rebin(v.at(i)->rebin);
