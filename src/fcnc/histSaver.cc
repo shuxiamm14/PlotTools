@@ -908,7 +908,8 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
       }
       for (int ivar = 0; ivar < v.size(); ++ivar)
       {
-        if(newvec[ivar]) newvec[ivar]->Add(grabhist(tokens[icompon+1],fromregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,ivar),numb);
+      	TH1D *target = grabhist(tokens[icompon+1],fromregion, tokens[icompon+1] == "data" ? "NOMINAL" : variation,ivar);
+        if(target && newvec[ivar]) newvec[ivar]->Add(target,numb);
       }
     }
   }
@@ -921,7 +922,7 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
       toregion.Data(), scaleto.nominal, scaleto.error,
       scalefactor.nominal, scalefactor.error);
     for(auto & hists : newvec){
-      hists->Scale(scalefactor.nominal);
+      if(hists) hists->Scale(scalefactor.nominal);
     }
   }else{
     for(auto & hists : newvec){
