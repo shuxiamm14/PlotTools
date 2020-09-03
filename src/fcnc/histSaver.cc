@@ -261,10 +261,11 @@ void histSaver::merge_regions(vector<TString> inputregions, TString outputregion
     for(auto &variation : iter.second[inputregions[0]]){
       for (int i = 0; i < v.size(); ++i)
       {
+        iter.second[outputregion][variation.first].push_back(0);
         for(auto region:existregions){
           TH1D* addtarget = grabhist(iter.first,region,variation.first,i);
           if(addtarget){
-            if(iter.second[outputregion][variation.first].size() != i) iter.second[outputregion][variation.first].push_back((TH1D*)addtarget->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer"));
+            if(iter.second[outputregion][variation.first][i] == 0) iter.second[outputregion][variation.first][i] = (TH1D*)addtarget->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer");
             else iter.second[outputregion][variation.first][i]->Add(addtarget);
           }
         }
