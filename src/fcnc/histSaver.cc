@@ -1092,14 +1092,14 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       ATLASLabel(0.15,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), region.Data());
 //===============================blinded data===============================
       std::vector<TString> activeoverlay;
-      if(blinding && dataref){
-        for(auto overlaysample: overlaysamples){
-          TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
-          if(!histoverlaytmp){
-            printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
-            continue;
-          }
-          activeoverlay.push_back(overlaysample);
+      for(auto overlaysample: overlaysamples){
+        TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
+        if(!histoverlaytmp){
+          printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
+          continue;
+        }
+        activeoverlay.push_back(overlaysample);
+        if(blinding && dataref){
           for(Int_t j=1; j<v.at(i)->nbins+1; j++) {
             if(histoverlaytmp->GetBinContent(j)/sqrt(datahist->GetBinContent(j)) > blinding) {
               datahist->SetBinContent(j,0);
@@ -1108,13 +1108,13 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
               hdataR.SetBinError(j,0);
             }
           }
-        }
-        if(sensitivevariable == v.at(i)->name){
-          for(int j = v.at(i)->nbins*3/4/v.at(i)->rebin ; j <= v.at(i)->nbins ; j++){
-            datahist->SetBinContent(j,0);
-            datahist->SetBinError(j,0);
-            hdataR.SetBinContent(j,0);
-            hdataR.SetBinError(j,0);
+          if(sensitivevariable == v.at(i)->name){
+            for(int j = v.at(i)->nbins*3/4/v.at(i)->rebin ; j <= v.at(i)->nbins ; j++){
+              datahist->SetBinContent(j,0);
+              datahist->SetBinError(j,0);
+              hdataR.SetBinContent(j,0);
+              hdataR.SetBinError(j,0);
+            }
           }
         }
       }
@@ -1132,32 +1132,34 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       padlow->cd();
 
       if(debug) printf("plot data ratio\n");
-      if(dataref) {
+      if(dataref){
         hdataR.SetMarkerStyle(20);
         hdataR.SetMarkerSize(0.8);
         hdataR.SetMaximum(1.5);
         hdataR.SetMinimum(0.5);
-        hdataR.GetYaxis()->SetNdivisions(504,false);
-        hdataR.GetYaxis()->SetTitle("Data/Bkg");
-        hdataR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.08);
-        hdataR.GetYaxis()->CenterTitle();
-        hdataR.GetXaxis()->SetTitle(v.at(i)->unit == "" ? v.at(i)->title.Data() : (v.at(i)->title + " [" + v.at(i)->unit + "]").Data());
-        hdataR.GetXaxis()->SetTitleSize(hdataR.GetXaxis()->GetTitleSize()*0.7);
-        hdataR.GetYaxis()->SetTitleSize(hdataR.GetYaxis()->GetTitleSize()*0.7);
       }
+      hmcR.GetYaxis()->SetNdivisions(504,false);
+      hmcR.GetYaxis()->SetTitle("Data/Bkg");
+      hmcR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.08);
+      hmcR.GetYaxis()->CenterTitle();
+      hmcR.GetXaxis()->SetTitle(v.at(i)->unit == "" ? v.at(i)->title.Data() : (v.at(i)->title + " [" + v.at(i)->unit + "]").Data());
+      hmcR.GetXaxis()->SetTitleSize(hdataR.GetXaxis()->GetTitleSize()*0.7);
+      hmcR.GetYaxis()->SetTitleSize(hdataR.GetYaxis()->GetTitleSize()*0.7);
       hmcR.SetFillColor(1);
       hmcR.SetLineColor(0);
       hmcR.SetMarkerStyle(1);
       hmcR.SetMarkerSize(0);
       hmcR.SetMarkerColor(1);
       hmcR.SetFillStyle(3004);
-      if(debug) printf("plot data ratio\n");
-      hdataR.Draw("E same");
-      hdataR.GetXaxis()->SetTitleOffset(3.4);
-      hdataR.GetXaxis()->SetLabelSize(hdataR.GetXaxis()->GetLabelSize()*0.7); 
-      hdataR.GetYaxis()->SetLabelSize(hdataR.GetYaxis()->GetLabelSize()*0.7); 
+      hmcR.GetXaxis()->SetTitleOffset(3.4);
+      hmcR.GetXaxis()->SetLabelSize(hdataR.GetXaxis()->GetLabelSize()*0.7); 
+      hmcR.GetYaxis()->SetLabelSize(hdataR.GetYaxis()->GetLabelSize()*0.7); 
       if(debug) printf("plot mc ratio\n");
       hmcR.Draw("E2 same");
+      if(debug) printf("plot data ratio\n");
+      if(dataref){
+        hdataR.Draw("E same");
+      }
       TLine line;
       line.SetLineColor(2);
       line.DrawLine(hdataR.GetBinLowEdge(1), 1., hdataR.GetBinLowEdge(hdataR.GetNbinsX()+1), 1.);
