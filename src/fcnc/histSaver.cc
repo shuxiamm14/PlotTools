@@ -1135,9 +1135,9 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       if(dataref){
         hdataR.SetMarkerStyle(20);
         hdataR.SetMarkerSize(0.8);
-        hdataR.SetMaximum(1.5);
-        hdataR.SetMinimum(0.5);
       }
+      hmcR.SetMaximum(1.5);
+      hmcR.SetMinimum(0.5);
       hmcR.GetYaxis()->SetNdivisions(504,false);
       hmcR.GetYaxis()->SetTitle("Data/Bkg");
       hmcR.GetYaxis()->SetTitleOffset(hdataR.GetYaxis()->GetTitleOffset()*1.08);
