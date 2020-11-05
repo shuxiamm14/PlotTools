@@ -125,28 +125,28 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString variation, TSt
 
 TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int ivar, bool vital){
   if(sample == "data") variation = "NOMINAL";
-  for(auto samp : plot_lib){
-    if(sample != samp.first) continue;
-    for(auto reg : samp.second){
-      if(region != reg.first) continue;
-      for(auto vari : reg.second){
-        if(variation != vari.first) continue;
-        if(vari.second.size() <= ivar){
-          if(debug) printf("histSaver:grabhist  WARNING: variable %s in region %s with variation %s for sample %s not found\n", v[ivar]->name.Data(), region.Data(), variation.Data(), sample.Data());
-          if(vital) exit(0);
-          return 0;
-        }
-        return vari.second.at(ivar);
-      }
-      if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s with variation %s not found\n", region.Data(), sample.Data(), variation.Data());
-      if(debug) show();
-      return 0;
-    }
-    if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s not found\n", region.Data(), sample.Data());
+  auto samp = plot_lib.find(sample);
+  if(samp == plot_lib.end()) {
+    if(debug) printf("histSaver:grabhist  Warning: sample %s not found\n", sample.Data());
     if(debug) show();
+    if(vital) exit(0);
     return 0;
   }
-  return 0;
+  auto reg = samp->second.find(region);
+  if(reg == samp->second.end()){
+    if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s not found\n", region.Data(), sample.Data());
+    if(debug) show();
+    if(vital) exit(0);
+    return 0;
+  }
+  auto vari = reg->second.find(variation);
+  if(vari == reg->second.end()){
+    if(debug) printf("histSaver:grabhist  Warning: region %s for sample %s with variation %s not found\n", region.Data(), sample.Data(), variation.Data());
+    if(debug) show();
+    if(vital) exit(0);
+    return 0;
+  }
+  return vari->second.at(ivar);
 }
 
 TH1D* histSaver::grabhist(TString sample, TString region, TString varname, bool vital){
