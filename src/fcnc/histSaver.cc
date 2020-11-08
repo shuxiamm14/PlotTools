@@ -23,10 +23,6 @@ histSaver::histSaver(TString _outputfilename) {
   lumi = "#it{#sqrt{s}} = 13TeV, 80 fb^{-1}";
   analysis = "FCNC tqH H#rightarrow tautau";
   workflow = "work in progress";
-  fromntuple = 1;
-  histcount = 0;
-  this_region = "nominal";
-  read_path = "./" ;
   debug = 1;
   sensitivevariable = "";
 }
@@ -320,41 +316,45 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
   if(!exist) regions.push_back(outputregion);
 }
 
-void histSaver::init_sample(TString samplename, TString variation, TString sampleTitle, enum EColor color){
+void histSaver::add_sample(TString samplename, TString sampletitle, enum EColor color){
+  samples.emplace_back(samplename,sampletitle,color,1);
+  plot_lib[samplename];
+}
+void histSaver::init_hist(map<TString,map<TString,map<TString,vector<TH1D*>>>>::iterator sample_lib, TString region, TString variation){
   createdNP = variation;
-
-  if(find_sample(samplename)) return;
-
   if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root","update");
   else outputfile[variation]->cd();
-  current_sample = samplename;
-  
+  auto sampleiter = find_if(samples.begin(),samples.end(),[sample_lib](fcncSample const& tmp){return sample_lib->first == tmp.name;});
   if(debug) {
-    printf("histSaver::init_sample() : add new sample: %s, title %s\n", samplename.Data(),sampleTitle.Data());
-    printf("histSaver::init_sample() : variation: %s\n",variation.Data());
+    printf("histSaver::init_hist() : add new sample: %s\n", sample_lib->first);
+    printf("histSaver::init_hist() : variation: %s\n",variation.Data());
   }
-  for(auto const& region: regions) {
-    if(debug) printf("histSaver::init_sample(): Region: %s\n", region.Data());
-    for (int i = 0; i < v.size(); ++i){
-      if(debug) printf("histSaver::init_sample(): var %s\n",v.at(i)->name.Data());
-      TString histname = samplename + "_" + variation  + "_" +  region + "_" + v.at(i)->name + "_buffer";
-      TH1D *created = new TH1D(histname,sampleTitle,v.at(i)->nbins,v.at(i)->xlow,v.at(i)->xhigh);
-      created->SetDirectory(0);
-      plot_lib[samplename][region][variation].push_back(created);
-      if (samplename != "data")
-      {
-        plot_lib[samplename][region][variation][i]->Sumw2();
-        plot_lib[samplename][region][variation][i]->SetFillColor(color);
-        plot_lib[samplename][region][variation][i]->SetLineWidth(1);
-        plot_lib[samplename][region][variation][i]->SetLineColor(kBlack);
-        plot_lib[samplename][region][variation][i]->SetMarkerSize(0);
-      }
+  if(debug) printf("histSaver::init_hist(): Region: %s\n", region.Data());
+  pair<TString,map<TString,vector<TH1D*>>> regionpair;
+  regionpair.first = region;
+  auto regioniter = sample_lib->second.insert(regionpair).first;
+  regionpair.first = region;
+  for (int i = 0; i < v.size(); ++i){
+    if(debug) printf("histSaver::init_hist(): var %s\n",v.at(i)->name.Data());
+    TString histname = sample_lib->first + "_" + variation  + "_" +  region + "_" + v.at(i)->name + "_buffer";
+    TH1D *created = new TH1D(histname,sampleiter->title,v.at(i)->nbins,v.at(i)->xlow,v.at(i)->xhigh);
+    created->SetDirectory(0);
+    regioniter->second[variation].push_back(created);
+    if (sample_lib->first != "data")
+    {
+      created->Sumw2();
+      created->SetFillColor(sampleiter->color);
+      created->SetLineWidth(1);
+      created->SetLineColor(kBlack);
+      created->SetMarkerSize(0);
     }
-    if(debug == 1) printf("plot_lib[%s][%s][%s]\n", samplename.Data(), region.Data(), variation.Data());
   }
-  if (samplename == "data") dataref = 1;
+  
+  if(debug == 1) printf("plot_lib[%s][%s][%s]\n", sample_lib->first.Data(), region.Data(), variation.Data());
+  
+  if (sample_lib->first == "data") dataref = 1;
 
-  if(debug) printf("finished initializing %s\n", samplename.Data() );
+  if(debug) printf("finished initializing %s\n", sample_lib->first.Data() );
 }
 
 vector<observable> histSaver::scale_to_data(TString scaleregion, string formula, TString scaleVariable, vector<double> slices, TString variation){
@@ -721,10 +721,25 @@ void histSaver::add_region(TString region){
 }
 
 void histSaver::fill_hist(TString sample, TString region, TString variation){
+  auto sampleiter = plot_lib.find(sample);
+  if(sampleiter == plot_lib.end()) {
+    printf("histSaver::fill_hist() ERROR: sample %s not found\n", sample.Data());
+    show();
+    exit(0);
+  }
   if (weight_type == 0)
   {
     printf("ERROR: weight not set\n");
   }
+  if(sampleiter->second.find(region) == sampleiter->second.end()){
+    init_hist(sampleiter, region, variation);
+    if(find(regions.begin(), regions.end(), region) == regions.end()) {
+      regions.push_back(region);
+      nregion += 1;
+    }
+  }
+
+
   for (int i = 0; i < v.size(); ++i){
     double fillval = getVal(i);
     if(fillval!=fillval) {
@@ -735,7 +750,7 @@ void histSaver::fill_hist(TString sample, TString region, TString variation){
     TH1D *target = grabhist(sample,region,variation,i);
     if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
     else {
-      if(!add_variation(sample,variation)) printf("add variation %s failed, sample %s doesnt exist\n", variation.Data(), sample.Data());
+      if(!add_variation(sample,region,variation)) printf("add variation %s failed, sample %s doesnt exist\n", variation.Data(), sample.Data());
       TH1D *target = grabhist(sample,region,variation,i);
       if(target) target->Fill(fillval,weight_type == 1? *fweight : *dweight);
       else {
@@ -757,26 +772,24 @@ bool histSaver::find_sample(TString sample){
   return 1;
 }
 
-bool histSaver::add_variation(TString sample,TString variation){
+bool histSaver::add_variation(TString sample,TString reg,TString variation){
   if(!find_sample(sample)) return 0;
   if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
   for (int i = 0; i < v.size(); ++i){
-    for(auto reg : regions){
-      if(plot_lib[sample][reg].begin() == plot_lib[sample][reg].end()) {
-        printf("histSaver::add_variation() ERROR: No variation defined yet, cant add new variation\n");
-        exit(0);
-      }
-      TH1D *created = (TH1D*) plot_lib[sample][reg][createdNP].at(i);
-      if(!created){
-        printf("histSaver::add_variation() ERROR: hist doesn't exist: plot_lib[%s][%s][%s][%d]\n",sample.Data(), reg.Data(), plot_lib[sample][reg].begin()->first.Data(),i);
-        exit(0);
-      }
-      created = (TH1D*) created->Clone(sample + "_" + variation + "_" + reg + "_" + v.at(i)->name + "_buffer");
-      created->Reset();
-      created->SetDirectory(0);
-      plot_lib[sample][reg][variation].push_back(created);
+    if(plot_lib[sample][reg].begin() == plot_lib[sample][reg].end()) {
+      printf("histSaver::add_variation() ERROR: No variation defined yet, cant add new variation\n");
+      exit(0);
     }
+    TH1D *created = (TH1D*) plot_lib[sample][reg][createdNP].at(i);
+    if(!created){
+      printf("histSaver::add_variation() ERROR: hist doesn't exist: plot_lib[%s][%s][%s][%d]\n",sample.Data(), reg.Data(), plot_lib[sample][reg].begin()->first.Data(),i);
+      exit(0);
+    }
+    created = (TH1D*) created->Clone(sample + "_" + variation + "_" + reg + "_" + v.at(i)->name + "_buffer");
+    created->Reset();
+    created->SetDirectory(0);
+    plot_lib[sample][reg][variation].push_back(created);
   }
   return 1;
 }

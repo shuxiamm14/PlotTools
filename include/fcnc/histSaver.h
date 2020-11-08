@@ -23,6 +23,16 @@ struct variable{
 
 };
 
+struct fcncSample
+{
+public:
+  fcncSample(TString _name, TString _title, enum EColor _color, double _norm = 1): name(_name), title(_title), color(_color), norm(_norm) {};
+  TString name;
+  TString title;
+  double norm;
+  enum EColor color;
+};
+
 class histSaver{
 public:
   TString inputfilename;
@@ -44,12 +54,8 @@ public:
   TString lumi;
   TString analysis;
   TString workflow;
-  bool fromntuple;
   bool doROC;
   TString nominalfilename;
-  int histcount;
-  TString this_region;
-  TString read_path;
   TString createdNP;
   int debug;
   std::vector<variable*> v;
@@ -59,13 +65,12 @@ public:
   std::vector<Int_t*> address2;
   bool dataref;
   TString trexdir;
-  TString current_sample;
-  std::map<TString, TString> variations; //variations[sample] = variation_name
   std::vector<TString> stackorder;
   TString outputfilename;
   TString sensitivevariable;
   std::map<TString, std::map<TString, std::map<TString, std::vector<TH1D*> > > > plot_lib; //plot_lib[sample][region][variation][var]
   std::vector<TString> regions;
+  std::vector<fcncSample> samples;
   std::vector<TString> mutedregions;
   static TFile *bufferfile;
   histSaver(TString outputfilename);
@@ -96,7 +101,7 @@ public:
   TH1D* grabbkghist(TString region, int ivar);
   TH1D* grabsighist(TString region, int ivar, TString signal="");
   TH1D* grabdatahist(TString region, int ivar);
-  bool add_variation(TString sample,TString variation);
+  bool add_variation(TString sample,TString region,TString variation);
   void printyield(TString region);
   observable calculateYield(TString region, std::string formula, TString variation);
   double gethisterror(TH1* hist);
@@ -125,7 +130,9 @@ public:
   void fill_hist(TString sample, TString region, TString variation);
   void fill_hist(TString sample, TString region);
   void add_region(TString region);
-  void init_sample(TString samplename, TString histname, TString sampleTitle, enum EColor color);
+  void add_sample(TString samplename, TString sampleTitle, enum EColor color);
+  void init_hist(std::map<TString,std::map<TString,std::map<TString,std::vector<TH1D*>>>>::iterator sample_lib, TString region, TString variation);
+
   void set_weight(Float_t* _weight){ fweight = _weight; weight_type = 1;}
   void set_weight(Double_t* _weight){ dweight = _weight; weight_type = 2;}
   void write();
