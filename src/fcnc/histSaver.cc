@@ -231,10 +231,6 @@ float histSaver::binwidth(int i){
 void histSaver::merge_regions(vector<TString> inputregions, TString outputregion){
   if(debug) printf("histSaver::merge_regions\t");
   bool exist = 0;
-  for(auto region: inputregions){
-    printf("%s,", region.Data());
-  }
-  printf("into %s\n", outputregion.Data());
   vector<TString> existregions;
   for(auto& iter:plot_lib ){
     if(debug) printf("=====================start merging sample %s=====================\n", iter.first.Data());
@@ -1124,7 +1120,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       std::vector<TString> activeoverlay;
       for(auto overlaysample: overlaysamples){
         TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
-        if(!histoverlaytmp){
+        if(!histoverlaytmp && debug){
           printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
           continue;
         }
