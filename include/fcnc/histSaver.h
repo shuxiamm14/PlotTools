@@ -66,6 +66,7 @@ public:
   bool dataref;
   TString trexdir;
   std::vector<TString> stackorder;
+  std::map<TString,std::vector<TString>> merge_suffix;
   TString outputfilename;
   TString sensitivevariable;
   std::map<TString, std::map<TString, std::map<TString, std::vector<TH1D*> > > > plot_lib; //plot_lib[sample][region][variation][var]

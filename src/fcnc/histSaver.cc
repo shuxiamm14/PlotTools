@@ -1014,7 +1014,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       hmc.Sumw2();
       THStack *hsk = new THStack(v.at(i)->name.Data(),v.at(i)->name.Data());
       TLegend* lg1 = 0;
-      lg1 = new TLegend(0.45,0.7,0.90,0.9,"");
+      lg1 = new TLegend(0.45,0.7,0.97,0.95,"");
       lg1->SetNColumns(2);
       TH1D *histoverlay;
       if(debug) printf("set hists\n");
@@ -1106,7 +1106,20 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       lg1->Draw("same");
 
       if(debug) printf("atlas label\n");
-      ATLASLabel(0.15,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), region.Data());
+      std::string regtitle = region.Data();
+      findAndReplaceAll(regtitle,"reg","");
+      findAndReplaceAll(regtitle,"vetobtagwp70","");
+      findAndReplaceAll(regtitle,"_"," ");
+
+      ATLASLabel(0.15,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), regtitle.c_str());
+      findAndReplaceAll(regtitle,"1l1tau1b3j_","TTH $\\tlhad$ ");
+      findAndReplaceAll(regtitle,"1l1tau1b2j_","STH $\\tlhad$ ");
+      findAndReplaceAll(regtitle,"1l1tau2b3j_","TTH $\\tlhad$ 2b ");
+      findAndReplaceAll(regtitle,"1l1tau2b2j_","STH $\\tlhad$ 2b ");
+      findAndReplaceAll(regtitle,"1l2tau1bnj_","$l\\thadhad$ ");
+      findAndReplaceAll(regtitle,"1l2tau2bnj_","$l\\thadhad$ 2b ");
+      findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
+      findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
 //===============================blinded data===============================
       std::vector<TString> activeoverlay;
       for(auto overlaysample: overlaysamples){
@@ -1191,17 +1204,6 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       if(!activeoverlay.size()) {
         cv.SaveAs(outdir + "/" + region + "/" + v.at(i)->name + ".pdf");
       }
-      std::string regtitle = region.Data();
-      findAndReplaceAll(regtitle,"reg","");
-      findAndReplaceAll(regtitle,"1l1tau1b3j_","TTH $\\tlhad$ ");
-      findAndReplaceAll(regtitle,"1l1tau1b2j_","STH $\\tlhad$ ");
-      findAndReplaceAll(regtitle,"1l1tau2b3j_","TTH $\\tlhad$ 2b ");
-      findAndReplaceAll(regtitle,"1l1tau2b2j_","STH $\\tlhad$ 2b ");
-      findAndReplaceAll(regtitle,"1l2tau1bnj_","$l\\thadhad$ ");
-      findAndReplaceAll(regtitle,"1l2tau2bnj_","$l\\thadhad$ 2b ");
-      findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
-      findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
-      findAndReplaceAll(regtitle,"_","~");
 
       if(sensitivevariable == v.at(i)->name) {
         if(dataref){
