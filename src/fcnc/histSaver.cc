@@ -706,7 +706,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
           tmp[i] = target;
         }else{
           target->Add(readhist,norm);
-          return;
+          continue;
         }
       }
       target->SetName(samplename + "_" + variation + "_" + region + "_" + v.at(i)->name + "_buffer");
