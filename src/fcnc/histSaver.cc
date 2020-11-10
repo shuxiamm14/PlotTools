@@ -1030,7 +1030,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         if(debug) {
           printf("plot_lib[%s][%s][%d]\n", iter.Data(), region.Data(), i);
         }
-        if(grabhist(iter,region,NPname,i)) buffer.push_back((TH1D*)grabhist(iter,region,NPname,i)->Clone());
+        TH1D *tmp = grabhist(iter,region,NPname,i);
+        if(tmp) buffer.push_back((TH1D*)tmp->Clone());
         else continue;
         if(doROC && sensitivevariable == v.at(i)->name)
         {
@@ -1223,7 +1224,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
         if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
-        if(grabhist(overlaysample,region,NPname,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,NPname,i)->Clone();
+        histoverlay = grabhist(overlaysample,region,NPname,i);
+        if(histoverlay) histoverlay = (TH1D*)histoverlay->Clone();
         if(doROC && sensitivevariable == v.at(i)->name) ROC_sig = (TH1D*) histoverlay->Clone();
         if(!histoverlay) continue;
         if(v.at(i)->rebin != 1) histoverlay->Rebin(v.at(i)->rebin);
