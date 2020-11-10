@@ -242,23 +242,25 @@ void histSaver::merge_regions(vector<TString> inputregions, TString outputregion
     }
     if(existregions.size() == 0) continue;
     bool outputexist = 0;
-    if(iter.second.find(outputregion) != iter.second.end()){
+    auto outiter = iter.second.find(outputregion);
+    if(outiter != iter.second.end()){
       if(debug) printf("histSaver::merge_regions\t outputregion %s exist, overwrite it\n",outputregion.Data());
       exist = 1;
-      for(auto &variation: iter.second[outputregion]){
+      for(auto &variation: outiter->second){
         for(int i = 0; i < v.size(); ++i) deletepointer(variation.second[i]);
         variation.second.clear();
       }
     }
-    for(auto &variation : iter.second[inputregions[0]]){
+    for(auto &variation : iter.second[existregions[0]]){
       for (int i = 0; i < v.size(); ++i)
       {
-        iter.second[outputregion][variation.first].push_back(0);
+        auto &tmpiter = iter.second[outputregion][variation.first];
+        tmpiter.push_back(0);
         for(auto region:existregions){
           TH1D* addtarget = grabhist(iter.first,region,variation.first,i);
           if(addtarget){
-            if(iter.second[outputregion][variation.first][i] == 0) iter.second[outputregion][variation.first][i] = (TH1D*)addtarget->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer");
-            else iter.second[outputregion][variation.first][i]->Add(addtarget);
+            if(tmpiter[i] == 0) tmpiter[i] = (TH1D*)addtarget->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer");
+            else tmpiter[i]->Add(addtarget);
           }
         }
       }
@@ -299,13 +301,14 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
     {
       TH1D* addtarget1 = grabhist(iter.first,inputregion1,variation.first,i);
       TH1D* addtarget2 = grabhist(iter.first,inputregion2,variation.first,i);
-      if(input1exist == 1 && addtarget1) iter.second[outputregion][variation.first].push_back((TH1D*)addtarget1->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer"));
-      else if(addtarget2) iter.second[outputregion][variation.first].push_back((TH1D*)addtarget2->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + +"_buffer"));
-      else iter.second[outputregion][variation.first].push_back(0);
+      auto &tmpiter = iter.second[outputregion][variation.first];
+      if(input1exist == 1 && addtarget1) tmpiter.push_back((TH1D*)addtarget1->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer"));
+      else if(addtarget2) tmpiter.push_back((TH1D*)addtarget2->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + +"_buffer"));
+      else tmpiter.push_back(0);
       if(input1exist == 1 && input2exist == 1 && addtarget1 && addtarget2) {
-        iter.second[outputregion][variation.first][i]->Add(addtarget2);
+        tmpiter[i]->Add(addtarget2);
         if(debug)
-          printf("add %s to %s as %s\n", iter.second[inputregion2][variation.first][i]->GetName(),iter.second[inputregion1][variation.first][i]->GetName(),iter.second[outputregion][variation.first][i]->GetName());
+          printf("add %s to %s as %s\n", iter.second[inputregion2][variation.first][i]->GetName(),iter.second[inputregion1][variation.first][i]->GetName(),tmpiter[i]->GetName());
       }
     }
   }
