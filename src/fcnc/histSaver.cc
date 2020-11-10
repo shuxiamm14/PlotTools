@@ -663,25 +663,26 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     {
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
-    bool newRegion = plot_lib[samplename].find(region) == plot_lib[samplename].end();
+    auto &samplib = plot_lib[samplename];
+    bool newRegion = samplib.find(region) == samplib.end();
     for (int i = 0; i < v.size(); ++i)
     {
       if(debug) printf("histSaver::read_sample() : Read file %s to get %s\n",readfromfile->GetName(), (histname + v.at(i)->name).Data());
       TH1D *readhist = (TH1D*)readfromfile->Get(histname + v.at(i)->name);
       if(!readhist) {
         if(debug) printf("histogram name not found: %s\n", (histname + v.at(i)->name).Data());
-        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
+        if(i == samplib[region][variation].size()) samplib[region][variation].push_back(0);
         continue;
       }
       double tmp = readhist->Integral();
       if(tmp!=tmp){
         printf("Warning: %s->Integral() is nan, skip\n", (histname + v.at(i)->name).Data());
-        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
+        if(i == samplib[region][variation].size()) samplib[region][variation].push_back(0);
         continue;
       }
       if(tmp==0){
         printf("Warning: %s->Integral() is 0, skip\n", (histname + v.at(i)->name).Data());
-        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
+        if(i == samplib[region][variation].size()) samplib[region][variation].push_back(0);
         continue;
       }
       if(checkread){
@@ -690,24 +691,31 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
         }
       }
       bool newhist = 0;
-      if(!newRegion) newhist = plot_lib[samplename][region][variation][i] == 0;
-      if(newRegion || newhist ){
-        if(newRegion) plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname + v.at(i)->name)->Clone()));
-        else if(newhist) plot_lib[samplename][region][variation][i] = (TH1D*)(readfromfile->Get(histname + v.at(i)->name)->Clone());
-        TH1D* target = plot_lib[samplename][region][variation][i];
-        target->SetName(samplename + "_" + variation + "_" + region + "_" + v.at(i)->name + "_buffer");
-        target->Scale(norm);
-        target->SetTitle(sampleTitle);
-        target->SetFillColorAlpha(color,1);
-        target->SetLineWidth(1);
-        target->SetLineColor(kBlack);
-        target->SetMarkerSize(0);
-        target->SetDirectory(0);
-      }else{
-        plot_lib[samplename][region][variation][i]->Add(readhist,norm);
+      TH1D* target;
+      if(newRegion) {
+        target = (TH1D*)(readfromfile->Get(histname + v.at(i)->name)->Clone());
+        samplib[region][variation].push_back(target);
+      }else {
+        auto &tmp = samplib[region][variation];
+        target = tmp[i];
+        if(!target) {
+          target = (TH1D*)(readfromfile->Get(histname + v.at(i)->name)->Clone());
+          tmp[i] = target;
+        }else{
+          target->Add(readhist,norm);
+          return;
+        }
       }
+      target->SetName(samplename + "_" + variation + "_" + region + "_" + v.at(i)->name + "_buffer");
+      target->Scale(norm);
+      target->SetTitle(sampleTitle);
+      target->SetFillColorAlpha(color,1);
+      target->SetLineWidth(1);
+      target->SetLineColor(kBlack);
+      target->SetMarkerSize(0);
+      target->SetDirectory(0);
     }
-    if(debug) printf("histSaver::read_sample : finish read plot_lib[%s][%s][%s][%d]", samplename.Data(),region.Data(),variation.Data(),plot_lib[samplename][region][variation].size());
+    if(debug) printf("histSaver::read_sample : finish read plot_lib[%s][%s][%s][%d]", samplename.Data(),region.Data(),variation.Data(),samplib[region][variation].size());
   }
 }
 
