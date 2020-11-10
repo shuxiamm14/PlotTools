@@ -1120,8 +1120,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       std::vector<TString> activeoverlay;
       for(auto overlaysample: overlaysamples){
         TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
-        if(!histoverlaytmp && debug){
-          printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
+        if(!histoverlaytmp){
+          if(debug) printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
           continue;
         }
         activeoverlay.push_back(overlaysample);
