@@ -242,23 +242,25 @@ void histSaver::merge_regions(vector<TString> inputregions, TString outputregion
     }
     if(existregions.size() == 0) continue;
     bool outputexist = 0;
-    if(iter.second.find(outputregion) != iter.second.end()){
+    auto outiter = iter.second.find(outputregion);
+    if(outiter != iter.second.end()){
       if(debug) printf("histSaver::merge_regions\t outputregion %s exist, overwrite it\n",outputregion.Data());
       exist = 1;
-      for(auto &variation: iter.second[outputregion]){
+      for(auto &variation: outiter->second){
         for(int i = 0; i < v.size(); ++i) deletepointer(variation.second[i]);
         variation.second.clear();
       }
     }
-    for(auto &variation : iter.second[inputregions[0]]){
+    for(auto &variation : iter.second[existregions[0]]){
       for (int i = 0; i < v.size(); ++i)
       {
-        iter.second[outputregion][variation.first].push_back(0);
+        auto &tmpiter = iter.second[outputregion][variation.first];
+        tmpiter.push_back(0);
         for(auto region:existregions){
           TH1D* addtarget = grabhist(iter.first,region,variation.first,i);
           if(addtarget){
-            if(iter.second[outputregion][variation.first][i] == 0) iter.second[outputregion][variation.first][i] = (TH1D*)addtarget->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer");
-            else iter.second[outputregion][variation.first][i]->Add(addtarget);
+            if(tmpiter[i] == 0) tmpiter[i] = (TH1D*)addtarget->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer");
+            else tmpiter[i]->Add(addtarget);
           }
         }
       }
@@ -299,13 +301,14 @@ void histSaver::merge_regions(TString inputregion1, TString inputregion2, TStrin
     {
       TH1D* addtarget1 = grabhist(iter.first,inputregion1,variation.first,i);
       TH1D* addtarget2 = grabhist(iter.first,inputregion2,variation.first,i);
-      if(input1exist == 1 && addtarget1) iter.second[outputregion][variation.first].push_back((TH1D*)addtarget1->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer"));
-      else if(addtarget2) iter.second[outputregion][variation.first].push_back((TH1D*)addtarget2->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + +"_buffer"));
-      else iter.second[outputregion][variation.first].push_back(0);
+      auto &tmpiter = iter.second[outputregion][variation.first];
+      if(input1exist == 1 && addtarget1) tmpiter.push_back((TH1D*)addtarget1->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + "_buffer"));
+      else if(addtarget2) tmpiter.push_back((TH1D*)addtarget2->Clone(iter.first + "_" + variation.first+"_"+outputregion+"_"+v.at(i)->name + +"_buffer"));
+      else tmpiter.push_back(0);
       if(input1exist == 1 && input2exist == 1 && addtarget1 && addtarget2) {
-        iter.second[outputregion][variation.first][i]->Add(addtarget2);
+        tmpiter[i]->Add(addtarget2);
         if(debug)
-          printf("add %s to %s as %s\n", iter.second[inputregion2][variation.first][i]->GetName(),iter.second[inputregion1][variation.first][i]->GetName(),iter.second[outputregion][variation.first][i]->GetName());
+          printf("add %s to %s as %s\n", iter.second[inputregion2][variation.first][i]->GetName(),iter.second[inputregion1][variation.first][i]->GetName(),tmpiter[i]->GetName());
       }
     }
   }
@@ -663,25 +666,26 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
     {
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
-    bool newRegion = plot_lib[samplename].find(region) == plot_lib[samplename].end();
+    auto &samplib = plot_lib[samplename];
+    bool newRegion = samplib.find(region) == samplib.end();
     for (int i = 0; i < v.size(); ++i)
     {
       if(debug) printf("histSaver::read_sample() : Read file %s to get %s\n",readfromfile->GetName(), (histname + v.at(i)->name).Data());
       TH1D *readhist = (TH1D*)readfromfile->Get(histname + v.at(i)->name);
       if(!readhist) {
         if(debug) printf("histogram name not found: %s\n", (histname + v.at(i)->name).Data());
-        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
+        if(i == samplib[region][variation].size()) samplib[region][variation].push_back(0);
         continue;
       }
       double tmp = readhist->Integral();
       if(tmp!=tmp){
         printf("Warning: %s->Integral() is nan, skip\n", (histname + v.at(i)->name).Data());
-        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
+        if(i == samplib[region][variation].size()) samplib[region][variation].push_back(0);
         continue;
       }
       if(tmp==0){
         printf("Warning: %s->Integral() is 0, skip\n", (histname + v.at(i)->name).Data());
-        if(i == plot_lib[samplename][region][variation].size()) plot_lib[samplename][region][variation].push_back(0);
+        if(i == samplib[region][variation].size()) samplib[region][variation].push_back(0);
         continue;
       }
       if(checkread){
@@ -690,24 +694,31 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
         }
       }
       bool newhist = 0;
-      if(!newRegion) newhist = plot_lib[samplename][region][variation][i] == 0;
-      if(newRegion || newhist ){
-        if(newRegion) plot_lib[samplename][region][variation].push_back((TH1D*)(readfromfile->Get(histname + v.at(i)->name)->Clone()));
-        else if(newhist) plot_lib[samplename][region][variation][i] = (TH1D*)(readfromfile->Get(histname + v.at(i)->name)->Clone());
-        TH1D* target = plot_lib[samplename][region][variation][i];
-        target->SetName(samplename + "_" + variation + "_" + region + "_" + v.at(i)->name + "_buffer");
-        target->Scale(norm);
-        target->SetTitle(sampleTitle);
-        target->SetFillColorAlpha(color,1);
-        target->SetLineWidth(1);
-        target->SetLineColor(kBlack);
-        target->SetMarkerSize(0);
-        target->SetDirectory(0);
-      }else{
-        plot_lib[samplename][region][variation][i]->Add(readhist,norm);
+      TH1D* target;
+      if(newRegion) {
+        target = (TH1D*)(readfromfile->Get(histname + v.at(i)->name)->Clone());
+        samplib[region][variation].push_back(target);
+      }else {
+        auto &tmp = samplib[region][variation];
+        target = tmp[i];
+        if(!target) {
+          target = (TH1D*)(readfromfile->Get(histname + v.at(i)->name)->Clone());
+          tmp[i] = target;
+        }else{
+          target->Add(readhist,norm);
+          return;
+        }
       }
+      target->SetName(samplename + "_" + variation + "_" + region + "_" + v.at(i)->name + "_buffer");
+      target->Scale(norm);
+      target->SetTitle(sampleTitle);
+      target->SetFillColorAlpha(color,1);
+      target->SetLineWidth(1);
+      target->SetLineColor(kBlack);
+      target->SetMarkerSize(0);
+      target->SetDirectory(0);
     }
-    if(debug) printf("histSaver::read_sample : finish read plot_lib[%s][%s][%s][%d]", samplename.Data(),region.Data(),variation.Data(),plot_lib[samplename][region][variation].size());
+    if(debug) printf("histSaver::read_sample : finish read plot_lib[%s][%s][%s][%d]", samplename.Data(),region.Data(),variation.Data(),samplib[region][variation].size());
   }
 }
 
@@ -1019,7 +1030,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         if(debug) {
           printf("plot_lib[%s][%s][%d]\n", iter.Data(), region.Data(), i);
         }
-        if(grabhist(iter,region,NPname,i)) buffer.push_back((TH1D*)grabhist(iter,region,NPname,i)->Clone());
+        TH1D *tmp = grabhist(iter,region,NPname,i);
+        if(tmp) buffer.push_back((TH1D*)tmp->Clone());
         else continue;
         if(doROC && sensitivevariable == v.at(i)->name)
         {
@@ -1212,7 +1224,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
         if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
-        if(grabhist(overlaysample,region,NPname,i)) histoverlay = (TH1D*)grabhist(overlaysample,region,NPname,i)->Clone();
+        histoverlay = grabhist(overlaysample,region,NPname,i);
+        if(histoverlay) histoverlay = (TH1D*)histoverlay->Clone();
         if(doROC && sensitivevariable == v.at(i)->name) ROC_sig = (TH1D*) histoverlay->Clone();
         if(!histoverlay) continue;
         if(v.at(i)->rebin != 1) histoverlay->Rebin(v.at(i)->rebin);
