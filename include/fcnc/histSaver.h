@@ -107,6 +107,7 @@ public:
   observable calculateYield(TString region, std::string formula, TString variation);
   double gethisterror(TH1* hist);
   observable templatesample(TString fromregion, TString variation,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, double SF = 1);
+  observable templatesample(TString fromregion, TString variation,std::string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color,bool scaletogap, observable SF);
   std::vector<observable> scale_to_data(TString scaleregion, std::string formula, TString scaleVariable, std::vector<double> slices = {}, TString variation = "NOMINAL");
   void scale_sample(TString scaleregion, std::string formula, TString scaleVariable, std::vector<observable> scalefactor, std::vector<double> slices = {}, TString variation = "NOMINAL");
   int findvar(TString varname);
