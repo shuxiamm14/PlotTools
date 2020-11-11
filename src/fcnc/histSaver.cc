@@ -893,6 +893,10 @@ void histSaver::overlay(TString _overlaysample){
 }
 
 observable histSaver::templatesample(TString fromregion, TString variation,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, double SF){
+  return templatesample(fromregion, variation, formula, toregion, newsamplename, newsampletitle, color, scaletogap, observable(SF,0));
+}
+
+observable histSaver::templatesample(TString fromregion, TString variation,string formula,TString toregion,TString newsamplename,TString newsampletitle,enum EColor color, bool scaletogap, observable SF){
 
   if(outputfile.find(variation) == outputfile.end()) outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "update");
   else outputfile[variation]->cd();
@@ -950,8 +954,20 @@ observable histSaver::templatesample(TString fromregion, TString variation,strin
       if(hists) hists->Scale(scalefactor.nominal);
     }
   }else{
+    observable content;
     for(auto & hists : newvec){
-      if(hists) hists->Scale(SF);
+      if(hists) {
+        if(SF.error == 0) hists->Scale(SF.nominal);
+        else{
+          int nbins = hists->GetNbinsX();
+          for (int i = 1; i <= nbins; ++i)
+          {
+            content = observable(hists->GetBinContent(i), hists->GetBinError(i)) * SF;
+            hists->SetBinContent(i,content.nominal);
+            hists->SetBinError(i,content.error);
+          }
+        }
+      }
     }
   }
   for(int ivar = 0; ivar < v.size(); ivar++){
