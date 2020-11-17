@@ -1028,7 +1028,6 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       TLegend* lg1 = 0;
       lg1 = new TLegend(0.45,0.7,0.97,0.95,"");
       lg1->SetNColumns(2);
-      TH1D *histoverlay;
       if(debug) printf("set hists\n");
       for(auto& iter:stackorder ){
         if(iter == "data") continue;
@@ -1094,9 +1093,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       hsk->GetYaxis()->SetLabelSize(hsk->GetYaxis()->GetLabelSize()*0.7);
       hsk->GetXaxis()->SetLabelSize(hsk->GetXaxis()->GetLabelSize()*0.7);
       hsk->GetYaxis()->SetTitleSize(hsk->GetYaxis()->GetTitleSize()*0.7);
-      if(debug) printf("set blinding\n");
 
-      for(Int_t j=1; j<v.at(i)->nbins+1; j++) {
+      for(Int_t j=1; j<v.at(i)->nbins/v[i]->rebin+1; j++) {
         hmcR.SetBinContent(j,1);
         hmcR.SetBinError(j,hmc.GetBinContent(j)>0 ? hmc.GetBinError(j)/hmc.GetBinContent(j) : 0);
         if(dataref) hdataR.SetBinContent(j, hmc.GetBinContent(j)>0 ? datahist->GetBinContent(j)/hmc.GetBinContent(j) : 1);
@@ -1110,8 +1108,6 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       hmc.SetMarkerSize(0);
       hmc.SetMarkerColor(1);
       hmc.SetFillStyle(3004);
-      hmc.Draw("E2 same");
-      lg1->Draw("same");
 
       if(debug) printf("atlas label\n");
       std::string regtitle = region.Data();
@@ -1120,25 +1116,29 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       findAndReplaceAll(regtitle,"_"," ");
 
       ATLASLabel(0.15,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), regtitle.c_str());
+      findAndReplaceAll(regtitle,"1l1tau1b2j_ss","l$\\tauhad$ 2j");
+      findAndReplaceAll(regtitle,"1l1tau1b1j_ss","l$\\tauhad$ 1j");
       findAndReplaceAll(regtitle,"1l1tau1b3j_","TTH $\\tlhad$ ");
-      findAndReplaceAll(regtitle,"1l1tau1b2j_","STH $\\tlhad$ ");
-      findAndReplaceAll(regtitle,"1l1tau2b3j_","TTH $\\tlhad$ 2b ");
-      findAndReplaceAll(regtitle,"1l1tau2b2j_","STH $\\tlhad$ 2b ");
+      findAndReplaceAll(regtitle,"1l1tau1b2j_os","STH $\\tlhad$ ");
       findAndReplaceAll(regtitle,"1l2tau1bnj_","$l\\thadhad$ ");
       findAndReplaceAll(regtitle,"1l2tau2bnj_","$l\\thadhad$ 2b ");
-      findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
-      findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
+      //findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
+      //findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
+      findAndReplaceAll(regtitle,"highmet","$E_T^{miss}>20GeV$");
 //===============================blinded data===============================
       std::vector<TH1D*> activeoverlay;
+      if(debug) printf("set blinding\n");
       for(auto overlaysample: overlaysamples){
         TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
         if(!histoverlaytmp){
           if(debug) printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
           continue;
         }
+        histoverlaytmp = (TH1D*)histoverlaytmp->Clone();
+        if(v.at(i)->rebin != 1) histoverlaytmp->Rebin(v.at(i)->rebin);
         activeoverlay.push_back(histoverlaytmp);
         if(blinding && dataref){
-          for(Int_t j=1; j<v.at(i)->nbins+1; j++) {
+          for(Int_t j=1; j<v.at(i)->nbins/v[i]->rebin+1; j++) {
             if(histoverlaytmp->GetBinContent(j)/sqrt(hmc.GetBinContent(j)) > blinding) {
               datahist->SetBinContent(j,0);
               datahist->SetBinError(j,0);
@@ -1147,7 +1147,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
             }
           }
           if(sensitivevariable == v.at(i)->name){
-            for(int j = v.at(i)->nbins*3/4/v.at(i)->rebin ; j <= v.at(i)->nbins ; j++){
+            for(int j = v.at(i)->nbins*3/4/v.at(i)->rebin ; j <= v.at(i)->nbins/v[i]->rebin ; j++){
               datahist->SetBinContent(j,0);
               datahist->SetBinError(j,0);
               hdataR.SetBinContent(j,0);
@@ -1156,6 +1156,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
           }
         }
       }
+      hmc.Draw("E2 same");
+      lg1->Draw("same");
       if(dataref) {
         datahist->Draw("E same");
       }
@@ -1223,7 +1225,6 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       for(auto histoverlay: activeoverlay){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
-        if(v.at(i)->rebin != 1) histoverlay->Rebin(v.at(i)->rebin);
         histoverlay->SetLineStyle(9);
         histoverlay->SetLineWidth(3);
         histoverlay->SetLineColor(kRed);
@@ -1237,7 +1238,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
 
         if(sensitivevariable == v.at(i)->name){
           double _significance = 0;
-          for(Int_t j=1; j<v.at(i)->nbins+1; j++) {
+          for(Int_t j=1; j<v.at(i)->nbins/v[i]->rebin+1; j++) {
             if(histoverlay->GetBinContent(j) && hmc.GetBinContent(j)) {
               if(hmc.GetBinContent(j) > 0 && histoverlay->GetBinContent(j) > 0)
                 _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
