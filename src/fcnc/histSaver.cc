@@ -18,7 +18,6 @@ histSaver::histSaver(TString _outputfilename) {
   fweight = NULL;
   dweight = NULL;
   weight_type = 0;
-  doROC = 0;
   inputfile = 0;
   lumi = "#it{#sqrt{s}} = 13TeV, 80 fb^{-1}";
   analysis = "FCNC tqH H#rightarrow tautau";
@@ -1007,17 +1006,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
   gSystem->mkdir(outdir);
   gSystem->mkdir(outputchartdir);
   TCanvas cv("cv","cv",600,600);
-  TGraph* ROC;
-  TH1D *ROC_sig = 0;
-  TH1D *ROC_bkg = 0;
-  TH1D* datahistorig = 0;
   vector<TH1D*> buffer;
-  if(doROC){
-    ROC = new TGraph();
-    ROC -> SetName("ROC");
-    ROC -> SetTitle("ROC");
-  }
-  TFile *outputrocfile = new TFile (outputfilename + "_roc.root", "recreate");
   for(auto const& region: regions) {
     bool muted = 0;
     for (auto const& mutedregion: mutedregions)
@@ -1049,11 +1038,6 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         TH1D *tmp = grabhist(iter,region,NPname,i);
         if(tmp) buffer.push_back((TH1D*)tmp->Clone());
         else continue;
-        if(doROC && sensitivevariable == v.at(i)->name)
-        {
-          if(!ROC_bkg) ROC_bkg = (TH1D*) buffer.back()->Clone();
-          else ROC_bkg->Add(buffer.back());
-        }
         if(v.at(i)->rebin != 1) buffer.back()->Rebin(v.at(i)->rebin);
         hsk->Add(buffer.back());
         hmc.Add(buffer.back());
@@ -1068,8 +1052,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       TH1D * datahist = 0;
       if(debug) printf("set data\n");
       if (dataref) {
-        datahistorig = grabhist("data",region,"NOMINAL",i);
-        if(datahistorig) datahist = (TH1D*)datahistorig->Clone("dataClone");
+        datahist = grabhist("data",region,"NOMINAL",i);
+        if(datahist) datahist = (TH1D*)datahist->Clone("dataClone");
         if(!datahist) {
           printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), v.at(i)->name.Data());
           continue;
@@ -1145,17 +1129,17 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
       findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
 //===============================blinded data===============================
-      std::vector<TString> activeoverlay;
+      std::vector<TH1D*> activeoverlay;
       for(auto overlaysample: overlaysamples){
         TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
         if(!histoverlaytmp){
           if(debug) printf("histSaver::plot_stack(): Warning: signal hist %s not found\n", overlaysample.Data());
           continue;
         }
-        activeoverlay.push_back(overlaysample);
+        activeoverlay.push_back(histoverlaytmp);
         if(blinding && dataref){
           for(Int_t j=1; j<v.at(i)->nbins+1; j++) {
-            if(histoverlaytmp->GetBinContent(j)/sqrt(datahist->GetBinContent(j)) > blinding) {
+            if(histoverlaytmp->GetBinContent(j)/sqrt(hmc.GetBinContent(j)) > blinding) {
               datahist->SetBinContent(j,0);
               datahist->SetBinError(j,0);
               hdataR.SetBinContent(j,0);
@@ -1231,19 +1215,14 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
 
       if(sensitivevariable == v.at(i)->name) {
         if(dataref){
-          yield_chart->set("data",regtitle,integral(datahistorig));
+          yield_chart->set("data",regtitle,integral(datahist));
         }
         yield_chart->set("background",regtitle,integral(&hmc));
         printf("Region %s, Background yield: %f\n", region.Data(), hmc.Integral());
       }
-      for(auto overlaysample: activeoverlay){
+      for(auto histoverlay: activeoverlay){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
-        if(debug) { printf("overlay: %s\n", overlaysample.Data()); }
-        histoverlay = grabhist(overlaysample,region,NPname,i);
-        if(histoverlay) histoverlay = (TH1D*)histoverlay->Clone();
-        if(doROC && sensitivevariable == v.at(i)->name) ROC_sig = (TH1D*) histoverlay->Clone();
-        if(!histoverlay) continue;
         if(v.at(i)->rebin != 1) histoverlay->Rebin(v.at(i)->rebin);
         histoverlay->SetLineStyle(9);
         histoverlay->SetLineWidth(3);
@@ -1264,26 +1243,6 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
                 _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
             }
           }
-          if(doROC && sensitivevariable == v.at(i)->name){
-            double bkgintegral = ROC_bkg->Integral();
-            double sigintegral = ROC_sig->Integral();
-            double sigeff = 1;
-            double bkgrej = 0;
-            ROC->SetPoint(0,sigeff,bkgrej);
-            for (int i = 1; i < ROC_sig->GetNbinsX()+1; ++i)
-            {
-              sigeff -= ROC_sig->GetBinContent(i)/sigintegral;
-              bkgrej += ROC_bkg->GetBinContent(i)/bkgintegral;
-              ROC->SetPoint(i,sigeff,bkgrej);
-            }
-            outputrocfile->cd();
-            ROC->Write(overlaysample + "_ROC");
-            ROC_sig->Write(overlaysample + "_ROC_sig");
-            ROC_bkg->Write(overlaysample + "_ROC_bkg");
-            deletepointer(ROC);
-            deletepointer(ROC_sig);
-            deletepointer(ROC_bkg);
-          }
           std::string samptitle = histoverlay->GetTitle();
           findAndReplaceAll(samptitle," ","~");
           if(samptitle.find("#") != string::npos) samptitle = "$"+samptitle+"$";
@@ -1292,11 +1251,11 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
           findAndReplaceAll(samptitle,"rightarrow","to ");
           yield_chart->set(samptitle,regtitle,integral(histoverlay));
           sgnf_chart->set(samptitle,regtitle,sqrt(_significance));
-          printf("signal %s yield: %4.2f, significance: %4.2f\n",overlaysample.Data(), histoverlay->Integral(), sqrt(_significance));
+          printf("signal %s yield: %4.2f, significance: %4.2f\n",histoverlay->GetTitle(), histoverlay->Integral(), sqrt(_significance));
         }
 
         if(ratio > 0) histoverlay->Scale(ratio);
-        if(overlaysample != "") histoverlay->Draw("hist same");
+        histoverlay->Draw("hist same");
         lgsig->SetBorderSize(0);
         lgsig->Draw();
         padhi->Update();
@@ -1324,6 +1283,4 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
   }
   deletepointer(yield_chart);
   deletepointer(sgnf_chart);
-  outputrocfile->Close();
-  deletepointer(outputrocfile);
 }
