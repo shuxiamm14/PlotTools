@@ -90,7 +90,6 @@ observable histSaver::calculateYield(TString region, string formula, TString var
       yield+=thisyield*numb;
     }
   }
-  printf("histSaver::calculateYield() : Calcuated yield: %f+/-%f in %s\n", yield.nominal,yield.error,region.Data());
   return yield;
 }
 
@@ -667,7 +666,7 @@ void histSaver::read_sample(TString samplename, TString savehistname, TString va
       printf("read sample %s from %s region\n", samplename.Data(), region.Data());
     }
     auto &samplib = plot_lib[samplename];
-    auto regionlib = samplib[region];
+    auto &regionlib = samplib[region];
     bool newRegion = regionlib.size()==0;
     for (int i = 0; i < v.size(); ++i)
     {

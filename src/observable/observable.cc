@@ -101,3 +101,6 @@ observable::observable(double n, double e, double ed) : nominal(n), error(e) {
 	if(ed == 0) errordown = e;
 	else errordown = ed;
 }
+void observable::print(){
+	printf("%f+%f-%f",nominal,error,errordown);
+}
