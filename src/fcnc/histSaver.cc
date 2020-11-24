@@ -1128,6 +1128,15 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
 //===============================blinded data===============================
       std::vector<TH1D*> activeoverlay;
       if(debug) printf("set blinding\n");
+
+      if(sensitivevariable == v.at(i)->name) {
+        if(dataref){
+          yield_chart->set("data",regtitle,integral(datahist));
+        }
+        yield_chart->set("background",regtitle,integral(&hmc));
+        printf("Region %s, Background yield: %f\n", region.Data(), hmc.Integral());
+      }
+      
       for(auto overlaysample: overlaysamples){
         TH1D* histoverlaytmp = (TH1D*)grabhist(overlaysample,region,NPname,i);
         if(!histoverlaytmp){
@@ -1137,6 +1146,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         histoverlaytmp = (TH1D*)histoverlaytmp->Clone();
         if(v.at(i)->rebin != 1) histoverlaytmp->Rebin(v.at(i)->rebin);
         activeoverlay.push_back(histoverlaytmp);
+
         if(blinding && dataref){
           for(Int_t j=1; j<v.at(i)->nbins/v[i]->rebin+1; j++) {
             if(histoverlaytmp->GetBinContent(j)/sqrt(hmc.GetBinContent(j)) > blinding) {
@@ -1215,13 +1225,6 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         cv.SaveAs(outdir + "/" + region + "/" + v.at(i)->name + ".pdf");
       }
 
-      if(sensitivevariable == v.at(i)->name) {
-        if(dataref){
-          yield_chart->set("data",regtitle,integral(datahist));
-        }
-        yield_chart->set("background",regtitle,integral(&hmc));
-        printf("Region %s, Background yield: %f\n", region.Data(), hmc.Integral());
-      }
       for(auto histoverlay: activeoverlay){
         
         TLegend *lgsig = (TLegend*) lg1->Clone();
