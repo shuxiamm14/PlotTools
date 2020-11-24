@@ -1113,7 +1113,6 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       std::string regtitle = region.Data();
       findAndReplaceAll(regtitle,"reg","");
       findAndReplaceAll(regtitle,"vetobtagwp70","");
-      findAndReplaceAll(regtitle,"_"," ");
 
       ATLASLabel(0.15,0.900,workflow.Data(),kBlack,lumi.Data(), analysis.Data(), regtitle.c_str());
       findAndReplaceAll(regtitle,"1l1tau1b2j_ss","l$\\tauhad$ 2j");
@@ -1124,7 +1123,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       findAndReplaceAll(regtitle,"1l2tau2bnj_","$l\\thadhad$ 2b ");
       //findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
       //findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
-      findAndReplaceAll(regtitle,"highmet","$E_T^{miss}>20GeV$");
+      findAndReplaceAll(regtitle,"_"," ");
+      findAndReplaceAll(regtitle,"highmet","");
 //===============================blinded data===============================
       std::vector<TH1D*> activeoverlay;
       if(debug) printf("set blinding\n");
