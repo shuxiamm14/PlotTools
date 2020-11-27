@@ -1291,6 +1291,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
 
 // fake factor method 
 void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TString _1l1mregion,TString _1l1nregion,TString _1n1lregion,TString _2nregion,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color){// newsamplename指用ABCD估计的这个区域的名字, fake,qcdfake....
+  
+  final_region=final_region+"_vetobtagwp70_highmet";_1m1lregion=_1m1lregion+"_vetobtagwp70_highmet";_1l1mregion=_1l1mregion+"_vetobtagwp70_highmet";_1l1nregion=_1l1nregion+"_vetobtagwp70_highmet";_1n1lregion=_1n1lregion+"_vetobtagwp70_highmet";_2nregion=_2nregion+"_vetobtagwp70_highmet";
   std::vector<TString> tokens=tmp_regions;
   if(outputfile.find(variation) == outputfile.end()) {
     outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
@@ -1301,7 +1303,7 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TStri
   // 定义final_region的直方图
   vector<TH1D*> newvec;
   for (int ivar = 0; ivar < v.size(); ++ivar)
-  {
+  { 
     if(!grabhist(tokens[0],_1m1lregion, tokens[0] == "data" ? "NOMINAL" : variation,ivar)){
       std::cout<<"ivar: "<<ivar<<", data hist dont exist!"<<std::endl;
     }
