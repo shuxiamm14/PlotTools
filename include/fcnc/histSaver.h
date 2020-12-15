@@ -140,6 +140,7 @@ public:
   void write();
   // hadhad FF
   void FakeFactorMethod(TString final_region, TString _1m1lregion,TString _1l1mregion,TString _1l1nregion,TString _1n1lregion,TString _2nregion,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color);
+  void FakeFactorMethod(TString final_region, TString _1m1lnmregion,TString _1lnm1mregion,TString _2nregion,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color);
 };
 
 
