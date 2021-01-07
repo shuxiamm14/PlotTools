@@ -118,7 +118,9 @@ TH1D* histSaver::grabhist(TString sample, TString region, TString variation, TSt
 }
 
 TH1D* histSaver::grabhist(TString sample, TString region, TString variation, int ivar, bool vital){
-  if(sample == "data") variation = "NOMINAL";
+  if(sample == "data"&& !variation.Contains("FFNP_")){
+     variation = "NOMINAL";
+  } 
   auto samp = plot_lib.find(sample);
   if(samp == plot_lib.end()) {
     if(debug) printf("histSaver:grabhist  Warning: sample %s not found\n", sample.Data());
@@ -337,9 +339,10 @@ void histSaver::init_hist(map<TString,map<TString,map<TString,vector<TH1D*>>>>::
     TH1D *created = new TH1D(histname,sampleiter->title,v.at(i)->nbins,v.at(i)->xlow,v.at(i)->xhigh);
     created->SetDirectory(0);
     regioniter->second[variation].push_back(created);
+    created->Sumw2();
     if (sample_lib->first != "data")
     {
-      created->Sumw2();
+      //created->Sumw2();
       created->SetFillColor(sampleiter->color);
       created->SetLineWidth(1);
       created->SetLineColor(kBlack);
@@ -1051,7 +1054,8 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       TH1D * datahist = 0;
       if(debug) printf("set data\n");
       if (dataref) {
-        datahist = grabhist("data",region,"NOMINAL",i);
+        //datahist = grabhist("data",region,"NOMINAL",i);
+        datahist = grabhist("data",region,NPname.Contains("FFNP_")?NPname:"NOMINAL",i);
         if(datahist) datahist = (TH1D*)datahist->Clone("dataClone");
         if(!datahist) {
           printf("histSaver::plot_stack(): WARNING: clone data histogram failed: region %s, variable %s\n", region.Data(), v.at(i)->name.Data());
@@ -1304,10 +1308,10 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TStri
   vector<TH1D*> newvec;
   for (int ivar = 0; ivar < v.size(); ++ivar)
   { 
-    if(!grabhist(tokens[0],_1m1lregion, tokens[0] == "data" ? "NOMINAL" : variation,ivar)){
+    if(!grabhist(tokens[0],_1m1lregion, tokens[0] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,ivar)){
       std::cout<<"ivar: "<<ivar<<", data hist dont exist!"<<std::endl;
     }
-    newvec.push_back((TH1D*)grabhist(tokens[0],_1m1lregion, tokens[0] == "data" ? "NOMINAL" : variation,ivar)->Clone(newsamplename+"_"+final_region+v[ivar]->name));
+    newvec.push_back((TH1D*)grabhist(tokens[0],_1m1lregion, tokens[0] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,ivar)->Clone(newsamplename+"_"+final_region+v[ivar]->name));
     newvec[ivar]->Reset();
     newvec[ivar]->SetNameTitle(newsamplename,newsampletitle);
     newvec[ivar]->SetFillColor(color);
@@ -1323,15 +1327,15 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TStri
     if(icompon==0)sign_=1;
     else sign_=-1;
 
-    if(grabhist(tokens[icompon],_1m1lregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)){ 
-      if(fabs(grabhist(tokens[icompon],_1m1lregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)->Integral())<10E-06){
-        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_1m1lregion<<", integral: "<<(grabhist(tokens[icompon],_1m1lregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)->Integral())<<std::endl;
+    if(grabhist(tokens[icompon],_1m1lregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)){ 
+      if(fabs(grabhist(tokens[icompon],_1m1lregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)->Integral())<10E-06){
+        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_1m1lregion<<", integral: "<<(grabhist(tokens[icompon],_1m1lregion, tokens[icompon] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,0)->Integral())<<std::endl;
         continue;
       }
       std::cout<<"sample name:"<<tokens[icompon]<<", sign:"<<sign_<<" in region:"<<_1m1lregion<<" have contribution to the fake calculations!"<<std::endl;
       for (int ivar = 0; ivar < v.size(); ++ivar)
       {
-        newvec[ivar]->Add(grabhist(tokens[icompon],_1m1lregion, tokens[icompon] == "data" ? "NOMINAL" : variation,ivar),sign_);
+        newvec[ivar]->Add(grabhist(tokens[icompon],_1m1lregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,ivar),sign_);
       }
     }
   }
@@ -1343,15 +1347,15 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TStri
     if(icompon==0)sign_=1;
     else sign_=-1;
 
-    if(grabhist(tokens[icompon],_1l1mregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)){ 
-      if(fabs(grabhist(tokens[icompon],_1l1mregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)->Integral())<10E-06){
-        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_1l1mregion<<", integral: "<<(grabhist(tokens[icompon],_1l1mregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)->Integral())<<std::endl;
+    if(grabhist(tokens[icompon],_1l1mregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)){ 
+      if(fabs(grabhist(tokens[icompon],_1l1mregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)->Integral())<10E-06){
+        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_1l1mregion<<", integral: "<<(grabhist(tokens[icompon],_1l1mregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)->Integral())<<std::endl;
         continue;
       }
       std::cout<<"sample name:"<<tokens[icompon]<<", sign:"<<sign_<<" in region:"<<_1l1mregion<<" have contribution to the fake calculations!"<<std::endl;
       for (int ivar = 0; ivar < v.size(); ++ivar)
       {
-        newvec[ivar]->Add(grabhist(tokens[icompon],_1l1mregion, tokens[icompon] == "data" ? "NOMINAL" : variation,ivar),sign_);
+        newvec[ivar]->Add(grabhist(tokens[icompon],_1l1mregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,ivar),sign_);
       }
     }
   }
@@ -1364,15 +1368,15 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TStri
     if(icompon==0)sign_=-1;
     else sign_=1;
 
-    if(grabhist(tokens[icompon],_1l1nregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)){ // 如果直方图存在
-      if(fabs(grabhist(tokens[icompon],_1l1nregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)->Integral())<10E-06){
-        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_1l1nregion<<", integral: "<<(grabhist(tokens[icompon],_1l1nregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)->Integral())<<std::endl;
+    if(grabhist(tokens[icompon],_1l1nregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)){ // 如果直方图存在
+      if(fabs(grabhist(tokens[icompon],_1l1nregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)->Integral())<10E-06){
+        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_1l1nregion<<", integral: "<<(grabhist(tokens[icompon],_1l1nregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)->Integral())<<std::endl;
         continue;
       }
       std::cout<<"sample name:"<<tokens[icompon]<<", sign:"<<sign_<<", in region:"<<_1l1nregion<<", have contribution to the fake calculations!"<<std::endl;
       for (int ivar = 0; ivar < v.size(); ++ivar)
       {
-        newvec[ivar]->Add(grabhist(tokens[icompon],_1l1nregion, tokens[icompon] == "data" ? "NOMINAL" : variation,ivar),sign_);
+        newvec[ivar]->Add(grabhist(tokens[icompon],_1l1nregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,ivar),sign_);
       }
     }
   }
@@ -1384,15 +1388,15 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TStri
     if(icompon==0)sign_=-1;
     else sign_=1;
 
-    if(grabhist(tokens[icompon],_1n1lregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)){ // 如果直方图存在
-      if(fabs(grabhist(tokens[icompon],_1n1lregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)->Integral())<10E-06){
-        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_1n1lregion<<", integral: "<<(grabhist(tokens[icompon],_1n1lregion, tokens[icompon] == "data" ? "NOMINAL" : variation,0)->Integral())<<std::endl;
+    if(grabhist(tokens[icompon],_1n1lregion, tokens[icompon] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,0)){ // 如果直方图存在
+      if(fabs(grabhist(tokens[icompon],_1n1lregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)->Integral())<10E-06){
+        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_1n1lregion<<", integral: "<<(grabhist(tokens[icompon],_1n1lregion, tokens[icompon] == "data"&& !variation.Contains("FFNP_") ? "NOMINAL" : variation,0)->Integral())<<std::endl;
         continue;
       }
       std::cout<<"sample name:"<<tokens[icompon]<<", sign:"<<sign_<<" in region:"<<_1n1lregion<<" have contribution to the fake calculations!"<<std::endl;
       for (int ivar = 0; ivar < v.size(); ++ivar)
       {
-        newvec[ivar]->Add(grabhist(tokens[icompon],_1n1lregion, tokens[icompon] == "data" ? "NOMINAL" : variation,ivar),sign_);
+        newvec[ivar]->Add(grabhist(tokens[icompon],_1n1lregion, tokens[icompon] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,ivar),sign_);
       }
     }
   }
@@ -1523,3 +1527,134 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lnmregion,TSt
   std::cout<<"=========^===^================end of fake factor method!=========^===^================"<<std::endl;
 }
 
+// fake factor method 
+void histSaver::FakeFactorMethod(TString final_region, TString _reg1mtau1ltau1b2jos,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color){
+  
+  final_region=final_region+"_vetobtagwp70_highmet";_reg1mtau1ltau1b2jos=_reg1mtau1ltau1b2jos+"_vetobtagwp70_highmet";
+  std::vector<TString> tokens=tmp_regions;
+  std::cout<<"name by mxia:"<<outputfilename + "_" + variation + ".root"<<std::endl;
+  if(outputfile.find(variation) == outputfile.end()) {
+    outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
+  }else{
+    outputfile[variation]->cd();
+  } 
+
+  // 定义final_region的直方图
+  vector<TH1D*> newvec;
+  for (int ivar = 0; ivar < v.size(); ++ivar)
+  { 
+    if(!grabhist(tokens[0],_reg1mtau1ltau1b2jos, tokens[0] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,ivar)){
+      std::cout<<"ivar: "<<ivar<<", data hist dont exist!"<<std::endl;
+    }
+    newvec.push_back((TH1D*)grabhist(tokens[0],_reg1mtau1ltau1b2jos,  tokens[0] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,ivar)->Clone(newsamplename+"_"+final_region+v[ivar]->name));
+    newvec[ivar]->Reset();
+    newvec[ivar]->SetNameTitle(newsamplename,newsampletitle);
+    newvec[ivar]->SetFillColor(color);
+  }
+
+
+  // 防止出错,一段代码复制了很多次,可以优化!!!!
+
+  //  _reg1mtau1ltau1b2jos region fake
+  int sign_=0;
+  for (int icompon = 0; icompon < tokens.size(); ++icompon)
+  {
+    if(icompon==0)sign_=1;
+    else sign_=-1;
+
+    if(grabhist(tokens[icompon],_reg1mtau1ltau1b2jos, tokens[0] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,0)){ 
+      if(fabs(grabhist(tokens[icompon],_reg1mtau1ltau1b2jos,tokens[0] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,0)->Integral())<10E-06){
+        std::cout<<"sample name:"<<tokens[icompon]<<" in region:"<<_reg1mtau1ltau1b2jos<<", integral: "<<(grabhist(tokens[icompon],_reg1mtau1ltau1b2jos,tokens[0] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,0)->Integral())<<std::endl;
+        continue;
+      }
+      std::cout<<"sample name:"<<tokens[icompon]<<", sign:"<<sign_<<" in region:"<<_reg1mtau1ltau1b2jos<<" have contribution to the fake calculations!"<<std::endl;
+      for (int ivar = 0; ivar < v.size(); ++ivar)
+      {
+        newvec[ivar]->Add(grabhist(tokens[icompon],_reg1mtau1ltau1b2jos, tokens[0] == "data" && !variation.Contains("FFNP_")? "NOMINAL" : variation,ivar),sign_);
+      }
+    }
+  }
+  std::cout<<"============^=========^================="<<std::endl;
+
+
+// save the hist to plot_lib for further plotting
+  for(int ivar = 0; ivar < v.size(); ivar++){
+    plot_lib[newsamplename][final_region][variation] = newvec;
+  }
+
+  std::cout<<"=========^===^================end of fake factor method!=========^===^================"<<std::endl;
+}
+
+
+
+std::vector<observable> histSaver::derive_ff(std::string formula,std::vector<TString> region_numerator,std::vector<TString> region_denominator,TString variable){
+  
+  if(region_numerator.size()!=region_denominator.size()){
+    std::cout<<"numerator and denominator size is not equal.exit"<<std::endl;
+    exit(0);
+  }
+
+  for (int i = 0; i < region_numerator.size(); ++i)
+  {
+    region_numerator[i]=region_numerator[i]+"_vetobtagwp70_highmet";
+  }
+
+  for (int i = 0; i < region_denominator.size(); ++i)
+  {
+    region_denominator[i]=region_denominator[i]+"_vetobtagwp70_highmet";
+  }
+
+  istringstream iss(formula);
+  vector<string> tokens{istream_iterator<string>{iss},
+  istream_iterator<string>{}};
+  if(tokens.size()%2) printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 top -1 fake1truth ...", formula.c_str());
+
+  int total_nbins=12;
+  TH1D *region_numerator_hist=0;
+  TH1D *region_denominator_hist=0;
+
+  TH1D *template_=grabhist("data",region_numerator[0],"NOMINAL",variable); // data 2mtau NOMINAL  subleading_index_bin always exist.
+  if(template_){
+    total_nbins=template_->GetNbinsX();
+    region_numerator_hist=(TH1D*)template_->Clone("region_numerator_hist");
+    region_denominator_hist=(TH1D*)template_->Clone("region_denominator_hist");
+    region_numerator_hist->Reset();
+    region_denominator_hist->Reset();
+  }else{
+    std::cout<<"data sample in first numerator region is not exsit!"<<std::endl;
+    exit(0);
+  }
+
+  for(int index = 0; index < region_denominator.size(); ++index){//2j 3j
+    for (int i = 0; i < tokens.size()/2; ++i)
+    {
+      int icompon = 2*i;
+      float numb = 0;
+      try{
+        numb = stof(tokens[icompon]);
+      } 
+      catch(const std::invalid_argument& e){
+        printf("Error: Wrong formula format: %s\nShould be like: 1 data -1 real -1 zll ...", formula.c_str());
+        exit(1);
+      }
+
+      TH1D *target_numerator   = grabhist(tokens[icompon+1],region_numerator[index]  ,"NOMINAL",variable);
+      TH1D *target_denominator = grabhist(tokens[icompon+1],region_denominator[index],"NOMINAL",variable);
+      if(!target_numerator){
+        std::cout<<"sample: "<<tokens[icompon+1]<<", region:"<<region_numerator[index]<<", not exsit!"<<std::endl;
+      }
+      if(target_numerator &&region_numerator_hist)    region_numerator_hist->Add(target_numerator,numb);
+      if(target_denominator&&region_denominator_hist) region_denominator_hist->Add(target_denominator,numb);
+    
+    }
+  }
+
+  std::vector<observable> result;
+  for(int i=0;i<total_nbins;i++){
+    observable   numerator(region_numerator_hist->GetBinContent(i+1),region_numerator_hist->GetBinError(i+1));
+    observable   denominator(region_denominator_hist->GetBinContent(i+1),region_denominator_hist->GetBinError(i+1));
+    result.push_back(numerator/denominator);
+  }
+
+ return result;
+}
