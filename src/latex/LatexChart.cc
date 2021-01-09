@@ -41,6 +41,7 @@ void LatexChart::print(std::string filename){
 	(*file).open(filename+".tex");
 	(*file)<<"\\centering\n";
 	int ncolumn = columns.size();
+	int currentnrow = 0;
 	if(ncolumn > maxcolumn){
 		int nvec = ncolumn/maxcolumn;
 		if(ncolumn%maxcolumn) nvec+=1;
@@ -49,8 +50,15 @@ void LatexChart::print(std::string filename){
 		if(!ncolumn%maxcolumn) averagelow-=1;
 		vector<string> new_columns;
 		int count = 0;
+		char nfile = '0';
 		for (int ivec = 0; ivec < nvec; ++ivec)
 		{
+			if((currentnrow+=rows.size()+1) > maxrow){
+				currentnrow=0;
+				file->close();
+				(*file).open(filename+"_"+char(nfile+1)+".tex");
+				(*file)<<"\\centering\n";
+			}
 			for (int i = 0; i < averagelow+1; ++i)
 			{
 				if(i == averagelow && ivec >= nlong) continue;
@@ -59,6 +67,7 @@ void LatexChart::print(std::string filename){
 			}
 			writeContent(new_columns, file);
 			new_columns.clear();
+			currentnrow+=rows.size()+1;
 		}
 	}else{
 		writeContent(columns, file);

@@ -5,11 +5,12 @@
 class LatexChart
 {
 public:
-	LatexChart(){ maxcolumn = 4; debug = 0;}
+	LatexChart(){ maxcolumn = 4; debug = 0; maxrow = 40; }
 	~LatexChart(){};
-	LatexChart(std::string chartlabel) : label(chartlabel) { maxcolumn = 4; }
+	LatexChart(std::string chartlabel) : label(chartlabel) { maxcolumn = 4; maxrow = 40; }
 	int debug;
 	int maxcolumn;
+	int maxrow;
 	std::string label;
 	std::string caption;
 	std::vector<std::string> rows;
