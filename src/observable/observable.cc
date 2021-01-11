@@ -75,14 +75,14 @@ observable observable::operator * (double aa) {
 	observable res;
 	res.nominal = nominal * (aa);
 	res.error = error * fabs(aa);
-	res.errordown = errordown * (aa);
+	res.errordown = errordown * fabs(aa);
 	return res;
 } 
 observable observable::operator / (double aa) { 
 	observable res;
 	res.nominal = nominal / aa;
-	res.error = error / aa;
-	res.errordown = errordown / aa;
+	res.error = error / fabs(aa);
+	res.errordown = errordown / fabs(aa);
 	return res;
 } 
 
