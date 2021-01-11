@@ -85,7 +85,7 @@ observable histSaver::calculateYield(TString region, string formula, TString var
     TH1D *target=grabhist(sample,region, sample == "data" ? "NOMINAL" : variation,0);
     if(target){
       double err;
-      observable thisyield(target->IntegralAndError(1,target->GetNbinsX(),err),err);
+      observable thisyield(integral(target,1,target->GetNbinsX()));
       yield+=thisyield*numb;
     }
   }
