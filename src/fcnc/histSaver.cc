@@ -1019,7 +1019,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
     std::string regtitle = region.Data();
     findAndReplaceAll(regtitle,"reg","");
     findAndReplaceAll(regtitle,"vetobtagwp70","");
-    findAndReplaceAll(regtitle,"highmet","");
+    findAndReplaceAll(regtitle,"__highmet","");
     std::string labeltitle = regtitle;
     findAndReplaceAll(regtitle,"1l1tau1b2j_ss","l$\\tauhad$ 2j");
     findAndReplaceAll(regtitle,"1l1tau1b1j_ss","l$\\tauhad$ 1j");
