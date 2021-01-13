@@ -51,6 +51,7 @@ public:
   std::vector<TString> overlaysamples;
   TFile* inputfile;
   std::map<TString,TFile*> outputfile;
+  std::map<TString,std::string> regioninTables;
   TString lumi;
   TString analysis;
   TString workflow;
