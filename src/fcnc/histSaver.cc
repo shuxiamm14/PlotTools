@@ -1023,6 +1023,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
     findAndReplaceAll(regtitle,"reg","");
     findAndReplaceAll(regtitle,"vetobtagwp70","");
     findAndReplaceAll(regtitle,"highmet","");
+    findAndReplaceAll(regtitle,"_","");
     std::string labeltitle = regtitle;
     findAndReplaceAll(regtitle,"1l1tau1b2j_ss","l$\\tauhad$ 2j");
     findAndReplaceAll(regtitle,"1l1tau1b1j_ss","l$\\tauhad$ 1j");
@@ -1304,9 +1305,9 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
 }
 
 // fake factor method 
-void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TString _1l1mregion,TString _1l1nregion,TString _1n1lregion,TString _2nregion,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color){// newsamplename指用ABCD估计的这个区域的名字, fake,qcdfake....
+void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TString _1l1mregion,TString _1l1nregion,TString _1n1lregion,TString _2nregion,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color,bool SBplot){// newsamplename指用ABCD估计的这个区域的名字, fake,qcdfake....
   
-  final_region=final_region+"_vetobtagwp70_highmet";_1m1lregion=_1m1lregion+"_vetobtagwp70_highmet";_1l1mregion=_1l1mregion+"_vetobtagwp70_highmet";_1l1nregion=_1l1nregion+"_vetobtagwp70_highmet";_1n1lregion=_1n1lregion+"_vetobtagwp70_highmet";_2nregion=_2nregion+"_vetobtagwp70_highmet";
+  final_region=final_region+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_1m1lregion=_1m1lregion+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_1l1mregion=_1l1mregion+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_1l1nregion=_1l1nregion+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_1n1lregion=_1n1lregion+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_2nregion=_2nregion+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");
   std::vector<TString> tokens=tmp_regions;
   if(outputfile.find(variation) == outputfile.end()) {
     outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
@@ -1440,9 +1441,9 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lregion,TStri
   std::cout<<"=========^===^================end of fake factor method!=========^===^================"<<std::endl;
 }
 // fake factor method 
-void histSaver::FakeFactorMethod(TString final_region, TString _1m1lnmregion,TString _1lnm1mregion,TString _2nregion,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color){// newsamplename指用ABCD估计的这个区域的名字, fake,qcdfake....
+void histSaver::FakeFactorMethod(TString final_region, TString _1m1lnmregion,TString _1lnm1mregion,TString _2nregion,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color,bool SBplot){// newsamplename指用ABCD估计的这个区域的名字, fake,qcdfake....
   
-  final_region=final_region+"_vetobtagwp70_highmet";_1m1lnmregion=_1m1lnmregion+"_vetobtagwp70_highmet";_1lnm1mregion=_1lnm1mregion+"_vetobtagwp70_highmet";_2nregion=_2nregion+"_vetobtagwp70_highmet";
+  final_region=final_region+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_1m1lnmregion=_1m1lnmregion+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_1lnm1mregion=_1lnm1mregion+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_2nregion=_2nregion+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");
   std::vector<TString> tokens=tmp_regions;
   if(outputfile.find(variation) == outputfile.end()) {
     outputfile[variation] = new TFile(outputfilename + "_" + variation + ".root", "recreate");
@@ -1538,9 +1539,9 @@ void histSaver::FakeFactorMethod(TString final_region, TString _1m1lnmregion,TSt
 }
 
 // fake factor method 
-void histSaver::FakeFactorMethod(TString final_region, TString _reg1mtau1ltau1b2jos,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color){
+void histSaver::FakeFactorMethod(TString final_region, TString _reg1mtau1ltau1b2jos,TString variation,TString newsamplename,TString newsampletitle,std::vector<TString> tmp_regions,enum EColor color,bool SBplot){
   
-  final_region=final_region+"_vetobtagwp70_highmet";_reg1mtau1ltau1b2jos=_reg1mtau1ltau1b2jos+"_vetobtagwp70_highmet";
+  final_region=final_region+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");_reg1mtau1ltau1b2jos=_reg1mtau1ltau1b2jos+"_vetobtagwp70"+(!SBplot?"_highmet":"_highmet_SB");
   std::vector<TString> tokens=tmp_regions;
   std::cout<<"name by mxia:"<<outputfilename + "_" + variation + ".root"<<std::endl;
   if(outputfile.find(variation) == outputfile.end()) {
