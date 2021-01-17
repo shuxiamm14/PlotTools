@@ -60,10 +60,8 @@ observable observable::operator /= (observable const &obj) {
 } 
 
 observable observable::operator + (double aa) { 
-	observable res;
-	res.nominal = nominal + aa;
-	res.error = error;
-	res.errordown = errordown;
+	observable res = *this;
+	res.nominal += aa;
 	return res;
 } 
 observable observable::operator - (double aa) { 
@@ -75,16 +73,16 @@ observable observable::operator - (double aa) {
 } 
 observable observable::operator * (double aa) { 
 	observable res;
-	res.nominal = nominal * aa;
-	res.error = error * aa;
-	res.errordown = errordown * aa;
+	res.nominal = nominal * (aa);
+	res.error = error * fabs(aa);
+	res.errordown = errordown * fabs(aa);
 	return res;
 } 
 observable observable::operator / (double aa) { 
 	observable res;
 	res.nominal = nominal / aa;
-	res.error = error / aa;
-	res.errordown = errordown / aa;
+	res.error = error / fabs(aa);
+	res.errordown = errordown / fabs(aa);
 	return res;
 } 
 

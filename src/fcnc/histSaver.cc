@@ -82,10 +82,10 @@ observable histSaver::calculateYield(TString region, string formula, TString var
       exit(1);
     }
     TString sample=tokens[icompon+1].c_str();
-    if(grabhist(sample,region, sample == "data" ? "NOMINAL" : variation,0)){
-      TH1D *target=grabhist_int(sample,region,0,0);
+    TH1D *target=grabhist(sample,region, sample == "data" ? "NOMINAL" : variation,0);
+    if(target){
       double err;
-      observable thisyield(target->IntegralAndError(1,target->GetNbinsX(),err),err);
+      observable thisyield(integral(target,1,target->GetNbinsX()));
       yield+=thisyield*numb;
     }
   }
@@ -1019,6 +1019,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
     }
     if(muted) continue;
     gSystem->mkdir(outdir + "/" + region);
+
     std::string regtitle = region.Data();
     findAndReplaceAll(regtitle,"reg","");
     findAndReplaceAll(regtitle,"vetobtagwp70","");
@@ -1034,6 +1035,13 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
     //findAndReplaceAll(regtitle,"2lSS1tau1bnj_","$2lSS\\thad$ ");
     //findAndReplaceAll(regtitle,"2lSS1tau2bnj_","$2lSS\\thad$ 2b ");
     findAndReplaceAll(regtitle,"_"," ");
+    auto tableIter = regioninTables.find(region);
+
+    string labeltitle_ = tableIter->second;
+    findAndReplaceAll(labeltitle_,"\\tauhad","#tau_{had}");
+    findAndReplaceAll(labeltitle_,"\\tlhad","#tau_{lep}#tau_{had}");
+    findAndReplaceAll(labeltitle_,"\\thadhad","#tau_{had}#tau_{had}");
+
 
     for (int i = 0; i < v.size(); ++i){
       TPad *padlow = new TPad("lowpad","lowpad",0,0,1,0.3);
@@ -1060,12 +1068,12 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         hsk->Add(buffer.back());
         hmc.Add(buffer.back());
 
-        if(sensitivevariable == v.at(i)->name) {
+        if(i == 0 && tableIter!=regioninTables.end()) {
           std::string latexsamptitle = buffer.back()->GetTitle();
           findAndReplaceAll(latexsamptitle,"rightarrow","to");
           if(latexsamptitle.find("#")!=std::string::npos) latexsamptitle = "$" + latexsamptitle + "$";
           findAndReplaceAll(latexsamptitle,"#","\\");
-          yield_chart->set(latexsamptitle,regtitle,integral(buffer.back()));
+          yield_chart->set(latexsamptitle,tableIter->second,integral(buffer.back()));
         }
 
         lg1->AddEntry(buffer.back(),buffer.back()->GetTitle(),"F");
@@ -1144,10 +1152,10 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
       std::vector<TH1D*> activeoverlay;
       if(debug) printf("set blinding\n");
 
-      if(sensitivevariable == v.at(i)->name) {
-        yield_chart->set("background",regtitle,integral(&hmc));
+      if(i == 0 && tableIter!=regioninTables.end()) {
+        yield_chart->set("background",tableIter->second,integral(&hmc));
         if(dataref){
-          yield_chart->set("data",regtitle,integral(datahist));
+          yield_chart->set("data",tableIter->second,integral(datahist));
         }
         printf("Region %s, Background yield: %f\n", region.Data(), hmc.Integral());
       }
@@ -1253,8 +1261,15 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
         if(ratio>100) ratio -= ratio%100;
         if(ratio>1000) ratio -= ratio%1000;
         lgsig->AddEntry(histoverlay,(histoverlay->GetTitle() + (ratio > 0? "#times" + to_string(ratio) : "")).c_str(),"LP");
+        std::string samptitle = histoverlay->GetTitle();
+        findAndReplaceAll(samptitle," ","~");
+        if(samptitle.find("#") != string::npos) samptitle = "$"+samptitle+"$";
+        findAndReplaceAll(samptitle,"#","\\");
+        findAndReplaceAll(samptitle,"%","\\%");
+        findAndReplaceAll(samptitle,"rightarrow","to ");
+        if(i==0 && tableIter!=regioninTables.end()) yield_chart->set(samptitle,tableIter->second,integral(histoverlay));
 
-        if(sensitivevariable == v.at(i)->name){
+        if(sensitivevariable == v.at(i)->name && tableIter!=regioninTables.end()){
           double _significance = 0;
           for(Int_t j=1; j<v.at(i)->nbins/v[i]->rebin+1; j++) {
             if(histoverlay->GetBinContent(j) && hmc.GetBinContent(j)) {
@@ -1262,14 +1277,7 @@ void histSaver::plot_stack(TString NPname, TString outdir, TString outputchartdi
                 _significance += pow(significance(hmc.GetBinContent(j), histoverlay->GetBinContent(j)),2);
             }
           }
-          std::string samptitle = histoverlay->GetTitle();
-          findAndReplaceAll(samptitle," ","~");
-          if(samptitle.find("#") != string::npos) samptitle = "$"+samptitle+"$";
-          findAndReplaceAll(samptitle,"#","\\");
-          findAndReplaceAll(samptitle,"%","\\%");
-          findAndReplaceAll(samptitle,"rightarrow","to ");
-          yield_chart->set(samptitle,regtitle,integral(histoverlay));
-          sgnf_chart->set(samptitle,regtitle,sqrt(_significance));
+          sgnf_chart->set(samptitle,tableIter->second,sqrt(_significance));
           printf("signal %s yield: %4.2f, significance: %4.2f\n",histoverlay->GetTitle(), histoverlay->Integral(), sqrt(_significance));
         }
 
